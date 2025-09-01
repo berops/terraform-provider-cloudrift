@@ -1,0 +1,1 @@
+terraform import cloudrift_virtual_machine.machine0 9936b568-6155-11f0-90b5-8338c8e977e5

@@ -1,0 +1,5330 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "rift-server",
+    "description": "",
+    "contact": { "name": "CloudRift Inc" },
+    "license": { "name": "" },
+    "version": "0.49.1"
+  },
+  "paths": {
+    "/api/v1/account/info": {
+      "post": {
+        "tags": ["account"],
+        "description": "Retrieve account information",
+        "operationId": "get_account_info",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AccountInfoProto" }
+              }
+            }
+          }
+        },
+        "security": [{ "token": [] }, { "api-key": [] }]
+      }
+    },
+    "/api/v1/account/transactions/create/external": {
+      "post": {
+        "tags": ["account"],
+        "description": "Create external transaction",
+        "operationId": "create_external_transaction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalTransactionRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": { "200": { "description": "Success" } },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/account/transactions/create/promo": {
+      "post": {
+        "tags": ["account"],
+        "description": "Create promo transaction",
+        "operationId": "create_promo_transaction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PromoCodeRequestProto" }
+            }
+          },
+          "required": true
+        },
+        "responses": { "200": { "description": "Success" } },
+        "security": [{ "token": [] }, { "api-key": [] }]
+      }
+    },
+    "/api/v1/account/transactions/list": {
+      "post": {
+        "tags": ["account"],
+        "description": "List account transactions",
+        "operationId": "list_transactions",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionArrayProto"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/api-keys/add": {
+      "post": {
+        "tags": ["api_keys"],
+        "description": "Add API key",
+        "operationId": "add_api_key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddApiKeyRequestProto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddApiKeyResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/api-keys/delete": {
+      "post": {
+        "tags": ["api_keys"],
+        "description": "Delete API key with selector",
+        "operationId": "select_and_delete_api_keys",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteApiKeysRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteApiKeysResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/api-keys/list": {
+      "post": {
+        "tags": ["api_keys"],
+        "description": "List API keys",
+        "operationId": "list_api_keys",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListApiKeysRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListApiKeysResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/api-keys/update": {
+      "post": {
+        "tags": ["api_keys"],
+        "description": "Modify API key properties",
+        "operationId": "update_api_keys",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApiKeysRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateApiKeysResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["auth"],
+        "description": "Login user and retrieve JWT token",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginUserRequestProto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginUserResponseProto"
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authorized" }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": ["auth"],
+        "description": "Logout user and remove JWT token",
+        "operationId": "logout",
+        "responses": {
+          "201": { "description": "Logout successful" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/auth/request-password-reset": {
+      "post": {
+        "tags": ["auth"],
+        "description": "Initiate password reset process",
+        "operationId": "request_password_reset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetVerifyRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": { "description": "Password reset email sent" },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "User not found" }
+        }
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": ["auth"],
+        "description": "Reset password using token",
+        "operationId": "reset_password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "Password reset successfully" },
+          "400": { "description": "Bad request, invalid token or password" },
+          "404": { "description": "Token not found or expired" }
+        }
+      }
+    },
+    "/api/v1/instance-types/list": {
+      "post": {
+        "tags": ["instance_types"],
+        "description": "List instance types",
+        "operationId": "list_instance_types",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListInstanceTypesRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListInstanceTypesResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "api-key": [] }]
+      }
+    },
+    "/api/v1/instances/list": {
+      "post": {
+        "tags": ["instances"],
+        "description": "List user instances",
+        "operationId": "list_instances",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListInstancesRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListInstancesResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/instances/rent": {
+      "post": {
+        "tags": ["instances"],
+        "description": "Rent instance for the user",
+        "operationId": "rent_instance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RentInstanceRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RentInstanceResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/instances/terminate": {
+      "post": {
+        "tags": ["instances"],
+        "description": "Terminate user instance(s)",
+        "operationId": "terminate_instances",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TerminateInstancesRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": { "description": "Instance(s) terminated" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/network/add": {
+      "post": {
+        "tags": ["network"],
+        "description": "Add a new network with multiple IP ranges",
+        "operationId": "add_network",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddNetworkRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Network created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddNetworkResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" },
+          "409": { "description": "Network already exists" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/network/list": {
+      "post": {
+        "tags": ["network"],
+        "description": "List the networks in a datacenter",
+        "operationId": "list_networks",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListNetworksRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListNetworksResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/network/list-ranges": {
+      "post": {
+        "tags": ["network"],
+        "description": "List available IP ranges for a datacenter and network",
+        "operationId": "list_ip_ranges",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListIpRangesRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListIpRangesResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/providers/list": {
+      "post": {
+        "tags": ["providers"],
+        "description": "List providers",
+        "operationId": "list_providers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListProvidersRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListProvidersResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        }
+      }
+    },
+    "/api/v1/providers/nodes/list": {
+      "post": {
+        "tags": ["providers"],
+        "description": "List provider nodes",
+        "operationId": "list_provider_nodes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListProviderNodesRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListProviderNodesResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        }
+      }
+    },
+    "/api/v1/recipes/list": {
+      "post": {
+        "tags": ["recipes"],
+        "description": "List available recipes",
+        "operationId": "list_recipes",
+        "responses": {
+          "200": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListRecipesResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        }
+      }
+    },
+    "/api/v1/reservations/list": {
+      "post": {
+        "tags": ["reservations"],
+        "description": "List user reservations",
+        "operationId": "list_reservations",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListReservationsRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListReservationsResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/reservations/types/list": {
+      "post": {
+        "tags": ["ReservationTypes"],
+        "summary": "List available reservation types",
+        "operationId": "list_reservation_types",
+        "responses": {
+          "200": {
+            "description": "List of reservation types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListReservationTypesResponseProto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request format or instance variant ID not found"
+          },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/api/v1/services/bulk-charge": {
+      "post": {
+        "tags": ["services"],
+        "description": "Bulk charge for service",
+        "operationId": "bulk_charge_for_service",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkServiceChargeRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Charge has been created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkServiceChargeResponseProto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Charge for provided request ID already exists"
+          }
+        },
+        "security": [{ "api-key": [] }]
+      }
+    },
+    "/api/v1/services/charge": {
+      "post": {
+        "tags": ["services"],
+        "description": "Charge for service",
+        "operationId": "charge_for_service",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceChargeRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Charge has been created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceChargeResponseProto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Charge for provided request ID already exists"
+          }
+        },
+        "security": [{ "api-key": [] }]
+      }
+    },
+    "/api/v1/ssh-keys/add": {
+      "post": {
+        "tags": ["ssh_keys"],
+        "description": "Add ssh keys",
+        "operationId": "add_ssh_key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddSshKeyRequestProto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateSshKeyResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/ssh-keys/delete": {
+      "post": {
+        "tags": ["ssh_keys"],
+        "description": "Delete ssh key with selector",
+        "operationId": "select_and_delete_ssh_key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteSshKeyRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": { "description": "Request succeeded" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/ssh-keys/list": {
+      "post": {
+        "tags": ["ssh_keys"],
+        "description": "List ssh keys",
+        "operationId": "list_ssh_keys",
+        "responses": {
+          "200": {
+            "description": "Request succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSshKeysResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/ssh-keys/{ssh_key_id}": {
+      "delete": {
+        "tags": ["ssh_keys"],
+        "description": "Delete ssh key",
+        "operationId": "delete_ssh_key",
+        "parameters": [
+          {
+            "name": "ssh_key_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Request succeeded" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/teams/create": {
+      "post": {
+        "tags": ["teams"],
+        "description": "Create a new team",
+        "operationId": "create_team",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTeamRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Team created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTeamResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/teams/list": {
+      "post": {
+        "tags": ["teams"],
+        "description": "List teams the authenticated user is a member of",
+        "operationId": "list_teams",
+        "responses": {
+          "200": {
+            "description": "Teams retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListTeamsResponseProto"
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/teams/{team_id}": {
+      "get": {
+        "tags": ["teams"],
+        "description": "Get details of a specific team including its members",
+        "operationId": "get_team",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "path",
+            "description": "The unique identifier of the team to retrieve",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TeamResponseProto" }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" },
+          "404": { "description": "Team not found" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/teams/{team_id}/members/add": {
+      "put": {
+        "tags": ["teams"],
+        "description": "Add a new member to a team by their email",
+        "operationId": "add_team_member",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "path",
+            "description": "The unique identifier of the team to add the member to",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "description": "Email of the user to add to the team",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTeamMemberRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Member added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Not authorized" },
+          "404": { "description": "Team not found" }
+        },
+        "security": [{ "token": [] }]
+      }
+    },
+    "/api/v1/teams/{team_id}/members/remove": {
+      "post": {
+        "tags": ["teams"],
+        "description": "Remove a member from a team by their email",
+        "operationId": "remove_team_member",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveTeamMemberRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Member removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberResponseProto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request parameters" },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Team not found" }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/api/v1/teams/{team_id}/members/update": {
+      "put": {
+        "tags": ["teams"],
+        "description": "Update the role of a team member",
+        "operationId": "update_team_membership",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamMembershipRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": { "description": "Member role updated successfully" },
+          "400": { "description": "Invalid request parameters" },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Team not found" }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/api/v1/users/register": {
+      "post": {
+        "tags": ["users"],
+        "description": "Register a new user",
+        "operationId": "register_user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": { "description": "Registration successful" },
+          "401": { "description": "Not authorized" }
+        },
+        "security": [{ "api-key": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccountInfo": {
+        "type": "object",
+        "required": ["balance", "pending", "disputed", "dispute_fees"],
+        "properties": {
+          "balance": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount of money in currency units (cents)"
+          },
+          "current_cost_per_hour": {
+            "type": "number",
+            "nullable": true,
+            "format": "double",
+            "description": "Current cost per hour in currency units (cents)"
+          },
+          "dispute_fees": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Dispute fees that are charged by the payment processor"
+          },
+          "disputed": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Disputed amount, i.e. the amount that is disputed by the user and thus frozen"
+          },
+          "pending": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount of money pending to be credited/debited"
+          }
+        }
+      },
+      "AccountInfoProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["balance", "pending", "disputed", "dispute_fees"],
+            "properties": {
+              "balance": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Amount of money in currency units (cents)"
+              },
+              "current_cost_per_hour": {
+                "type": "number",
+                "nullable": true,
+                "format": "double",
+                "description": "Current cost per hour in currency units (cents)"
+              },
+              "dispute_fees": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Dispute fees that are charged by the payment processor"
+              },
+              "disputed": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Disputed amount, i.e. the amount that is disputed by the user and thus frozen"
+              },
+              "pending": {
+                "type": "number",
+                "format": "double",
+                "description": "Amount of money pending to be credited/debited"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "AccountRequest": {
+        "type": "object",
+        "required": ["selector"],
+        "properties": {
+          "selector": { "$ref": "#/components/schemas/AccountSelector" }
+        }
+      },
+      "AccountRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "selector": { "$ref": "#/components/schemas/AccountSelector" }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "AccountSelector": {
+        "oneOf": [
+          { "type": "string", "enum": ["ByToken"] },
+          {
+            "type": "object",
+            "required": ["ByTeam"],
+            "properties": { "ByTeam": { "type": "string" } },
+            "example": { "ByTeamId": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b" }
+          }
+        ]
+      },
+      "AddApiKeyRequest": {
+        "type": "object",
+        "required": ["active"],
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "Enable/disable API key"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "API key name",
+            "example": "my-key"
+          },
+          "team_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Team ID in case of a team API key",
+            "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+          }
+        }
+      },
+      "AddApiKeyRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["active"],
+            "properties": {
+              "active": {
+                "type": "boolean",
+                "description": "Enable/disable API key"
+              },
+              "name": {
+                "type": "string",
+                "nullable": true,
+                "description": "API key name",
+                "example": "my-key"
+              },
+              "team_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "Team ID in case of a team API key",
+                "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "AddApiKeyResponse": {
+        "type": "object",
+        "required": ["id", "active", "key"],
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "Enabled/disabled status",
+            "example": "true"
+          },
+          "id": {
+            "type": "string",
+            "description": "API key ID",
+            "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+          },
+          "key": {
+            "type": "string",
+            "description": "API key value, only available at generation time",
+            "example": "rift_36RFCEBTU2RFJG6IUSLR6OAT839VXVZ6PILPOVXB1aw2as"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "API key name",
+            "example": "my-key"
+          }
+        }
+      },
+      "AddApiKeyResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["id", "active", "key"],
+            "properties": {
+              "active": {
+                "type": "boolean",
+                "description": "Enabled/disabled status",
+                "example": "true"
+              },
+              "id": {
+                "type": "string",
+                "description": "API key ID",
+                "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+              },
+              "key": {
+                "type": "string",
+                "description": "API key value, only available at generation time",
+                "example": "rift_36RFCEBTU2RFJG6IUSLR6OAT839VXVZ6PILPOVXB1aw2as"
+              },
+              "name": {
+                "type": "string",
+                "nullable": true,
+                "description": "API key name",
+                "example": "my-key"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "AddNetworkRequest": {
+        "type": "object",
+        "required": ["name", "gateway", "datacenter", "ip_ranges"],
+        "properties": {
+          "datacenter": {
+            "type": "string",
+            "description": "Datacenter for the network",
+            "example": "us-east-nc-nr-1"
+          },
+          "gateway": {
+            "type": "string",
+            "description": "Gateway IP address",
+            "example": "192.168.1.1"
+          },
+          "iface": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional network interface name",
+            "example": "eth0"
+          },
+          "ip_ranges": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/NetworkIpRange" },
+            "description": "IP ranges to add to the network"
+          },
+          "name": {
+            "type": "string",
+            "description": "Network name",
+            "example": "private-network-1"
+          },
+          "netmask": {
+            "type": "integer",
+            "nullable": true,
+            "format": "int32",
+            "description": "Optional network mask",
+            "example": 24,
+            "minimum": 0
+          },
+          "server_address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional server address if need to use internal IP for communication"
+          },
+          "team_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional team ID",
+            "example": "00000000-0000-0000-0000-000000000000"
+          }
+        }
+      },
+      "AddNetworkRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["name", "gateway", "datacenter", "ip_ranges"],
+            "properties": {
+              "datacenter": {
+                "type": "string",
+                "description": "Datacenter for the network",
+                "example": "us-east-nc-nr-1"
+              },
+              "gateway": {
+                "type": "string",
+                "description": "Gateway IP address",
+                "example": "192.168.1.1"
+              },
+              "iface": {
+                "type": "string",
+                "nullable": true,
+                "description": "Optional network interface name",
+                "example": "eth0"
+              },
+              "ip_ranges": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/NetworkIpRange" },
+                "description": "IP ranges to add to the network"
+              },
+              "name": {
+                "type": "string",
+                "description": "Network name",
+                "example": "private-network-1"
+              },
+              "netmask": {
+                "type": "integer",
+                "nullable": true,
+                "format": "int32",
+                "description": "Optional network mask",
+                "example": 24,
+                "minimum": 0
+              },
+              "server_address": {
+                "type": "string",
+                "nullable": true,
+                "description": "Optional server address if need to use internal IP for communication"
+              },
+              "team_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "Optional team ID",
+                "example": "00000000-0000-0000-0000-000000000000"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "AddNetworkResponse": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID of the created network",
+            "example": "00000000-0000-0000-0000-000000000000"
+          }
+        }
+      },
+      "AddNetworkResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "ID of the created network",
+                "example": "00000000-0000-0000-0000-000000000000"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "AddSshKeyRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "SSH key name",
+            "example": "my-key"
+          },
+          "public_key": {
+            "type": "string",
+            "nullable": true,
+            "description": "SSH key public part",
+            "example": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD..."
+          }
+        }
+      },
+      "AddSshKeyRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "SSH key name",
+                "example": "my-key"
+              },
+              "public_key": {
+                "type": "string",
+                "nullable": true,
+                "description": "SSH key public part",
+                "example": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD..."
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "AddSshKeyResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["public_key"],
+            "properties": {
+              "public_key": { "$ref": "#/components/schemas/SshKey" }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "AddTeamMemberRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["email"],
+            "properties": {
+              "email": { "type": "string", "example": "john.doe@example.com" },
+              "role": {
+                "$ref": "#/components/schemas/TeamRole",
+                "nullable": true
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ApiKey": {
+        "type": "object",
+        "description": "TODO: Currently we have user API keys and provider API keys\n      This protocol handles only user API keys as provider API keys are planned for removal",
+        "required": ["id", "key", "has_secret", "active", "created_at"],
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "Enabled/disabled status",
+            "example": "true"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "API key creation time",
+            "example": "2021-01-01T00:00:00Z"
+          },
+          "creator_email": {
+            "type": "string",
+            "nullable": true,
+            "description": "The email of the creator of the API key in case of team API keys",
+            "example": "debug@usr.com"
+          },
+          "creator_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "The name of the creator of the API key in case of team API keys",
+            "example": "Test User"
+          },
+          "has_secret": {
+            "type": "boolean",
+            "description": "Whether the API key has a secret part"
+          },
+          "id": {
+            "type": "string",
+            "description": "API key ID",
+            "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+          },
+          "key": {
+            "type": "string",
+            "description": "Public part of the API key",
+            "example": "rift_36RFCEBTU2RFJG6IUSLR6OAT839VXVZ6PILPOVXB1aw2as"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "API key name",
+            "example": "my-key"
+          }
+        }
+      },
+      "ApiKeySelector": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["ByTeamId"],
+            "properties": { "ByTeamId": { "type": "string" } },
+            "example": {
+              "ByTeamId": { "id": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b" }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["ById"],
+            "properties": {
+              "ById": { "type": "array", "items": { "type": "string" } }
+            },
+            "example": { "ById": ["f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"] }
+          },
+          { "type": "string", "enum": ["All"], "example": "All" }
+        ]
+      },
+      "BulkServiceChargeRequest": {
+        "type": "object",
+        "required": ["service", "provider", "charges"],
+        "properties": {
+          "charges": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ServiceCharge" },
+            "description": "Charges to be applied"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Name of the provider of the service",
+            "example": "TestProvider"
+          },
+          "service": {
+            "type": "string",
+            "description": "Name of the service to charge",
+            "example": "LLM-Inference-API"
+          }
+        }
+      },
+      "BulkServiceChargeRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["service", "provider", "charges"],
+            "properties": {
+              "charges": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/ServiceCharge" },
+                "description": "Charges to be applied"
+              },
+              "provider": {
+                "type": "string",
+                "description": "Name of the provider of the service",
+                "example": "TestProvider"
+              },
+              "service": {
+                "type": "string",
+                "description": "Name of the service to charge",
+                "example": "LLM-Inference-API"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "BulkServiceChargeResponse": {
+        "type": "object",
+        "required": ["request_ids"],
+        "properties": {
+          "request_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Either a provided request IDs or generated ones"
+          }
+        }
+      },
+      "BulkServiceChargeResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["request_ids"],
+            "properties": {
+              "request_ids": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Either a provided request IDs or generated ones"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ComputeProviderInfo": {
+        "type": "object",
+        "required": ["name", "datacenters", "list_on_marketplace"],
+        "properties": {
+          "datacenters": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DataCenterInfo" },
+            "description": "Data centers where the provider has resources"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the provider",
+            "example": "Biggest cloud provider on earth"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provider email address",
+            "example": "support@aws.amazon.com"
+          },
+          "list_on_marketplace": {
+            "type": "boolean",
+            "description": "Whether the provider should be listed on the marketplace",
+            "example": true
+          },
+          "logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provider logo URL",
+            "example": "https://en.m.wikipedia.org/wiki/File:Amazon_Web_Services_Logo.svg"
+          },
+          "name": {
+            "type": "string",
+            "description": "Provider name (unique ID)",
+            "example": "Arcane Web Services"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provider website URL",
+            "example": "https://aws.amazon.com/"
+          }
+        }
+      },
+      "ComputeProviderSelector": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Select all providers",
+            "enum": ["All"]
+          },
+          {
+            "type": "object",
+            "description": "Select providers by name",
+            "required": ["ByName"],
+            "properties": {
+              "ByName": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Select providers by name"
+              }
+            }
+          }
+        ]
+      },
+      "CpuInfo": {
+        "type": "object",
+        "required": [
+          "brand",
+          "brand_short",
+          "physical_core_count",
+          "logical_core_count"
+        ],
+        "properties": {
+          "brand": {
+            "type": "string",
+            "description": "Full brand name of the CPU",
+            "example": "AMD Ryzen Threadripper 1950X 16-Core Processor"
+          },
+          "brand_short": {
+            "type": "string",
+            "description": "Short and recognizable brand name of the CPU",
+            "example": "Threadripper 1950X"
+          },
+          "logical_core_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of logical cores",
+            "example": 32,
+            "minimum": 0
+          },
+          "physical_core_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of physical cores",
+            "example": 16,
+            "minimum": 0
+          },
+          "vendor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Vendor of the CPU",
+            "example": "AMD"
+          },
+          "vendor_logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Logo of the CPU vendor",
+            "example": "https://storage.googleapis.com/cloudrift-resources/vendor/logo/advanced-micro-devices-white-with-text.svg"
+          }
+        }
+      },
+      "CreateTeamRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "example": "Team responsible for backend development"
+              },
+              "name": { "type": "string", "example": "Engineering Team" }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "CreateTeamResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "account_id",
+              "created_at",
+              "updated_at",
+              "user_role"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string",
+                "example": "00000000-0000-0000-0000-000000000000"
+              },
+              "created_at": { "type": "string" },
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "example": "Team responsible for backend development"
+              },
+              "id": {
+                "type": "string",
+                "example": "00000000-0000-0000-0000-000000000000"
+              },
+              "name": { "type": "string", "example": "Engineering Team" },
+              "updated_at": { "type": "string" },
+              "user_role": { "type": "string", "example": "Owner" }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "DataCenterInfo": {
+        "type": "object",
+        "required": ["name", "location"],
+        "properties": {
+          "country_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Data center country code",
+            "example": "US"
+          },
+          "location": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "format": "float" },
+              { "type": "number", "format": "float" }
+            ],
+            "description": "Data center geographical location",
+            "example": [37.7749, -122.4194]
+          },
+          "name": {
+            "type": "string",
+            "description": "Data center name like 'us-east-nc-nr-1' (unique ID)",
+            "example": "us-east-nc-nr-1"
+          }
+        }
+      },
+      "DatacenterNetworks": {
+        "type": "object",
+        "required": ["datacenter", "networks"],
+        "properties": {
+          "datacenter": { "type": "string" },
+          "networks": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "DeleteApiKeysRequest": {
+        "type": "object",
+        "required": ["selector"],
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/ApiKeySelector",
+            "description": "Which API key(s) to delete"
+          }
+        }
+      },
+      "DeleteApiKeysRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/ApiKeySelector",
+                "description": "Which API key(s) to delete"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "DeleteApiKeysResponse": {
+        "type": "object",
+        "required": ["status", "keys"],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/KeyResult" },
+            "description": "Information about the deleted API keys with their operation status"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ResponseStatus",
+            "description": "Overall status of the operation"
+          }
+        }
+      },
+      "DeleteApiKeysResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["status", "keys"],
+            "properties": {
+              "keys": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/KeyResult" },
+                "description": "Information about the deleted API keys with their operation status"
+              },
+              "status": {
+                "$ref": "#/components/schemas/ResponseStatus",
+                "description": "Overall status of the operation"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "DeleteSshKeyRequest": {
+        "type": "object",
+        "required": ["selector"],
+        "properties": {
+          "selector": { "$ref": "#/components/schemas/SshKeySelector" }
+        }
+      },
+      "DeleteSshKeyRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "selector": { "$ref": "#/components/schemas/SshKeySelector" }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "DiskInfo": {
+        "type": "object",
+        "required": ["kind", "name", "fs_type", "mount_point", "size"],
+        "properties": {
+          "fs_type": {
+            "type": "string",
+            "description": "File system type like ext4, xfs",
+            "example": "ext4"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DiskKind",
+            "description": "Disk kind like HDD, SSD"
+          },
+          "mount_point": {
+            "type": "string",
+            "description": "Mount point of the disk like /",
+            "example": "/"
+          },
+          "name": {
+            "type": "string",
+            "description": "Disk name like sda, nvme0n1",
+            "example": "nvme0n1"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total disk size in bytes",
+            "example": "1_073_741_824_000",
+            "minimum": 0
+          }
+        }
+      },
+      "DiskKind": { "type": "string", "enum": ["HDD", "SSD", "Unknown"] },
+      "DockerRegistryAuth": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["UsernamePassword"],
+            "properties": {
+              "UsernamePassword": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "password": { "type": "string" },
+                  "username": { "type": "string" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ExternalTransactionRequest": {
+        "type": "object",
+        "required": ["account", "amount"],
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountSelector",
+            "description": "Account from or to which we're transferring money"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount of money in currency units (cents)"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the payout"
+          }
+        }
+      },
+      "ExternalTransactionRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["account", "amount"],
+            "properties": {
+              "account": {
+                "$ref": "#/components/schemas/AccountSelector",
+                "description": "Account from or to which we're transferring money"
+              },
+              "amount": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Amount of money in currency units (cents)"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "description": "Description of the payout"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "GenerateSshKeyResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["public_key", "private_key"],
+            "properties": {
+              "private_key": {
+                "type": "array",
+                "items": { "type": "integer", "format": "int32", "minimum": 0 },
+                "description": "SSH key private part in PEM format (base64 encoded)",
+                "example": "LS0tLS1CRUdJTiB...tLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo="
+              },
+              "public_key": { "$ref": "#/components/schemas/SshKey" }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "GetTeamRequest": {
+        "type": "object",
+        "required": ["team_id"],
+        "properties": {
+          "team_id": {
+            "type": "string",
+            "example": "00000000-0000-0000-0000-000000000000"
+          }
+        }
+      },
+      "GetTeamRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["team_id"],
+            "properties": {
+              "team_id": {
+                "type": "string",
+                "example": "00000000-0000-0000-0000-000000000000"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "GpuInfo": {
+        "type": "object",
+        "required": ["vram", "pci_vendor_id", "pci_device_id"],
+        "properties": {
+          "brand": {
+            "type": "string",
+            "nullable": true,
+            "description": "Full brand name of the GPU",
+            "example": "NVIDIA GeForce RTX 4090"
+          },
+          "brand_short": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short and recognizable brand name of the GPU",
+            "example": "RTX 4090"
+          },
+          "pci_device_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "PCI device ID, it can be used to locate GPU model if high-level information is not available",
+            "example": "2717",
+            "minimum": 0
+          },
+          "pci_slot": {
+            "type": "string",
+            "nullable": true,
+            "description": "PCI slot information",
+            "example": "0000:01:00.0"
+          },
+          "pci_vendor_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "PCI vendor ID, it can be used to locate GPU model if high-level information is not available",
+            "example": "10de",
+            "minimum": 0
+          },
+          "vendor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Vendor of the GPU",
+            "example": "NVIDIA"
+          },
+          "vendor_logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Logo of the GPU vendor",
+            "example": "https://storage.googleapis.com/cloudrift-resources/vendor/logo/nvidia-white-with-text.svg"
+          },
+          "vram": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount of memory in bytes",
+            "example": "25_757_220_864",
+            "minimum": 0
+          }
+        }
+      },
+      "InstanceAndUsageInfo": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "node_id",
+          "node_mode",
+          "node_status",
+          "virtual_machines",
+          "containers"
+        ],
+        "properties": {
+          "bare_metal": {
+            "$ref": "#/components/schemas/InstanceBareMetalInfo",
+            "nullable": true
+          },
+          "containers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InstanceContainerInfo" },
+            "description": "Containers running on this instance"
+          },
+          "cpu": {
+            "$ref": "#/components/schemas/CpuInfo",
+            "nullable": true,
+            "description": "CPU information on the instance node"
+          },
+          "cpu_limit": {
+            "type": "integer",
+            "nullable": true,
+            "format": "int32",
+            "description": "Number of CPUs available to the instance",
+            "example": "96",
+            "minimum": 0
+          },
+          "cpu_mask": {
+            "type": "string",
+            "nullable": true,
+            "description": "CPUs available to instance as a hex number making a bitmask",
+            "example": "ffffffffffffffffffffffff"
+          },
+          "disk_limit": {
+            "type": "integer",
+            "nullable": true,
+            "format": "int64",
+            "description": "GPU information on the instance node\nmaximum amount of disk space",
+            "minimum": 0
+          },
+          "dram": {
+            "type": "integer",
+            "nullable": true,
+            "format": "int64",
+            "description": "Information about memory on the node",
+            "minimum": 0
+          },
+          "dram_limit": {
+            "type": "integer",
+            "nullable": true,
+            "format": "int64",
+            "description": "Maximum amount of DRAM available to the instance",
+            "example": "1236950581248",
+            "minimum": 0
+          },
+          "gpu_limit": {
+            "type": "integer",
+            "nullable": true,
+            "format": "int32",
+            "description": "number of GPUs available to the instance",
+            "example": "8",
+            "minimum": 0
+          },
+          "gpu_mask": {
+            "type": "string",
+            "nullable": true,
+            "description": "gpus available to instance as a hex number making a bitmask",
+            "example": "1ff"
+          },
+          "gpus": {
+            "type": "array",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/GpuInfo" },
+            "description": "GPU models like GeForce RTX 4090"
+          },
+          "host_address": {
+            "type": "string",
+            "nullable": true,
+            "description": "instance public IP address (external IP when available, internal IP otherwise)",
+            "example": "38.108.83.41"
+          },
+          "id": {
+            "type": "string",
+            "description": "ID of the instance to be used in API calls"
+          },
+          "instructions": {
+            "$ref": "#/components/schemas/InstanceUserInstructions",
+            "nullable": true
+          },
+          "internal_host_address": {
+            "type": "string",
+            "nullable": true,
+            "description": "instance internal IP address (for implementation details)",
+            "example": "172.154.10.38"
+          },
+          "node_id": {
+            "type": "string",
+            "description": "ID of the node the instance is running on"
+          },
+          "node_mode": {
+            "$ref": "#/components/schemas/InstanceMode",
+            "description": "mode of the instance, like Container or VM"
+          },
+          "node_status": {
+            "$ref": "#/components/schemas/NodeStatus",
+            "description": "Status of the node, like offline or active"
+          },
+          "reservation_data": {
+            "$ref": "#/components/schemas/ReservationDates",
+            "nullable": true
+          },
+          "resource_info": {
+            "$ref": "#/components/schemas/InstanceResourceInfo",
+            "description": "Information about rented instance like cost, provider, etc.",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/InstanceStatus",
+            "description": "Status of the instance, like offline or active"
+          },
+          "usage_info": {
+            "$ref": "#/components/schemas/InstanceUsageInfo",
+            "description": "Information about the usage, e.g. how much time was charged",
+            "nullable": true
+          },
+          "virtual_machines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstanceVirtualMachineInfo"
+            },
+            "description": "Virtual machines running on this instance"
+          }
+        }
+      },
+      "InstanceBareMetalInfo": {
+        "type": "object",
+        "required": ["name", "ready"],
+        "properties": {
+          "login_info": {
+            "$ref": "#/components/schemas/InstanceLoginInfo",
+            "nullable": true
+          },
+          "name": { "type": "string" },
+          "ready": { "type": "boolean" }
+        }
+      },
+      "InstanceConfiguration": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["BareMetal"],
+            "properties": {
+              "BareMetal": {
+                "type": "object",
+                "required": ["ssh_key"],
+                "properties": {
+                  "ssh_key": {
+                    "$ref": "#/components/schemas/InstanceSshKeySelector",
+                    "description": "SSH key to use for the instance"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["VirtualMachine"],
+            "properties": {
+              "VirtualMachine": {
+                "type": "object",
+                "required": ["image_url"],
+                "properties": {
+                  "cloudinit_commands": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Command to run in the VM"
+                  },
+                  "cloudinit_url": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cloud-init configuration file content",
+                    "example": "https://storage.googleapis.com/cloudrift-vm-disks/cloudinit/ubuntu-base.cloudinit"
+                  },
+                  "image_url": {
+                    "type": "string",
+                    "description": "ULR of the image to use for the VM",
+                    "example": "https://storage.googleapis.com/cloudrift-vm-disks/disks/ubuntu/24.04/noble-server-cloudimg-amd64.img"
+                  },
+                  "ssh_key": {
+                    "$ref": "#/components/schemas/InstanceSshKeySelector",
+                    "description": "SSH key to use for the instance",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["Docker"],
+            "properties": {
+              "Docker": {
+                "type": "object",
+                "properties": {
+                  "command": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": { "type": "string" },
+                    "description": "Command to run in the container",
+                    "example": []
+                  },
+                  "env": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "array",
+                      "prefixItems": [
+                        { "type": "string" },
+                        { "type": "string" }
+                      ]
+                    },
+                    "description": "Environment variables to set",
+                    "example": [["JUPYTER_PORT", "8117"]]
+                  },
+                  "image": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Docker image to run",
+                    "example": "quay.io/jupyter/pytorch-notebook"
+                  },
+                  "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional name for the container",
+                    "example": "my_notebook"
+                  },
+                  "ports": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": { "type": "string" },
+                    "description": "Ports to expose in the format <host>:<container>/<tcp|udp|sctp>",
+                    "example": ["8117:8888"]
+                  },
+                  "registry_auth": {
+                    "$ref": "#/components/schemas/DockerRegistryAuth",
+                    "description": "Optional Docker registry authentication",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "InstanceContainerInfo": {
+        "type": "object",
+        "required": ["docker_id", "truncated_docker_id"],
+        "properties": {
+          "docker_id": { "type": "string" },
+          "name": { "type": "string", "nullable": true },
+          "truncated_docker_id": { "type": "string" }
+        }
+      },
+      "InstanceInfo": {
+        "type": "object",
+        "required": ["name", "cost_per_hour"],
+        "properties": {
+          "cost_per_hour": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Cost per hour in currency units (cents)",
+            "example": "3277",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "Instance type name",
+            "example": "p4d.24xlarge"
+          }
+        }
+      },
+      "InstanceLoginInfo": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["UsernameAndPassword"],
+            "properties": {
+              "UsernameAndPassword": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "password": { "type": "string" },
+                  "username": { "type": "string" }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["Username"],
+            "properties": {
+              "Username": {
+                "type": "object",
+                "required": ["username"],
+                "properties": { "username": { "type": "string" } }
+              }
+            }
+          }
+        ]
+      },
+      "InstanceMode": {
+        "type": "string",
+        "enum": ["Container", "VirtualMachine", "BareMetal"]
+      },
+      "InstanceResourceInfo": {
+        "type": "object",
+        "required": ["provider_name", "instance_type", "cost_per_hour"],
+        "properties": {
+          "cost_per_hour": {
+            "type": "number",
+            "format": "float",
+            "description": "Cost per hour in currency units",
+            "example": "3277"
+          },
+          "instance_type": {
+            "type": "string",
+            "description": "Name of the instance type",
+            "example": "p4d.24xlarge"
+          },
+          "provider_name": {
+            "type": "string",
+            "description": "Name of the provider, i.e. resource owner",
+            "example": "Arcane Web Services"
+          }
+        }
+      },
+      "InstanceSshKeySelector": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "List of SSH key names to use for the instance",
+            "required": ["ByName"],
+            "properties": {
+              "ByName": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of SSH key names to use for the instance"
+              }
+            },
+            "example": ["my-key"]
+          },
+          {
+            "type": "object",
+            "description": "Use specified SSH key",
+            "required": ["PublicKeys"],
+            "properties": {
+              "PublicKeys": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Use specified SSH key"
+              }
+            },
+            "example": ["ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD..."]
+          },
+          {
+            "type": "object",
+            "required": ["ById"],
+            "properties": {
+              "ById": { "type": "array", "items": { "type": "string" } }
+            },
+            "example": { "ById": ["f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"] }
+          }
+        ]
+      },
+      "InstanceStatus": {
+        "type": "string",
+        "enum": ["Initializing", "Active", "Deactivating", "Inactive"]
+      },
+      "InstanceType": {
+        "type": "object",
+        "required": ["name", "variants"],
+        "properties": {
+          "brand_short": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short and recognizable brand name of the core instance hardware for easier navigation"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true,
+            "description": "Used to display GPU or CPU (if no GPU is present) vendor to the user for easier navigation",
+            "example": "Nvidia"
+          },
+          "name": {
+            "type": "string",
+            "description": "Instance type name",
+            "example": "p4d"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstanceVariantInfo"
+            },
+            "description": "List of variants of the Instance Type"
+          }
+        }
+      },
+      "InstanceTypeSelector": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Select all instance types",
+            "enum": ["All"]
+          },
+          {
+            "type": "object",
+            "description": "Select instance types by service name",
+            "required": ["ByServiceAndLocation"],
+            "properties": {
+              "ByServiceAndLocation": {
+                "type": "object",
+                "description": "Select instance types by service name",
+                "properties": {
+                  "datacenters": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": { "type": "string" },
+                    "description": "Locations of the instance types",
+                    "example": ["us-east-nc-nr-1"]
+                  },
+                  "services": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": { "type": "string" },
+                    "description": "List of services that the instance type should support, e.g. docker, VM",
+                    "example": ["docker"]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Select instance types by service and provider name",
+            "required": ["ByServiceAndProvider"],
+            "properties": {
+              "ByServiceAndProvider": {
+                "type": "object",
+                "description": "Select instance types by service and provider name",
+                "properties": {
+                  "providers": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": { "type": "string" },
+                    "description": "List of providers that the instance type should support, e.g. AWS, GCP",
+                    "example": ["AWS"]
+                  },
+                  "services": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": { "type": "string" },
+                    "description": "List of services that the instance type should support, e.g. docker, VM",
+                    "example": ["docker"]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Select instance types by name",
+            "required": ["ByName"],
+            "properties": {
+              "ByName": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Select instance types by name"
+              }
+            },
+            "example": "generic-cpu"
+          }
+        ]
+      },
+      "InstanceUsageInfo": {
+        "type": "object",
+        "required": ["usage", "accounted_usage", "user_email", "user_name"],
+        "properties": {
+          "accounted_usage": {
+            "type": "object",
+            "description": "Amount of usage we've subtracted from user balance",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "propertyNames": { "type": "string" },
+            "example": { "secs": 1, "nanos": 0 }
+          },
+          "usage": {
+            "type": "object",
+            "description": "Total amount of usage we've estimated",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "propertyNames": { "type": "string" },
+            "example": { "secs": 1, "nanos": 0 }
+          },
+          "user_email": {
+            "type": "string",
+            "description": "User's email of the instance",
+            "example": "jdoe@me.com"
+          },
+          "user_name": {
+            "type": "string",
+            "description": "User's name of the instance",
+            "example": "John Doe"
+          }
+        }
+      },
+      "InstanceUserInstructions": {
+        "type": "object",
+        "required": ["instructions_template", "placeholder_values"],
+        "properties": {
+          "instructions_template": {
+            "type": "string",
+            "description": "Instructions for the user to access the instance, stored as base64-encoded bytes"
+          },
+          "placeholder_values": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "prefixItems": [{ "type": "string" }, { "type": "string" }]
+            },
+            "description": "Placeholder values for the instructions template"
+          }
+        }
+      },
+      "InstanceVariant": {
+        "type": "object",
+        "required": ["name", "cpu_count", "dram", "vram", "disk"],
+        "properties": {
+          "cpu_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "CPU count",
+            "example": "24",
+            "minimum": 0
+          },
+          "disk": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Disk size in bytes",
+            "example": "8_796_093_022_208",
+            "minimum": 0
+          },
+          "dram": {
+            "type": "integer",
+            "format": "int64",
+            "description": "RAM size",
+            "example": "48000000000",
+            "minimum": 0
+          },
+          "gpu_count": {
+            "type": "integer",
+            "nullable": true,
+            "format": "int32",
+            "description": "GPU count",
+            "example": "2",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "Instance variant name including instance type name",
+            "example": "p4d.24xlarge"
+          },
+          "vram": {
+            "type": "integer",
+            "format": "int64",
+            "description": "VRAM per GPU",
+            "example": "40000000000",
+            "minimum": 0
+          }
+        }
+      },
+      "InstanceVariantInfo": {
+        "type": "object",
+        "required": [
+          "name",
+          "cpu_count",
+          "logical_cpu_count",
+          "dram",
+          "vram",
+          "disk",
+          "cost_per_hour",
+          "nodes",
+          "nodes_per_dc",
+          "available_nodes",
+          "available_nodes_per_dc"
+        ],
+        "properties": {
+          "available_nodes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of nodes that this variant is available on to estimate availability",
+            "example": "2",
+            "minimum": 0
+          },
+          "available_nodes_per_dc": {
+            "type": "object",
+            "description": "Number of nodes that this variant is available on per datacenter",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "propertyNames": { "type": "string" },
+            "example": { "us-east-nc-nr-1": 1, "us-central-tx-nr-1": 1 }
+          },
+          "cost_per_hour": {
+            "type": "number",
+            "format": "double",
+            "description": "Cost of the instance per hour in currency units (cents)",
+            "example": "3277"
+          },
+          "cpu_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "CPU count",
+            "example": "24",
+            "minimum": 0
+          },
+          "disk": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Disk size in bytes",
+            "example": "8_796_093_022_208",
+            "minimum": 0
+          },
+          "dram": {
+            "type": "integer",
+            "format": "int64",
+            "description": "RAM size",
+            "example": "48000000000",
+            "minimum": 0
+          },
+          "gpu_count": {
+            "type": "integer",
+            "nullable": true,
+            "format": "int32",
+            "description": "GPU count",
+            "example": "2",
+            "minimum": 0
+          },
+          "logical_cpu_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Logical CPU count (cpu_count * 2)",
+            "example": "24",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "Instance variant name including instance type name",
+            "example": "p4d.24xlarge"
+          },
+          "nodes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of nodes that this variant is available on to estimate availability",
+            "example": "4",
+            "minimum": 0
+          },
+          "nodes_per_dc": {
+            "type": "object",
+            "description": "Number of nodes that this variant is available on per datacenter",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "propertyNames": { "type": "string" },
+            "example": { "us-east-nc-nr-1": 3, "us-central-tx-nr-1": 1 }
+          },
+          "vram": {
+            "type": "integer",
+            "format": "int64",
+            "description": "VRAM per GPU",
+            "example": "40000000000",
+            "minimum": 0
+          }
+        }
+      },
+      "InstanceVirtualMachineInfo": {
+        "type": "object",
+        "required": ["vmid", "name", "ready"],
+        "properties": {
+          "login_info": {
+            "$ref": "#/components/schemas/InstanceLoginInfo",
+            "nullable": true
+          },
+          "name": { "type": "string" },
+          "ready": { "type": "boolean" },
+          "vmid": { "type": "integer", "format": "int32" }
+        }
+      },
+      "InstancesSelector": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "List of instance IDs to retrieve information about",
+            "required": ["ById"],
+            "properties": {
+              "ById": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of instance IDs to retrieve information about"
+              }
+            },
+            "example": { "ById": ["f8c403e6-7101-11ee-b00d-63f746883a19"] }
+          },
+          {
+            "type": "object",
+            "description": "Retrieve information about active/activating/deactivating/inactive user instances",
+            "required": ["ByStatus"],
+            "properties": {
+              "ByStatus": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/InstanceStatus" },
+                "description": "Retrieve information about active/activating/deactivating/inactive user instances"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["ByTeamId"],
+            "properties": { "ByTeamId": { "type": "string" } },
+            "example": {
+              "ByTeamId": { "id": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b" }
+            }
+          }
+        ]
+      },
+      "KeyError": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code",
+            "example": "INVALID_TYPE"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "All elements must be numbers."
+          }
+        }
+      },
+      "KeyResult": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/KeyError",
+            "description": "Error that occurred during the operation on this key null if status is success",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "description": "API key ID",
+            "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+          },
+          "status": {
+            "$ref": "#/components/schemas/KeyStatus",
+            "description": "Status of the operation on this key"
+          }
+        }
+      },
+      "KeyStatus": { "type": "string", "enum": ["success", "error"] },
+      "ListApiKeysRequest": {
+        "type": "object",
+        "required": ["selector"],
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/ApiKeySelector",
+            "description": "Which API key(s) to list"
+          }
+        }
+      },
+      "ListApiKeysRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/ApiKeySelector",
+                "description": "Which API key(s) to list"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListApiKeysResponse": {
+        "type": "object",
+        "required": ["keys"],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ApiKey" },
+            "description": "List of the user API keys"
+          }
+        }
+      },
+      "ListApiKeysResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["keys"],
+            "properties": {
+              "keys": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/ApiKey" },
+                "description": "List of the user API keys"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListInstanceTypesRequest": {
+        "type": "object",
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/InstanceTypeSelector",
+            "description": "List of the instance types available for renting"
+          }
+        }
+      },
+      "ListInstanceTypesRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/InstanceTypeSelector",
+                "description": "List of the instance types available for renting"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListInstanceTypesResponse": {
+        "type": "object",
+        "required": ["instance_types"],
+        "properties": {
+          "instance_types": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InstanceType" },
+            "description": "List of the instance types available for renting"
+          }
+        }
+      },
+      "ListInstanceTypesResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["instance_types"],
+            "properties": {
+              "instance_types": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/InstanceType" },
+                "description": "List of the instance types available for renting"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListInstancesRequest": {
+        "type": "object",
+        "required": ["selector"],
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/InstancesSelector",
+            "description": "Instances to list"
+          }
+        }
+      },
+      "ListInstancesRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/InstancesSelector",
+                "description": "Instances to list"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListInstancesResponse": {
+        "type": "object",
+        "required": ["instances"],
+        "properties": {
+          "instances": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InstanceAndUsageInfo" },
+            "description": "List of requested user instances, it might not contain all requested instances if some are not found or there was an error"
+          }
+        }
+      },
+      "ListInstancesResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["instances"],
+            "properties": {
+              "instances": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InstanceAndUsageInfo"
+                },
+                "description": "List of requested user instances, it might not contain all requested instances if some are not found or there was an error"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListIpRangesRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "selector": {
+                "description": "Which IP ranges to retrieve"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListIpRangesResponse": {
+        "type": "object",
+        "required": ["ranges"],
+        "properties": {
+          "ranges": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/NetworkIpRanges" },
+            "description": "All IPs available for allocation"
+          }
+        }
+      },
+      "ListIpRangesResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["ranges"],
+            "properties": {
+              "ranges": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/NetworkIpRanges" },
+                "description": "All IPs available for allocation"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListNetworksRequest": {
+        "type": "object",
+        "required": ["selector"],
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/NetworkSelector",
+            "description": "Which Networks to retrieve"
+          }
+        }
+      },
+      "ListNetworksRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/NetworkSelector",
+                "description": "Which Networks to retrieve"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListNetworksResponse": {
+        "type": "object",
+        "required": ["datacenter_networks"],
+        "properties": {
+          "datacenter_networks": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DatacenterNetworks" },
+            "description": "All Networks for the datacenter"
+          }
+        }
+      },
+      "ListNetworksResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["datacenter_networks"],
+            "properties": {
+              "datacenter_networks": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/DatacenterNetworks" },
+                "description": "All Networks for the datacenter"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListProviderNodesRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "selector": {
+                "description": "Selector for filtering providers whose nodes to list"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListProviderNodesResponse": {
+        "type": "object",
+        "required": ["nodes"],
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProviderNodeInfo" },
+            "description": "List of the nodes available for renting"
+          }
+        }
+      },
+      "ListProviderNodesResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["nodes"],
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/ProviderNodeInfo" },
+                "description": "List of the nodes available for renting"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListProvidersRequest": {
+        "type": "object",
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/ComputeProviderSelector",
+            "description": "Selector for filtering providers"
+          }
+        }
+      },
+      "ListProvidersRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/ComputeProviderSelector",
+                "description": "Selector for filtering providers"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListProvidersResponse": {
+        "type": "object",
+        "required": ["providers"],
+        "properties": {
+          "providers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ComputeProviderInfo" },
+            "description": "List of compute providers on the platform"
+          }
+        }
+      },
+      "ListProvidersResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["providers"],
+            "properties": {
+              "providers": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/ComputeProviderInfo" },
+                "description": "List of compute providers on the platform"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListRecipesResponse": {
+        "type": "object",
+        "required": ["groups"],
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RecipeGroup" },
+            "description": "List of the recipe groups available for renting"
+          }
+        }
+      },
+      "ListRecipesResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["groups"],
+            "properties": {
+              "groups": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/RecipeGroup" },
+                "description": "List of the recipe groups available for renting"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListReservationTypesResponse": {
+        "type": "object",
+        "required": ["reservation_types"],
+        "properties": {
+          "reservation_types": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReservationType" }
+          }
+        }
+      },
+      "ListReservationTypesResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["reservation_types"],
+            "properties": {
+              "reservation_types": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/ReservationType" }
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListReservationsRequest": {
+        "type": "object",
+        "properties": {
+          "selector": { "$ref": "#/components/schemas/ReservationSelector" }
+        }
+      },
+      "ListReservationsRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "selector": { "$ref": "#/components/schemas/ReservationSelector" }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListReservationsResponse": {
+        "type": "object",
+        "required": ["reservations"],
+        "properties": {
+          "reservations": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Reservation" }
+          }
+        }
+      },
+      "ListReservationsResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["reservations"],
+            "properties": {
+              "reservations": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Reservation" }
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListSshKeysRequest": {
+        "type": "object",
+        "required": ["selector"],
+        "properties": {
+          "selector": { "$ref": "#/components/schemas/AccountSelector" }
+        }
+      },
+      "ListSshKeysRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "selector": { "$ref": "#/components/schemas/AccountSelector" }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListSshKeysResponse": {
+        "type": "object",
+        "required": ["keys"],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SshKey" },
+            "description": "List of the SSH keys available for renting",
+            "example": [
+              {
+                "id": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b",
+                "name": "my-key",
+                "public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD..."
+              }
+            ]
+          }
+        }
+      },
+      "ListSshKeysResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["keys"],
+            "properties": {
+              "keys": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SshKey" },
+                "description": "List of the SSH keys available for renting",
+                "example": [
+                  {
+                    "id": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b",
+                    "name": "my-key",
+                    "public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD..."
+                  }
+                ]
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListTeamSshKeysResponse": {
+        "type": "object",
+        "required": ["keys"],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SshKey" },
+            "description": "List of the SSH keys available for renting",
+            "example": [
+              {
+                "id": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b",
+                "name": "my-key",
+                "public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD...",
+                "user_name": "John Doe",
+                "owner": true
+              }
+            ]
+          }
+        }
+      },
+      "ListTeamSshKeysResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["keys"],
+            "properties": {
+              "keys": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SshKey" },
+                "description": "List of the SSH keys available for renting",
+                "example": [
+                  {
+                    "id": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b",
+                    "name": "my-key",
+                    "public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD...",
+                    "user_name": "John Doe",
+                    "owner": true
+                  }
+                ]
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ListTeamsResponse": {
+        "type": "object",
+        "required": ["teams"],
+        "properties": {
+          "teams": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Team" }
+          }
+        }
+      },
+      "ListTeamsResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["teams"],
+            "properties": {
+              "teams": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Team" }
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "LoginUserRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User email",
+            "example": "debug@usr.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "User password",
+            "example": "debug-pwd"
+          }
+        }
+      },
+      "LoginUserRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["email", "password"],
+            "properties": {
+              "email": {
+                "type": "string",
+                "description": "User email",
+                "example": "debug@usr.com"
+              },
+              "password": {
+                "type": "string",
+                "description": "User password",
+                "example": "debug-pwd"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "LoginUserResponse": {
+        "type": "object",
+        "required": ["token", "pat"],
+        "properties": {
+          "pat": { "type": "string" },
+          "token": {
+            "type": "string",
+            "description": "Token for authentication to be used in the Authorization header"
+          }
+        }
+      },
+      "LoginUserResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["token", "pat"],
+            "properties": {
+              "pat": { "type": "string" },
+              "token": {
+                "type": "string",
+                "description": "Token for authentication to be used in the Authorization header"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "NetworkIpRange": {
+        "type": "object",
+        "required": ["from", "to"],
+        "properties": {
+          "external_from": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional external start mapped 1:1 to [from, to]",
+            "example": "38.108.83.41"
+          },
+          "external_to": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional external range end mapped 1:1 to [from, to]",
+            "example": "38.108.83.46"
+          },
+          "from": {
+            "type": "string",
+            "description": "Minimum IP address (inclusive)",
+            "example": "192.168.1.100"
+          },
+          "to": {
+            "type": "string",
+            "description": "Maximum IP address (inclusive)",
+            "example": "192.168.1.150"
+          }
+        }
+      },
+      "NetworkIpRanges": {
+        "type": "object",
+        "required": ["network_ip_ranges", "network"],
+        "properties": {
+          "network": { "type": "string" },
+          "network_ip_ranges": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/NetworkIpRange" },
+            "description": "All IPs available for allocation"
+          }
+        }
+      },
+      "NetworkSelector": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Retrieve the Networks in specific datacenters",
+            "required": ["ByDataCenter"],
+            "properties": {
+              "ByDataCenter": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Retrieve the Networks in specific datacenters"
+              }
+            },
+            "example": { "ByDataCenter": ["us-east-nc-nr-1"] }
+          }
+        ]
+      },
+      "NodeSelector": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["ByInstanceTypeAndLocation"],
+            "properties": {
+              "ByInstanceTypeAndLocation": {
+                "type": "object",
+                "required": ["instance_type"],
+                "properties": {
+                  "datacenters": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": { "type": "string" },
+                    "description": "Locations where we can allocate requested instance",
+                    "example": ["us-east-nc-nr-1"]
+                  },
+                  "instance_type": {
+                    "type": "string",
+                    "description": "Instance type to rent",
+                    "example": "generic-cpu.1"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["ByNodeId"],
+            "properties": {
+              "ByNodeId": {
+                "type": "object",
+                "required": ["node_id", "instance_type"],
+                "properties": {
+                  "instance_type": {
+                    "type": "string",
+                    "description": "Instance type to rent",
+                    "example": "generic-cpu.1"
+                  },
+                  "node_id": {
+                    "type": "string",
+                    "description": "Node ID to rent",
+                    "example": "f8c403e6-7101-11ee-b00d-63f746883a19"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "NodeStatus": {
+        "type": "string",
+        "enum": ["Ready", "Hibernated", "NotResponding", "Offline"]
+      },
+      "PasswordResetRequest": {
+        "type": "object",
+        "required": ["token", "new_password"],
+        "properties": {
+          "new_password": {
+            "type": "string",
+            "description": "New password",
+            "example": "newpassword"
+          },
+          "token": {
+            "type": "string",
+            "description": "Password reset token received in the email"
+          }
+        }
+      },
+      "PasswordResetRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["token", "new_password"],
+            "properties": {
+              "new_password": {
+                "type": "string",
+                "description": "New password",
+                "example": "newpassword"
+              },
+              "token": {
+                "type": "string",
+                "description": "Password reset token received in the email"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "PasswordResetVerifyRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email to send the password reset token",
+            "example": "debug@usr.com"
+          }
+        }
+      },
+      "PasswordResetVerifyRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["email"],
+            "properties": {
+              "email": {
+                "type": "string",
+                "description": "Email to send the password reset token",
+                "example": "debug@usr.com"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "PromoCodeRequest": {
+        "type": "object",
+        "required": ["promo_code"],
+        "properties": {
+          "promo_code": { "type": "string" },
+          "team_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+          }
+        }
+      },
+      "PromoCodeRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["promo_code"],
+            "properties": {
+              "promo_code": { "type": "string" },
+              "team_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ProviderNodeInfo": {
+        "type": "object",
+        "required": [
+          "id",
+          "cpu",
+          "cpu_cores_available",
+          "cpu_cores_available_mask",
+          "gpus",
+          "gpus_available",
+          "gpus_available_mask",
+          "dram",
+          "dram_available",
+          "disks"
+        ],
+        "properties": {
+          "cpu": {
+            "$ref": "#/components/schemas/CpuInfo",
+            "description": "Node CPU information"
+          },
+          "cpu_cores_available": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of CPU cores available on the node, i.e. not allocated by the executor",
+            "example": "96",
+            "minimum": 0
+          },
+          "cpu_cores_available_mask": {
+            "type": "string",
+            "description": "Available CPU cores as a hex number making a bitmask",
+            "example": "ffffffffffffffffffffffff"
+          },
+          "disks": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DiskInfo" },
+            "description": "Disks available on the node"
+          },
+          "dram": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total node DRAM",
+            "example": "1236950581248",
+            "minimum": 0
+          },
+          "dram_available": {
+            "type": "integer",
+            "format": "int64",
+            "description": "DRAM available for renting",
+            "example": "1236950581248",
+            "minimum": 0
+          },
+          "gpus": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GpuInfo" },
+            "description": "Number of gpus on the node"
+          },
+          "gpus_available": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of GPUs available for renting",
+            "example": "8",
+            "minimum": 0
+          },
+          "gpus_available_mask": {
+            "type": "string",
+            "description": "Available GPUs as a hex number making a bitmask",
+            "example": "1ff"
+          },
+          "id": {
+            "type": "string",
+            "description": "ID of the node to be used in rent API request"
+          },
+          "instance": {
+            "$ref": "#/components/schemas/InstanceInfo",
+            "description": "Information about the instance like cost, etc.",
+            "nullable": true
+          }
+        }
+      },
+      "Recipe": {
+        "type": "object",
+        "required": ["name", "description", "tags", "details"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Description of the recipe",
+            "example": "Docker image with Jupyter, PyTorch and CUDA installed for easy machine learning."
+          },
+          "details": {
+            "$ref": "#/components/schemas/RecipeDetails",
+            "description": "Recipe object with the recipe details"
+          },
+          "instructions_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL to the instructions for the recipe, if available",
+            "example": "https://storage.googleapis.com/cloudrift-resources/instructions/deepseek_r1_7b.md"
+          },
+          "logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Logo of the recipe, if available, e.g. Ubuntu, PyTorch or Jupyter logo",
+            "example": "https://storage.googleapis.com/cloudrift-resources/os/logo/ubuntu.svg"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the recipe",
+            "example": "PyTorch Notebook"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Tags for the recipe to help users find it and filter by them"
+          }
+        }
+      },
+      "RecipeDetails": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["Docker"],
+            "properties": {
+              "Docker": {
+                "type": "object",
+                "required": ["image", "command", "ports", "env"],
+                "properties": {
+                  "command": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Docker command to run the recipe",
+                    "example": []
+                  },
+                  "env": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "prefixItems": [
+                        { "type": "string" },
+                        { "type": "string" }
+                      ]
+                    },
+                    "description": "Environment variables to set",
+                    "example": [["JUPYTER_PORT", "8117"]]
+                  },
+                  "image": {
+                    "type": "string",
+                    "description": "Docker image corresponding to the recipe",
+                    "example": "quay.io/jupyter/pytorch-notebook"
+                  },
+                  "ports": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Ports to expose in the format <host>:<container>:<tcp|udp|sctp>",
+                    "example": ["8117:8888"]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["VirtualMachine"],
+            "properties": {
+              "VirtualMachine": {
+                "type": "object",
+                "required": ["image_url", "cloudinit_url"],
+                "properties": {
+                  "cloudinit_url": { "type": "string" },
+                  "image_url": {
+                    "type": "string",
+                    "description": "VM image to use for the recipe",
+                    "example": "https://storage.googleapis.com/cloudrift-vm-disks/disks/ubuntu/24.04/noble-server-cloudimg-amd64.img"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "RecipeGroup": {
+        "type": "object",
+        "required": ["name", "description", "tags", "recipes"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Description of the recipe group",
+            "example": "VM images with various Linux distributions."
+          },
+          "logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Logo of the recipe group, if available, e.g. Ubuntu, PyTorch or Jupyter logo",
+            "example": "https://storage.googleapis.com/cloudrift-resources/os/logo/linux.svg"
+          },
+          "metadata": {
+            "type": "string",
+            "nullable": true,
+            "description": "JSON string with metadata for the recipe group",
+            "example": "{\"color\": \"ED7014\"}"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the recipe group",
+            "example": "Linux"
+          },
+          "recipes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Recipe" },
+            "description": "Recipes in the group"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Tags for the recipe group to help users find it and filter by them"
+          }
+        }
+      },
+      "RegisterUserRequest": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "New user email",
+            "example": "debug@usr.com"
+          },
+          "invite_code": { "type": "string", "nullable": true },
+          "name": {
+            "type": "string",
+            "description": "New user name",
+            "example": "Test User"
+          },
+          "password": {
+            "type": "string",
+            "description": "New user password",
+            "example": "debug-pwd"
+          },
+          "subscribe_newsletter": {
+            "type": "boolean",
+            "description": "Whether to subscribe user to newsletter"
+          }
+        }
+      },
+      "RegisterUserRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["name", "email", "password"],
+            "properties": {
+              "email": {
+                "type": "string",
+                "description": "New user email",
+                "example": "debug@usr.com"
+              },
+              "invite_code": { "type": "string", "nullable": true },
+              "name": {
+                "type": "string",
+                "description": "New user name",
+                "example": "Test User"
+              },
+              "password": {
+                "type": "string",
+                "description": "New user password",
+                "example": "debug-pwd"
+              },
+              "subscribe_newsletter": {
+                "type": "boolean",
+                "description": "Whether to subscribe user to newsletter"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "RemoveTeamMemberRequest": {
+        "type": "object",
+        "required": ["user_id"],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "example": "00000000-0000-0000-0000-000000000000"
+          }
+        }
+      },
+      "RemoveTeamMemberRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["user_id"],
+            "properties": {
+              "user_id": {
+                "type": "string",
+                "example": "00000000-0000-0000-0000-000000000000"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "RentInstanceRequest": {
+        "type": "object",
+        "required": ["selector", "with_public_ip", "config"],
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/InstanceConfiguration",
+            "description": "VM, Docker image, etc."
+          },
+          "network": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional Network name",
+            "example": "public"
+          },
+          "recipe": {
+            "type": "string",
+            "nullable": true,
+            "description": "Recipe name to use for the instance",
+            "example": "Ubuntu 24.04 Server"
+          },
+          "reservation": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "$ref": "#/components/schemas/ReservationParameters",
+                "description": "Reservation request parameters for instance usage"
+              }
+            ]
+          },
+          "selector": {
+            "$ref": "#/components/schemas/NodeSelector",
+            "description": "Instance to rent, obtain by listing provider instance types"
+          },
+          "team_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional team ID",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "with_public_ip": {
+            "type": "boolean",
+            "description": "Allocate public IP from the pool"
+          }
+        }
+      },
+      "RentInstanceRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector", "with_public_ip", "config"],
+            "properties": {
+              "config": {
+                "$ref": "#/components/schemas/InstanceConfiguration",
+                "description": "VM, Docker image, etc."
+              },
+              "network": {
+                "type": "string",
+                "nullable": true,
+                "description": "Optional Network name",
+                "example": "public"
+              },
+              "recipe": {
+                "type": "string",
+                "nullable": true,
+                "description": "Recipe name to use for the instance",
+                "example": "Ubuntu 24.04 Server"
+              },
+              "reservation": {
+                "$ref": "#/components/schemas/ReservationParameters",
+                "description": "Reservation request parameters for instance usage",
+                "nullable": true
+              },
+              "selector": {
+                "$ref": "#/components/schemas/NodeSelector",
+                "description": "Instance to rent, obtain by listing provider instance types"
+              },
+              "team_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "Optional team ID",
+                "example": "00000000-0000-0000-0000-000000000000"
+              },
+              "with_public_ip": {
+                "type": "boolean",
+                "description": "Allocate public IP from the pool"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "RentInstanceResponse": {
+        "type": "object",
+        "required": ["instance_ids"],
+        "properties": {
+          "instance_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "ID of the instances that were rented"
+          }
+        }
+      },
+      "RentInstanceResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["instance_ids"],
+            "properties": {
+              "instance_ids": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "ID of the instances that were rented"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "Reservation": {
+        "type": "object",
+        "required": [
+          "id",
+          "bound_resource",
+          "created_at",
+          "valid_till",
+          "instance_variant",
+          "instance_type",
+          "node_mode"
+        ],
+        "properties": {
+          "bound_resource": { "type": "string" },
+          "created_at": { "type": "string" },
+          "id": { "type": "string" },
+          "instance_type": { "$ref": "#/components/schemas/InstanceType" },
+          "instance_variant": {
+            "$ref": "#/components/schemas/InstanceVariant"
+          },
+          "node_mode": {
+            "$ref": "#/components/schemas/InstanceMode",
+            "description": "mode of the instance, like Container or VM"
+          },
+          "valid_till": { "type": "string" }
+        }
+      },
+      "ReservationDates": {
+        "type": "object",
+        "required": ["created_at", "valid_till"],
+        "properties": {
+          "created_at": { "type": "string" },
+          "valid_till": { "type": "string" }
+        }
+      },
+      "ReservationParameters": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Create a new reservation with the selected reservation type ID",
+            "required": ["TypeID"],
+            "properties": {
+              "TypeID": {
+                "type": "string",
+                "description": "Create a new reservation with the selected reservation type ID"
+              }
+            },
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          {
+            "type": "object",
+            "description": "Use an existing reservation by ID",
+            "required": ["ID"],
+            "properties": {
+              "ID": {
+                "type": "string",
+                "description": "Use an existing reservation by ID"
+              }
+            },
+            "example": "00000000-0000-0000-0000-000000000000"
+          }
+        ],
+        "description": "Parameters for using reservations with instances"
+      },
+      "ReservationSelector": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Select all reservations",
+            "enum": ["All"],
+            "example": "All"
+          },
+          {
+            "type": "object",
+            "required": ["ByTeamId"],
+            "properties": { "ByTeamId": { "type": "string" } },
+            "example": { "ByTeamId": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b" }
+          }
+        ]
+      },
+      "ReservationType": {
+        "type": "object",
+        "required": ["id", "duration", "price_factor"],
+        "properties": {
+          "duration": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "propertyNames": { "type": "string" },
+            "example": { "secs": 1, "nanos": 0 }
+          },
+          "id": {
+            "type": "string",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "price_factor": {
+            "type": "number",
+            "format": "double",
+            "example": 0.8
+          }
+        }
+      },
+      "ResponseStatus": {
+        "type": "string",
+        "enum": ["success", "partial_success", "error"]
+      },
+      "ServiceCharge": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "amount": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "integer", "format": "int32" },
+              { "type": "integer", "format": "int32" }
+            ],
+            "description": "Charge amount as a fraction of currency units (cents)",
+            "example": [1354, 1000]
+          },
+          "request_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Request ID for idempotency, i.e. to avoid double charges",
+            "example": null
+          },
+          "usage_metadata": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional usage metadata, e.g. usage minutes or number of API calls",
+            "example": {
+              "num_input_tokens": "10354",
+              "num_output_tokens": "6472"
+            }
+          }
+        }
+      },
+      "ServiceChargeRequest": {
+        "type": "object",
+        "required": ["amount", "service", "provider"],
+        "properties": {
+          "amount": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "integer", "format": "int32" },
+              { "type": "integer", "format": "int32" }
+            ],
+            "description": "Charge amount as a fraction of currency units (cents)",
+            "example": [1354, 1000]
+          },
+          "provider": {
+            "type": "string",
+            "description": "Name of the provider of the service",
+            "example": "TestProvider"
+          },
+          "request_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Request ID for idempotency, i.e. to avoid double charges",
+            "example": null
+          },
+          "service": {
+            "type": "string",
+            "description": "Name of the service to charge",
+            "example": "LLM-Inference-API"
+          },
+          "usage_metadata": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional usage metadata, e.g. usage minutes or number of API calls",
+            "example": {
+              "num_input_tokens": "10354",
+              "num_output_tokens": "6472"
+            }
+          }
+        }
+      },
+      "ServiceChargeRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["amount", "service", "provider"],
+            "properties": {
+              "amount": {
+                "type": "array",
+                "prefixItems": [
+                  { "type": "integer", "format": "int32" },
+                  { "type": "integer", "format": "int32" }
+                ],
+                "description": "Charge amount as a fraction of currency units (cents)",
+                "example": [1354, 1000]
+              },
+              "provider": {
+                "type": "string",
+                "description": "Name of the provider of the service",
+                "example": "TestProvider"
+              },
+              "request_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "Request ID for idempotency, i.e. to avoid double charges",
+                "example": null
+              },
+              "service": {
+                "type": "string",
+                "description": "Name of the service to charge",
+                "example": "LLM-Inference-API"
+              },
+              "usage_metadata": {
+                "type": "string",
+                "nullable": true,
+                "description": "Optional usage metadata, e.g. usage minutes or number of API calls",
+                "example": {
+                  "num_input_tokens": "10354",
+                  "num_output_tokens": "6472"
+                }
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "ServiceChargeResponse": {
+        "type": "object",
+        "required": ["request_id"],
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Either a provided request ID or a generated one"
+          }
+        }
+      },
+      "ServiceChargeResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["request_id"],
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "description": "Either a provided request ID or a generated one"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "SshKey": {
+        "type": "object",
+        "required": ["id", "name", "public_key"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "SSH key ID",
+            "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+          },
+          "name": {
+            "type": "string",
+            "description": "SSH key name",
+            "example": "my-key"
+          },
+          "public_key": {
+            "type": "string",
+            "description": "SSH key public part",
+            "example": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD..."
+          }
+        }
+      },
+      "SshKeySelector": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["ByName"],
+            "properties": {
+              "ByName": { "type": "array", "items": { "type": "string" } }
+            },
+            "example": ["my-key"]
+          },
+          { "type": "string", "enum": ["All"], "example": "All" }
+        ]
+      },
+      "StripeTransactionInfo": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["Payment"],
+            "properties": {
+              "Payment": {
+                "type": "object",
+                "required": ["payment_intent_id"],
+                "properties": {
+                  "payment_intent_id": {
+                    "type": "string",
+                    "description": "ID of CloudRift payment intent"
+                  },
+                  "stripe_payment_intent_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ID of the Stripe payment"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["DisputeOpen"],
+            "properties": {
+              "DisputeOpen": {
+                "type": "object",
+                "required": [
+                  "stripe_dispute_id",
+                  "stripe_dispute_amount",
+                  "stripe_dispute_fee"
+                ],
+                "properties": {
+                  "stripe_dispute_amount": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Amount disputed"
+                  },
+                  "stripe_dispute_fee": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Additional amount that payment processor charges for Dispute"
+                  },
+                  "stripe_dispute_id": {
+                    "type": "string",
+                    "description": "Dispute ID"
+                  },
+                  "stripe_payment_intent_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ID of the original Stripe payment that is being disputed"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["DisputeClose"],
+            "properties": {
+              "DisputeClose": {
+                "type": "object",
+                "required": [
+                  "refunded",
+                  "dispute_fee",
+                  "stripe_dispute_id",
+                  "stripe_dispute_status"
+                ],
+                "properties": {
+                  "dispute_fee": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Dispute fee charged by the payment processor, not refunded"
+                  },
+                  "refunded": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Amount refunded"
+                  },
+                  "stripe_dispute_id": {
+                    "type": "string",
+                    "description": "Dispute ID"
+                  },
+                  "stripe_dispute_status": {
+                    "type": "string",
+                    "description": "Status of the dispute like won, lost, etc."
+                  },
+                  "stripe_payment_intent_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ID of the original Stripe payment that is being disputed"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Team": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "account_id",
+          "created_at",
+          "updated_at",
+          "user_role"
+        ],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "created_at": { "type": "string" },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Team responsible for backend development"
+          },
+          "id": {
+            "type": "string",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": { "type": "string", "example": "Engineering Team" },
+          "updated_at": { "type": "string" },
+          "user_role": { "type": "string", "example": "Owner" }
+        }
+      },
+      "TeamMember": {
+        "type": "object",
+        "required": ["user_id", "role", "joined_at", "name", "email"],
+        "properties": {
+          "email": { "type": "string", "example": "debug@usr.com" },
+          "joined_at": { "type": "string" },
+          "name": { "type": "string", "example": "Test User" },
+          "role": { "type": "string", "example": "Owner" },
+          "user_id": {
+            "type": "string",
+            "example": "00000000-0000-0000-0000-000000000000"
+          }
+        }
+      },
+      "TeamMemberResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["user_id", "role", "joined_at", "name", "email"],
+            "properties": {
+              "email": { "type": "string", "example": "debug@usr.com" },
+              "joined_at": { "type": "string" },
+              "name": { "type": "string", "example": "Test User" },
+              "role": { "type": "string", "example": "Owner" },
+              "user_id": {
+                "type": "string",
+                "example": "00000000-0000-0000-0000-000000000000"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "TeamResponse": {
+        "type": "object",
+        "required": ["team", "members"],
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TeamMember" }
+          },
+          "team": { "$ref": "#/components/schemas/Team" }
+        }
+      },
+      "TeamResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["team", "members"],
+            "properties": {
+              "members": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/TeamMember" }
+              },
+              "team": { "$ref": "#/components/schemas/Team" }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "TeamRole": { "type": "string", "enum": ["Owner", "Admin", "Member"] },
+      "TerminateInstancesRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/InstancesSelector",
+                "description": "Instances to terminate"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "required": ["amount", "created_at", "info"],
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount of money in cents, positive for debit and negative for credit"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Date and time of the transaction"
+          },
+          "info": {
+            "$ref": "#/components/schemas/TransactionInfo",
+            "description": "Extra information about the transaction"
+          }
+        }
+      },
+      "TransactionArray": {
+        "type": "object",
+        "required": ["transactions"],
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Transaction" }
+          }
+        }
+      },
+      "TransactionArrayProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["transactions"],
+            "properties": {
+              "transactions": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Transaction" }
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "TransactionInfo": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "User has deposited or withdrawn money to or from their account using Stripe",
+            "required": ["Stripe"],
+            "properties": {
+              "Stripe": {
+                "$ref": "#/components/schemas/StripeTransactionInfo",
+                "description": "User has deposited or withdrawn money to or from their account using Stripe"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Money has been spent on using a service for a certain amount of time",
+            "required": ["Usage"],
+            "properties": {
+              "Usage": {
+                "type": "object",
+                "description": "Money has been spent on using a service for a certain amount of time",
+                "required": ["resource_id", "carryover", "rounding"],
+                "properties": {
+                  "carryover": {
+                    "type": "array",
+                    "prefixItems": [
+                      { "type": "integer" },
+                      { "type": "integer" }
+                    ],
+                    "description": "Carryover from previous transaction included in the current transaction"
+                  },
+                  "reservation_data": {
+                    "$ref": "#/components/schemas/ReservationDates",
+                    "description": "reservation dates",
+                    "nullable": true
+                  },
+                  "resource_id": {
+                    "type": "string",
+                    "description": "ID of the resource providing the service"
+                  },
+                  "rounding": {
+                    "type": "array",
+                    "prefixItems": [
+                      { "type": "integer" },
+                      { "type": "integer" }
+                    ],
+                    "description": "Additional charge due to rounding included in the transaction"
+                  },
+                  "usage_metadata": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON object with the usage data"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Payout to the provider for service usage",
+            "required": ["Payout"],
+            "properties": {
+              "Payout": {
+                "type": "object",
+                "description": "Payout to the provider for service usage",
+                "required": ["resource_id", "carryover", "rounding"],
+                "properties": {
+                  "carryover": {
+                    "type": "array",
+                    "prefixItems": [
+                      { "type": "integer" },
+                      { "type": "integer" }
+                    ],
+                    "description": "Carryover from previous transaction included in the current transaction"
+                  },
+                  "resource_id": {
+                    "type": "string",
+                    "description": "ID of the resource providing the service"
+                  },
+                  "rounding": {
+                    "type": "array",
+                    "prefixItems": [
+                      { "type": "integer" },
+                      { "type": "integer" }
+                    ],
+                    "description": "Additional charge due to rounding included in the transaction"
+                  },
+                  "usage_cost": {
+                    "type": "integer",
+                    "nullable": true,
+                    "format": "int64",
+                    "description": "usage cost for which we're performing the payout"
+                  },
+                  "usage_metadata": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON object with the usage data"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Charge to the user account by external service",
+            "required": ["ServiceUsage"],
+            "properties": {
+              "ServiceUsage": {
+                "type": "object",
+                "description": "Charge to the user account by external service",
+                "required": ["service", "carryover", "rounding"],
+                "properties": {
+                  "carryover": {
+                    "type": "array",
+                    "prefixItems": [
+                      { "type": "integer" },
+                      { "type": "integer" }
+                    ],
+                    "description": "Carryover from previous transaction included in the current transaction"
+                  },
+                  "rounding": {
+                    "type": "array",
+                    "prefixItems": [
+                      { "type": "integer" },
+                      { "type": "integer" }
+                    ],
+                    "description": "Additional charge due to rounding included in the transaction"
+                  },
+                  "service": {
+                    "type": "string",
+                    "description": "Name of the service"
+                  },
+                  "usage_metadata": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON object with the usage data"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Payout to the provider for usage of external service",
+            "required": ["ServicePayout"],
+            "properties": {
+              "ServicePayout": {
+                "type": "object",
+                "description": "Payout to the provider for usage of external service",
+                "required": ["service", "carryover", "rounding"],
+                "properties": {
+                  "carryover": {
+                    "type": "array",
+                    "prefixItems": [
+                      { "type": "integer" },
+                      { "type": "integer" }
+                    ],
+                    "description": "Carryover from previous transaction included in the current transaction"
+                  },
+                  "rounding": {
+                    "type": "array",
+                    "prefixItems": [
+                      { "type": "integer" },
+                      { "type": "integer" }
+                    ],
+                    "description": "Additional charge due to rounding included in the transaction"
+                  },
+                  "service": {
+                    "type": "string",
+                    "description": "Name of the service"
+                  },
+                  "usage_cost": {
+                    "type": "integer",
+                    "nullable": true,
+                    "format": "int64",
+                    "description": "usage cost for which we're performing the payout"
+                  },
+                  "usage_metadata": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON object with the usage data"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Amount increase due to promo code",
+            "required": ["PromoCode"],
+            "properties": {
+              "PromoCode": {
+                "type": "object",
+                "description": "Amount increase due to promo code",
+                "required": ["promo_code"],
+                "properties": {
+                  "promo_code": {
+                    "type": "string",
+                    "description": "The promo code that was used"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "External transaction, e.g. from or to a bank account",
+            "required": ["External"],
+            "properties": {
+              "External": {
+                "type": "object",
+                "description": "External transaction, e.g. from or to a bank account",
+                "required": ["description"],
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "Description of the payout"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "UpdateApiKeysRequest": {
+        "type": "object",
+        "required": ["selector"],
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Enable/disable API key"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Change API key name"
+          },
+          "selector": {
+            "$ref": "#/components/schemas/ApiKeySelector",
+            "description": "Which API key(s) to update"
+          }
+        }
+      },
+      "UpdateApiKeysRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["selector"],
+            "properties": {
+              "active": {
+                "type": "boolean",
+                "nullable": true,
+                "description": "Enable/disable API key"
+              },
+              "name": {
+                "type": "string",
+                "nullable": true,
+                "description": "Change API key name"
+              },
+              "selector": {
+                "$ref": "#/components/schemas/ApiKeySelector",
+                "description": "Which API key(s) to update"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "UpdateApiKeysResponse": {
+        "type": "object",
+        "required": ["status", "keys"],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/KeyResult" },
+            "description": "Information about the updated API keys with their operation status"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ResponseStatus",
+            "description": "Overall status of the operation"
+          }
+        }
+      },
+      "UpdateApiKeysResponseProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["status", "keys"],
+            "properties": {
+              "keys": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/KeyResult" },
+                "description": "Information about the updated API keys with their operation status"
+              },
+              "status": {
+                "$ref": "#/components/schemas/ResponseStatus",
+                "description": "Overall status of the operation"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      },
+      "UpdateTeamMembershipRequest": {
+        "type": "object",
+        "required": ["user_id", "role"],
+        "properties": {
+          "role": { "$ref": "#/components/schemas/TeamRole" },
+          "user_id": {
+            "type": "string",
+            "example": "00000000-0000-0000-0000-000000000000"
+          }
+        }
+      },
+      "UpdateTeamMembershipRequestProto": {
+        "type": "object",
+        "required": ["version", "data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["user_id", "role"],
+            "properties": {
+              "role": { "$ref": "#/components/schemas/TeamRole" },
+              "user_id": {
+                "type": "string",
+                "example": "00000000-0000-0000-0000-000000000000"
+              }
+            }
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "default": "~upcoming"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "api-key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Provider API key to authenticate provider in the request"
+      },
+      "token": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Bearer token to authenticate user in the request, obtain via /auth/login"
+      }
+    }
+  },
+  "tags": [{ "name": "commands", "description": "Command management endpoint" }]
+}
