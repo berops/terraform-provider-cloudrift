@@ -5,6 +5,7 @@ Terraform provider for [CloudRift](https://www.cloudrift.ai/)
 
 ## Example
 
+
 To spin up a Virtual Machine with Ubuntu as the base image you can use the terraform provider to provision the infrastructure.
 
 ```
