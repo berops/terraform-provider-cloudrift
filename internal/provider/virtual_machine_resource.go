@@ -266,13 +266,33 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 	id := ids.Data.InstanceIds[0]
 	var last *cloudriftapi.InstanceAndUsageInfo
 
-	// we have successfully rented out the VM. Poll until finished creating.
+	// The provisioning timeout is generous here, as usually the VM is provisioned
+	// within 2 - 6 mins. The timeout here is in case of failure so that the we eventually
+	// exit and don't wait for the VM infinitely.
+	provisioningTimeout := time.After(28 * time.Minute)
+
+	// we have successfully rented out the VM. Poll until finished creating, or timeout is reached.
 	for {
 		select {
+		case <-provisioningTimeout:
+			// Failed to provisioning VM wihtin the requested timeout.
+			//
+			// If there was some state previosly fetched, use it to store it in the state file.
+			if last != nil {
+				resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
+				resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+			}
+
+			resp.Diagnostics.AddError(
+				"Provisioning timeout reached",
+				"Provisioning timeout reached before finished waiting on instance creation",
+			)
+
+			return
 		case <-ctx.Done():
 			// Context cancelled.
 			//
-			// If there was some state previously fetched use it to store it in the state file.
+			// If there was some state previously fetched, use it to store it in the state file.
 			if last != nil {
 				resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
 				resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
