@@ -264,19 +264,45 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 	}
 
 	id := ids.Data.InstanceIds[0]
+	plan.ID = types.StringValue(id) // always assing atleast the ID to the state file.
+
 	var last *cloudriftapi.InstanceAndUsageInfo
 
-	// we have successfully rented out the VM. Poll until finished creating.
+	// The provisioning timeout is generous here, as usually the VM is provisioned
+	// within 2 - 6 mins. The timeout here is in case of failure so that the we eventually
+	// exit and don't wait for the VM infinitely.
+	provisioningTimeout := time.After(28 * time.Minute)
+
+	// we have successfully rented out the VM. Poll until finished creating, or timeout is reached.
 	for {
 		select {
+		case <-provisioningTimeout:
+			// Failed to provisioning VM within the requested timeout.
+			//
+			// If there was some state previously fetched, use it to store it in the state file.
+			if last != nil {
+				resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
+			}
+
+			// Save any partial state into the state file.
+			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+
+			resp.Diagnostics.AddError(
+				"Provisioning timeout reached",
+				"Provisioning timeout reached before finished waiting on instance creation",
+			)
+
+			return
 		case <-ctx.Done():
 			// Context cancelled.
 			//
-			// If there was some state previously fetched use it to store it in the state file.
+			// If there was some state previously fetched, use it to store it in the state file.
 			if last != nil {
 				resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
-				resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 			}
+
+			// Save any partial state into the state file.
+			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 
 			if err := ctx.Err(); err != nil {
 				resp.Diagnostics.AddError(
@@ -287,12 +313,14 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 
 			return
 		case <-time.After(InstancePollingInterval):
-			last, err = r.client.GetInstance(id)
+			current, err := r.client.GetInstance(id)
 			if err != nil {
-				if !errors.Is(err, cloudriftapi.ErrNotFound) && last != nil {
+				if !errors.Is(err, cloudriftapi.ErrNotFound) {
+					if last != nil {
+						resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
+					}
 					// If there was an API error, store the last know state of the virtual machine
 					// in the state file.
-					resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
 					resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 				}
 				resp.Diagnostics.AddError(
@@ -301,6 +329,8 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 				)
 				return
 			}
+
+			last = current
 
 			// Currently it is only one VM per instance, while the [Status] field
 			// tells us that the Instance is spawned successfully, it does not tell us
