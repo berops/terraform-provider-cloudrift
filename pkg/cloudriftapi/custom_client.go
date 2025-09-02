@@ -354,7 +354,7 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands
 	}
 
 	instanceConfiguration := InstanceConfiguration{
-		union: json.RawMessage(buf.Bytes()),
+		union: json.RawMessage(bytes.Clone(buf.Bytes())),
 	}
 
 	var nodeSelector NodeSelector0
