@@ -275,7 +275,7 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 	for {
 		select {
 		case <-provisioningTimeout:
-			// Failed to provisioning VM wihtin the requested timeout.
+			// Failed to provisioning VM within the requested timeout.
 			//
 			// If there was some state previosly fetched, use it to store it in the state file.
 			if last != nil {
