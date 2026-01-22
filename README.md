@@ -32,7 +32,10 @@ resource "cloudrift_ssh_key" "primary" {
 resource "cloudrift_virtual_machine" "machine0" {
     recipe          = "Ubuntu 22.04 Server (NVidia)"
     datacenter      = "us-east-nc-nr-1"
-    instance_type   = "rtx49-8c-nr.1"
+    # Instance types change frequently. To check available instances, use:
+    # data "cloudrift_instance_types" "all" {}
+    # output "instance_types" { value = data.cloudrift_instance_types.all.instance_types }
+    instance_type   = "rtx49-10c-kn.1"
     ssh_key_id      = cloudrift_ssh_key.primary.id
 
     metadata = {

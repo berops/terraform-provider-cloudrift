@@ -31,7 +31,7 @@ func Test_VirtualMachineResrouce(t *testing.T) {
 					resource "cloudrift_virtual_machine" "machine0" {
 					  recipe        = "ubuntu"
 					  datacenter    = "us-east-nc-nr-1"
-					  instance_type = "rtx49-8c-nr.1"
+					  instance_type = "rtx49-10c-kn.1"
 					  ssh_key_id    = cloudrift_ssh_key.primary.id
   					}
 				`, keyName, publicKey),
@@ -54,7 +54,7 @@ func vmTestServer(keyName, publicKey string) *httptest.Server {
 					"host_address": "127.0.0.1",
 					"resource_info": {
 						"provider_name": "provider",
-						"instance_type": "rtx49-8c-nr.1"
+						"instance_type": "rtx49-10c-kn.1"
 					},
 					"status": "%s"
 				}
