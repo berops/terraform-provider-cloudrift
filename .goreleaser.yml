@@ -41,6 +41,7 @@ checksum:
   algorithm: sha256
 signs:
   - artifacts: checksum
+    stdin: "{{ .Env.GPG_PASSWORD }}"
     args:
       # if you are using this in a GitHub action or some other automated pipeline, you
       # need to pass the batch flag to indicate its not interactive.
