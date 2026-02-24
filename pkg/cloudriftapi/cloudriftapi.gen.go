@@ -849,6 +849,9 @@ type InstanceVariantInfo struct {
 	// GpuCount GPU count
 	GpuCount *int32 `json:"gpu_count"`
 
+	// IpAvailabilityPerDc IP availability information per datacenter
+	IpAvailabilityPerDc map[string]IpAvailability `json:"ip_availability_per_dc"`
+
 	// LogicalCpuCount Logical CPU count (cpu_count * 2)
 	LogicalCpuCount int32 `json:"logical_cpu_count"`
 
@@ -893,6 +896,12 @@ type InstancesSelector1 struct {
 // InstancesSelector2 defines model for .
 type InstancesSelector2 struct {
 	ByTeamId string `json:"ByTeamId"`
+}
+
+// IpAvailability defines model for IpAvailability.
+type IpAvailability struct {
+	// PublicIps Whether public IPs are available in this datacenter
+	PublicIps bool `json:"public_ips"`
 }
 
 // KeyError defines model for KeyError.

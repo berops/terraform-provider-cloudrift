@@ -19,6 +19,7 @@ func Test_InstanceTypesDataSource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.cloudrift_instance_types.default", "instance_types.0.name", "test"),
 					resource.TestCheckResourceAttr("data.cloudrift_instance_types.default", "instance_types.0.variants.0.name", "test-variant"),
+					resource.TestCheckResourceAttr("data.cloudrift_instance_types.default", "instance_types.0.variants.0.datacenters.#", "2"),
 				),
 			},
 		},

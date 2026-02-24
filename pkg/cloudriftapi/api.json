@@ -2462,6 +2462,17 @@
           }
         }
       },
+      "IpAvailability": {
+        "type": "object",
+        "required": ["public_ips"],
+        "properties": {
+          "public_ips": {
+            "type": "boolean",
+            "description": "Whether public IPs are available in this datacenter",
+            "example": true
+          }
+        }
+      },
       "InstanceLoginInfo": {
         "oneOf": [
           {
@@ -2780,7 +2791,8 @@
           "nodes",
           "nodes_per_dc",
           "available_nodes",
-          "available_nodes_per_dc"
+          "available_nodes_per_dc",
+          "ip_availability_per_dc"
         ],
         "properties": {
           "available_nodes": {
@@ -2835,6 +2847,15 @@
             "description": "GPU count",
             "example": "2",
             "minimum": 0
+          },
+          "ip_availability_per_dc": {
+            "type": "object",
+            "description": "IP availability information per datacenter",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/IpAvailability"
+            },
+            "propertyNames": { "type": "string" },
+            "example": { "us-east-nc-nr-1": { "public_ips": true }, "us-central-tx-nr-1": { "public_ips": false } }
           },
           "logical_cpu_count": {
             "type": "integer",
