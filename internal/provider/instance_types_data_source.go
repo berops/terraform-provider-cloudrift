@@ -193,9 +193,7 @@ func (d *instanceTypesSource) Read(ctx context.Context, req datasource.ReadReque
 			if v.GpuCount != nil {
 				n.GpuCount = types.Int64Value(int64(*v.GpuCount))
 			}
-			seenDc := make(map[string]bool)
 			for dcName, nodeCount := range v.NodesPerDc {
-				seenDc[dcName] = true
 				dc := instanceTypeVariantDatacenterModel{
 					Name:  types.StringValue(dcName),
 					Count: types.Int64Value(int64(nodeCount)),
@@ -204,15 +202,6 @@ func (d *instanceTypesSource) Read(ctx context.Context, req datasource.ReadReque
 					dc.PublicIps = types.BoolValue(ipAvail.PublicIps)
 				}
 				n.Datacenters = append(n.Datacenters, dc)
-			}
-			for dcName, ipAvail := range v.IpAvailabilityPerDc {
-				if seenDc[dcName] {
-					continue
-				}
-				n.Datacenters = append(n.Datacenters, instanceTypeVariantDatacenterModel{
-					Name:      types.StringValue(dcName),
-					PublicIps: types.BoolValue(ipAvail.PublicIps),
-				})
 			}
 			i.Variants = append(i.Variants, n)
 		}
