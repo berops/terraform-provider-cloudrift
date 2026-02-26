@@ -49,3 +49,4 @@ Read-Only:
 
 - `count` (Number) Number of instances of this variant in the datacenter. Does not equal to the number of currently available instances in the datacenter of this variant
 - `name` (String) Name of the datacenter
+- `public_ips` (Boolean) Whether dedicated public IPs are available in this datacenter. When false, the datacenter uses a shared public IP with port forwarding

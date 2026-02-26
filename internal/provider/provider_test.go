@@ -92,7 +92,9 @@ func defaultHttpTestServer(handlers map[string]func(w http.ResponseWriter, req *
 								"name": "test",
 								"variants": [
 								{
-								 "name": "test-variant"
+								 "name": "test-variant",
+								 "nodes_per_dc": {"dc-1": 2, "dc-2": 1},
+								 "ip_availability_per_dc": {"dc-1": {"public_ips": true}, "dc-2": {"public_ips": false}}
 								}
 								]
 							}

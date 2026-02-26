@@ -16,8 +16,9 @@ var (
 )
 
 type instanceTypeVariantDatacenterModel struct {
-	Name  types.String `tfsdk:"name"`
-	Count types.Int64  `tfsdk:"count"`
+	Name      types.String `tfsdk:"name"`
+	Count     types.Int64  `tfsdk:"count"`
+	PublicIps types.Bool   `tfsdk:"public_ips"`
 }
 
 type instanceTypeVariantModel struct {
@@ -116,6 +117,10 @@ func (d *instanceTypesSource) Schema(_ context.Context, _ datasource.SchemaReque
 													MarkdownDescription: "Number of instances of this variant in the datacenter. Does not equal to the number of currently available instances in the datacenter of this variant",
 													Computed:            true,
 												},
+												"public_ips": schema.BoolAttribute{
+													MarkdownDescription: "Whether dedicated public IPs are available in this datacenter. When false, the datacenter uses a shared public IP with port forwarding",
+													Computed:            true,
+												},
 											},
 										},
 									},
@@ -188,11 +193,15 @@ func (d *instanceTypesSource) Read(ctx context.Context, req datasource.ReadReque
 			if v.GpuCount != nil {
 				n.GpuCount = types.Int64Value(int64(*v.GpuCount))
 			}
-			for k, v := range v.NodesPerDc {
-				n.Datacenters = append(n.Datacenters, instanceTypeVariantDatacenterModel{
-					Name:  types.StringValue(k),
-					Count: types.Int64Value(int64(v)),
-				})
+			for dcName, nodeCount := range v.NodesPerDc {
+				dc := instanceTypeVariantDatacenterModel{
+					Name:  types.StringValue(dcName),
+					Count: types.Int64Value(int64(nodeCount)),
+				}
+				if ipAvail, ok := v.IpAvailabilityPerDc[dcName]; ok {
+					dc.PublicIps = types.BoolValue(ipAvail.PublicIps)
+				}
+				n.Datacenters = append(n.Datacenters, dc)
 			}
 			i.Variants = append(i.Variants, n)
 		}
