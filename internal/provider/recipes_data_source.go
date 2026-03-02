@@ -97,7 +97,7 @@ func (d *recipesDataSource) Configure(_ context.Context, req datasource.Configur
 	client, ok := req.ProviderData.(*cloudriftapi.HttpClient)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected DatSource Configure Type",
+			"Unexpected DataSource Configure Type",
 			fmt.Sprintf("Expected *cloudriftapi.HttpClient, got: %T. Please report this issue to the provider developers.",
 				req.ProviderData,
 			),

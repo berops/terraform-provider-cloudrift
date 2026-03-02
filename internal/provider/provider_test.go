@@ -1,7 +1,9 @@
 package provider
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -145,4 +147,84 @@ func defaultHttpTestServer(handlers map[string]func(w http.ResponseWriter, req *
 		}
 		handler(w, r)
 	}))
+}
+
+func providerConfigWithTeamID(baseURL, proto, teamID string) string {
+	return fmt.Sprintf(`
+provider "cloudrift" {
+	base_url = "%s"
+	proto_version = "%s"
+	token = "test"
+	team_id = "%s"
+}
+`, baseURL, proto, teamID)
+}
+
+// sshKeyAddHandler returns a test handler for POST /api/v1/ssh-keys/add
+// that echoes back the submitted key with a fixed ID of "11111".
+func sshKeyAddHandler() func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodPost {
+			return
+		}
+
+		var input struct {
+			Data struct {
+				Name      string `json:"name"`
+				PublicKey string `json:"public_key"`
+			} `json:"data"`
+		}
+
+		body, _ := io.ReadAll(req.Body)
+		_ = json.Unmarshal(body, &input)
+
+		w.Header().Set("Content-Type", "json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write(fmt.Appendf(nil, `
+			{
+				"data": {
+					"public_key": {
+						"id": "11111",
+						"name": "%s",
+						"public_key": "%s"
+					}
+				}
+			}
+		`, input.Data.Name, input.Data.PublicKey))
+	}
+}
+
+// sshKeyListHandlerWithKey returns a test handler for GET /api/v1/ssh-keys/list
+// that includes the default test key plus the given key with ID "11111".
+func sshKeyListHandlerWithKey(keyName, publicKey string) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fmt.Appendf(nil, `
+			{
+				"data": {
+					"keys": [
+						{
+							"id": "1",
+							"name": "test-key",
+							"public_key": "ssh-rsa AAAA testuser"
+						},
+						{
+							"id": "11111",
+							"name": "%s",
+							"public_key": "%s"
+						}
+					]
+				}
+			}
+		`, keyName, publicKey))
+	}
+}
+
+// sshKeyDeleteHandler returns a test handler for DELETE /api/v1/ssh-keys/11111
+// that responds with 200 OK.
+func sshKeyDeleteHandler() func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}
 }
