@@ -32,6 +32,7 @@ Manage virtualMachines
 - `node_id` (String) ID of the node where the Virtual Machine is running on.
 - `node_mode` (String) Mode of the Node the Virtual Machine is running on.
 - `node_status` (String) Status fo the Node the Virtual Machine is running on.
+- `port_mappings` (Attributes List) Port mappings for shared-IP instances. Each mapping pairs an external port on the shared IP to an internal port on the VM. (see [below for nested schema](#nestedatt--port_mappings))
 - `private_ip` (String) The private IP address
 - `provider_name` (String) The name of the provider.
 - `public_ip` (String) The public IPv4 IP address
@@ -44,6 +45,15 @@ Manage virtualMachines
 Optional:
 
 - `startup_commands` (String) A plain text script that will be executed after the first instance boot.
+
+
+<a id="nestedatt--port_mappings"></a>
+### Nested Schema for `port_mappings`
+
+Read-Only:
+
+- `guest_port` (Number) Port on the VM.
+- `host_port` (Number) Port on the host/shared IP.
 
 
 <a id="nestedatt--virtual_machines"></a>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/berops/terraform-provider-cloudrift/pkg/cloudriftapi"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -18,6 +19,7 @@ var (
 type recipeDataModel struct {
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
+	Tags        types.List   `tfsdk:"tags"`
 }
 
 type groupDataModel struct {
@@ -60,7 +62,7 @@ func (d *recipesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 							Computed:            true,
 						},
 						"recipes": schema.ListNestedAttribute{
-							MarkdownDescription: "Recipes beloning to the group",
+							MarkdownDescription: "Recipes belonging to the group",
 							Computed:            true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -71,6 +73,11 @@ func (d *recipesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 									"description": schema.StringAttribute{
 										MarkdownDescription: "Description of the recipe",
 										Computed:            true,
+									},
+									"tags": schema.ListAttribute{
+										MarkdownDescription: "Tags for the recipe",
+										Computed:            true,
+										ElementType:         types.StringType,
 									},
 								},
 							},
@@ -126,9 +133,20 @@ func (d *recipesDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		}
 
 		for _, r := range g.Recipes {
+			tagValues := make([]attr.Value, 0, len(r.Tags))
+			for _, t := range r.Tags {
+				tagValues = append(tagValues, types.StringValue(t))
+			}
+			tagsList, tagsDiags := types.ListValue(types.StringType, tagValues)
+			resp.Diagnostics.Append(tagsDiags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
 			group.Recipes = append(group.Recipes, recipeDataModel{
 				Name:        types.StringValue(r.Name),
 				Description: types.StringValue(r.Description),
+				Tags:        tagsList,
 			})
 		}
 

@@ -40,7 +40,10 @@ Read-Only:
 - `disk` (Number) Disk size
 - `dram` (Number) DRAM size
 - `gpu_count` (Number) Number of GPUs
+- `logical_cpu_count` (Number) Logical CPU count (cpu_count * 2)
+- `mig_profile` (String) MIG profile name for fractional GPU allocation
 - `name` (String) Name of the Instance Type Variant
+- `vram` (Number) VRAM per GPU in bytes
 
 <a id="nestedatt--instance_types--variants--datacenters"></a>
 ### Nested Schema for `instance_types.variants.datacenters`

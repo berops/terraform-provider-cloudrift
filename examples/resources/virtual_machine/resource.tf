@@ -2,14 +2,17 @@ terraform {
   required_providers {
     cloudrift = {
       source = "berops/cloudrift"
-      # version = "..."
     }
   }
 }
 
 provider "cloudrift" {
-  # set CLOUDRIFT_TOKEN env or:
-  # token = ""
+  # Set CLOUDRIFT_TOKEN env var or uncomment:
+  # token = "rift_..."
+
+  # Team ID for team-scoped operations.
+  # Set CLOUDRIFT_TEAM_ID env var or uncomment:
+  # team_id = "your-team-uuid"
 }
 
 resource "cloudrift_ssh_key" "primary" {
@@ -23,7 +26,7 @@ resource "cloudrift_virtual_machine" "machine0" {
   # Instance types change frequently. To check available instances, use:
   # data "cloudrift_instance_types" "all" {}
   # output "instance_types" { value = data.cloudrift_instance_types.all.instance_types }
-  instance_type = "rtx59-16c-nr.1"
+  instance_type = "rtx49-7-50-500-nr.1"
   ssh_key_id    = cloudrift_ssh_key.primary.id
 
   metadata = {
@@ -39,10 +42,23 @@ EOF
   }
 }
 
-output "machine0_ip" {
+output "vm_id" {
+  value = cloudrift_virtual_machine.machine0.id
+}
+
+output "public_ip" {
   value = cloudrift_virtual_machine.machine0.public_ip
 }
 
-output "machine0" {
+output "status" {
+  value = cloudrift_virtual_machine.machine0.status
+}
+
+output "port_mappings" {
+  description = "Port mappings for shared-IP instances (null for dedicated IP)"
+  value       = cloudrift_virtual_machine.machine0.port_mappings
+}
+
+output "virtual_machines" {
   value = cloudrift_virtual_machine.machine0.virtual_machines
 }

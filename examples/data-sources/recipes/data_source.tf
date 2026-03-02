@@ -2,18 +2,30 @@ terraform {
   required_providers {
     cloudrift = {
       source = "berops/cloudrift"
-      # version = "..."
     }
   }
 }
 
 provider "cloudrift" {
-  # set CLOUDRIFT_TOKEN env or:
-  # token = ""
+  # Set CLOUDRIFT_TOKEN env var or uncomment:
+  # token = "rift_..."
 }
 
-data "cloudrift_recipes" "recipes" {}
+data "cloudrift_recipes" "all" {}
 
 output "recipes" {
-  value = data.cloudrift_recipes.recipes
+  description = "All available recipes with tags"
+  value = [
+    for g in data.cloudrift_recipes.all.groups : {
+      name        = g.name
+      description = g.description
+      recipes = [
+        for r in g.recipes : {
+          name        = r.name
+          description = r.description
+          tags        = r.tags
+        }
+      ]
+    }
+  ]
 }

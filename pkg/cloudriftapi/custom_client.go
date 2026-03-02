@@ -51,11 +51,12 @@ type HttpClient struct {
 	auth         AuthData
 	retries      int
 	ProtoVersion string
+	TeamID       string // Optional team ID for team-scoped operations.
 
 	vmRecipies map[string]*RecipeDetails1
 }
 
-func NewCustom(endpoint, token, protoVersion string, opts ...HttpClientOption) (*HttpClient, error) {
+func NewCustom(endpoint, token, protoVersion, teamID string, opts ...HttpClientOption) (*HttpClient, error) {
 	c := HttpClient{
 		HostURL: endpoint,
 		auth:    AuthData{Token: token},
@@ -64,6 +65,7 @@ func NewCustom(endpoint, token, protoVersion string, opts ...HttpClientOption) (
 			Timeout: 10 * time.Second,
 		},
 		ProtoVersion: protoVersion,
+		TeamID:       teamID,
 		vmRecipies:   make(map[string]*RecipeDetails1),
 	}
 
@@ -81,7 +83,7 @@ func NewCustom(endpoint, token, protoVersion string, opts ...HttpClientOption) (
 	}
 
 	if protoVersion == "" {
-		c.ProtoVersion = Proto20250610
+		c.ProtoVersion = ProtoUpcoming
 	}
 
 	if err := c.Auth(); err != nil {
@@ -232,23 +234,26 @@ func DoRequestWithApiToken[Parsed any](c *HttpClient, req *http.Request, parse f
 }
 
 func (c *HttpClient) AddSSHKey(name, publicKey string) (*GenerateSshKeyResponseProto, error) {
-	var reqData AddSshKeyRequestProto
-	reqData.Version = c.ProtoVersion
-	reqData.Data.Name = name
-	reqData.Data.PublicKey = &publicKey
+	body, err := marshalVersionedRequest(c.ProtoVersion, struct {
+		Name      string  `json:"name"`
+		PublicKey *string `json:"public_key"`
+	}{Name: name, PublicKey: &publicKey})
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := NewAddSshKeyRequest(c.HostURL, reqData)
+	req, err := NewAddSshKeyRequestWithBody(c.HostURL, "application/json", body)
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := DoRequestWithApiToken(c, req, ParseAddSshKeyResponse)
 	if err != nil {
-		return nil, err
+		return nil, wrapSSHKeyAuthError(err)
 	}
 	if resp == nil || resp.JSON201 == nil {
 		return nil, errors.New(
-			"listing ssh-keys failed, expected response with code 201 which was not returned, but no error occurred with the request itself, most likely the API changed, or the response has a missing 'Content-Type' for json",
+			"adding ssh-key failed, expected response with code 201 which was not returned, but no error occurred with the request itself, most likely the API changed, or the response has a missing 'Content-Type' for json",
 		)
 	}
 	return resp.JSON201, nil
@@ -261,7 +266,7 @@ func (c *HttpClient) DeleteSSHKey(id string) error {
 	}
 
 	_, err = DoRequestWithApiToken(c, req, ParseDeleteSshKeyResponse)
-	return err
+	return wrapSSHKeyAuthError(err)
 }
 
 func (c *HttpClient) ListSSHKeys() ([]SshKey, error) {
@@ -272,7 +277,7 @@ func (c *HttpClient) ListSSHKeys() ([]SshKey, error) {
 
 	resp, err := DoRequestWithApiToken(c, req, ParseListSshKeysResponse)
 	if err != nil {
-		return nil, err
+		return nil, wrapSSHKeyAuthError(err)
 	}
 	if resp == nil || resp.JSON200 == nil {
 		return nil, errors.New(
@@ -283,16 +288,25 @@ func (c *HttpClient) ListSSHKeys() ([]SshKey, error) {
 }
 
 func (c *HttpClient) TerminateInstance(id string) error {
+	if strings.TrimSpace(id) == "" {
+		return errors.New("empty instance id")
+	}
+
 	var selector InstancesSelector
+	// Always terminate by specific instance ID to avoid accidentally
+	// terminating other instances.
 	if err := selector.FromInstancesSelector0(InstancesSelector0{ById: []string{id}}); err != nil {
 		return err
 	}
 
-	var reqData TerminateInstancesRequestProto
-	reqData.Version = c.ProtoVersion
-	reqData.Data.Selector = selector
+	body, err := marshalVersionedRequest(c.ProtoVersion, struct {
+		Selector InstancesSelector `json:"selector"`
+	}{Selector: selector})
+	if err != nil {
+		return err
+	}
 
-	req, err := NewTerminateInstancesRequest(c.HostURL, reqData)
+	req, err := NewTerminateInstancesRequestWithBody(c.HostURL, "application/json", body)
 	if err != nil {
 		return err
 	}
@@ -367,13 +381,22 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands
 	}
 
 	var reqData RentInstanceRequestProto
-	reqData.Version = c.ProtoVersion
 	reqData.Data.Selector = instanceSelector
 	reqData.Data.WithPublicIp = true
 	reqData.Data.Config = instanceConfiguration
+	if c.TeamID != "" {
+		reqData.Data.TeamId = &c.TeamID
+	}
 
+	// Encode with "version" before "data" to match marshalVersionedRequest
+	// convention. The generated RentInstanceRequestProto struct has Data
+	// before Version, so we use an inline struct to control field order.
+	// We reuse the same encoder to preserve SetEscapeHTML(false).
 	buf.Reset()
-	if err := enc.Encode(reqData); err != nil {
+	if err := enc.Encode(struct {
+		Version string `json:"version"`
+		Data    any    `json:"data"`
+	}{Version: c.ProtoVersion, Data: reqData.Data}); err != nil {
 		return nil, err
 	}
 
@@ -398,11 +421,14 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands
 }
 
 func (c *HttpClient) listInstances(selector InstancesSelector) (*ListInstancesResponseProto, error) {
-	var listRequest ListInstancesRequestProto
-	listRequest.Data.Selector = selector
-	listRequest.Version = c.ProtoVersion
+	body, err := marshalVersionedRequest(c.ProtoVersion, struct {
+		Selector InstancesSelector `json:"selector"`
+	}{Selector: selector})
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := NewListInstancesRequest(c.HostURL, listRequest)
+	req, err := NewListInstancesRequestWithBody(c.HostURL, "application/json", body)
 	if err != nil {
 		return nil, err
 	}
@@ -423,15 +449,21 @@ func (c *HttpClient) listInstances(selector InstancesSelector) (*ListInstancesRe
 
 func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
 	var selector InstancesSelector
-	err := selector.FromInstancesSelector1(InstancesSelector1{
-		ByStatus: []InstanceStatus{
+	statuses := StatusSelector{
+		Statuses: []InstanceStatus{
 			Active,
 			Initializing,
 			Deactivating,
-			// Inactive, We don't want to include inactive VMs in the response.
 		},
-	})
-	if err != nil {
+	}
+	if c.TeamID != "" {
+		scope, err := teamScope(c.TeamID)
+		if err != nil {
+			return nil, err
+		}
+		statuses.Scope = &scope
+	}
+	if err := selector.FromInstancesSelector1(InstancesSelector1{ByStatus: statuses}); err != nil {
 		return nil, err
 	}
 	return c.listInstances(selector)
@@ -439,8 +471,23 @@ func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
 
 func (c *HttpClient) GetInstance(id string) (*InstanceAndUsageInfo, error) {
 	var selector InstancesSelector
-	if err := selector.FromInstancesSelector0(InstancesSelector0{ById: []string{id}}); err != nil {
-		return nil, err
+	if c.TeamID != "" {
+		// Team instances are not visible via ById; query by team scope and filter.
+		statuses := StatusSelector{
+			Statuses: []InstanceStatus{Active, Initializing, Deactivating},
+		}
+		scope, err := teamScope(c.TeamID)
+		if err != nil {
+			return nil, err
+		}
+		statuses.Scope = &scope
+		if err := selector.FromInstancesSelector1(InstancesSelector1{ByStatus: statuses}); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := selector.FromInstancesSelector0(InstancesSelector0{ById: []string{id}}); err != nil {
+			return nil, err
+		}
 	}
 
 	instances, err := c.listInstances(selector)
@@ -462,17 +509,55 @@ func (c *HttpClient) GetInstance(id string) (*InstanceAndUsageInfo, error) {
 	return nil, ErrNotFound
 }
 
+// teamScope returns a SelectorScope that targets the given team.
+func teamScope(teamID string) (SelectorScope, error) {
+	var scope SelectorScope
+	err := scope.FromSelectorScope1(SelectorScope1{Teams: []string{teamID}})
+	return scope, err
+}
+
+// marshalVersionedRequest serializes a request body with "version" before "data".
+// The CloudRift API parses JSON sequentially and requires "version" first.
+func marshalVersionedRequest(version string, data any) (io.Reader, error) {
+	b, err := json.Marshal(struct {
+		Version string `json:"version"`
+		Data    any    `json:"data"`
+	}{Version: version, Data: data})
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
+}
+
+// wrapSSHKeyAuthError detects 401 errors on SSH key endpoints and provides
+// an actionable error message about team API key limitations.
+func wrapSSHKeyAuthError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if strings.Contains(err.Error(), "401") {
+		return fmt.Errorf("%w — SSH key operations require a personal API key. "+
+			"Team API keys cannot manage SSH keys (by design, for security auditability). "+
+			"Use a service account: create a dedicated user, add it to your team, "+
+			"and use that user's personal API key in the provider configuration", err)
+	}
+	return err
+}
+
 func (c *HttpClient) ListInstanceTypes() (*ListInstanceTypesResponseProto, error) {
 	var all InstanceTypeSelector
 	if err := all.FromInstanceTypeSelector0(InstanceTypeSelector0All); err != nil {
 		return nil, err
 	}
 
-	var listRequest ListInstanceTypesRequestProto
-	listRequest.Version = c.ProtoVersion
-	listRequest.Data.Selector = &all
+	body, err := marshalVersionedRequest(c.ProtoVersion, struct {
+		Selector *InstanceTypeSelector `json:"selector,omitempty"`
+	}{Selector: &all})
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := NewListInstanceTypesRequest(c.HostURL, listRequest)
+	req, err := NewListInstanceTypesRequestWithBody(c.HostURL, "application/json", body)
 	if err != nil {
 		return nil, err
 	}

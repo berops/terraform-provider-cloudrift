@@ -55,6 +55,8 @@ func defaultHttpTestServer(handlers map[string]func(w http.ResponseWriter, req *
 							 "recipes": [
 								{
 									"name": "ubuntu",
+									"description": "Ubuntu 22.04 LTS",
+									"tags": ["linux", "ubuntu"],
 									"details": {
 										"VirtualMachine": {
 											"cloudinit_url": "test",
@@ -64,6 +66,8 @@ func defaultHttpTestServer(handlers map[string]func(w http.ResponseWriter, req *
 								},
 								{
 									"name": "ubuntu-2",
+									"description": "Ubuntu 24.04 LTS",
+									"tags": [],
 									"details": {
 										"VirtualMachine": {
 											"cloudinit_url": "test",
@@ -93,6 +97,15 @@ func defaultHttpTestServer(handlers map[string]func(w http.ResponseWriter, req *
 								"variants": [
 								{
 								 "name": "test-variant",
+								 "cpu_count": 10,
+								 "logical_cpu_count": 20,
+								 "gpu_count": 1,
+								 "disk": 1099511627776,
+								 "dram": 68719476736,
+								 "vram": 25769803776,
+								 "cost_per_hour": 0.85,
+								 "available_nodes": 5,
+								 "available_nodes_per_dc": {"dc-1": 3, "dc-2": 2},
 								 "nodes_per_dc": {"dc-1": 2, "dc-2": 1},
 								 "ip_availability_per_dc": {"dc-1": {"public_ips": true}, "dc-2": {"public_ips": false}}
 								}
@@ -128,7 +141,7 @@ func defaultHttpTestServer(handlers map[string]func(w http.ResponseWriter, req *
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handler := handlers[strings.TrimSpace(r.URL.Path)]
 		if handler == nil {
-			panic("unsuported handler")
+			panic("unsupported handler")
 		}
 		handler(w, r)
 	}))
