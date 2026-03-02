@@ -136,7 +136,11 @@ func patchRecursive(v any) {
 // fixInstructionsTemplate changes InstanceUserInstructions.instructions_template
 // from array of int32 to string. The API actually returns a base64-encoded string.
 func fixInstructionsTemplate(spec map[string]any) {
-	schemas, ok := spec["components"].(map[string]any)["schemas"].(map[string]any)
+	components, ok := spec["components"].(map[string]any)
+	if !ok {
+		return
+	}
+	schemas, ok := components["schemas"].(map[string]any)
 	if !ok {
 		return
 	}

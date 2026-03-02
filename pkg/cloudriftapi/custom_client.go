@@ -288,7 +288,8 @@ func (c *HttpClient) ListSSHKeys() ([]SshKey, error) {
 }
 
 func (c *HttpClient) TerminateInstance(id string) error {
-	if strings.TrimSpace(id) == "" {
+	id = strings.TrimSpace(id)
+	if id == "" {
 		return errors.New("empty instance id")
 	}
 

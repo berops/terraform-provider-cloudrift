@@ -49,7 +49,7 @@ func findCheapestAvailableInstance(t *testing.T) cheapestInstance {
 
 	for _, it := range resp.Data.InstanceTypes {
 		for _, v := range it.Variants {
-			if v.AvailableNodes <= 0 || v.CostPerHour <= 0 {
+			if v.AvailableNodes <= 0 || v.CostPerHour <= 0 || v.GpuCount == nil || *v.GpuCount <= 0 {
 				continue
 			}
 			if v.CostPerHour >= best.costPerHour {
