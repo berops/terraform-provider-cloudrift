@@ -536,6 +536,16 @@ func populateModelFromInstanceResponse(m *virtualMachineModel, data *cloudriftap
 		m.PortMappings = types.ListNull(portMappingObjType)
 	}
 
+	// Since write-only attributes are supported on newer tf versions, have a workaround.
+	// Carry over the previous state for the write only attributes, since the API for fetching
+	// Instances does not return these.
+	// https://discuss.hashicorp.com/t/handling-attribute-required-during-create-but-not-returned-during-read/74613
+	//
+	// state.Metadata = state.Metadata
+	// state.Recipe = state.Recipe
+	// state.Datacenter = state.Datacenter
+	// state.SSHKeyID = state.SSHKeyID
+
 	return diags
 }
 

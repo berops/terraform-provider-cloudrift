@@ -203,6 +203,16 @@ func DoRequestWithApiToken[Parsed any](c *HttpClient, req *http.Request, parse f
 		// perform retries, if the client was configured as retryable.
 		backoff := 1 * time.Second
 		for retries := c.retries; retries > 0; retries-- {
+			if req.Body != nil {
+				if req.GetBody == nil {
+					return nil, fmt.Errorf("request retry failed: non-replayable request body")
+				}
+				retryBody, bodyErr := req.GetBody()
+				if bodyErr != nil {
+					return nil, fmt.Errorf("request retry failed: cannot recreate request body: %w", bodyErr)
+				}
+				req.Body = retryBody
+			}
 			time.Sleep(backoff)
 			backoff = backoff << 1
 			resp, err = c.HTTPClient.Do(req)
