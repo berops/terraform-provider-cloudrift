@@ -157,6 +157,9 @@ func (p *CloudRiftProvider) Configure(ctx context.Context, req provider.Configur
 		baseURL = cloudriftapi.Endpoint
 	}
 
+	// Default to ~upcoming because team-scoped selectors (scope field)
+	// are not yet available in any dated API version.
+	// TODO: switch to a fixed version once one supports team scope.
 	if protoVersion == "" {
 		protoVersion = cloudriftapi.ProtoUpcoming
 	}

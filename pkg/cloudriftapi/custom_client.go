@@ -82,6 +82,9 @@ func NewCustom(endpoint, token, protoVersion, teamID string, opts ...HttpClientO
 		c.HostURL += "/"
 	}
 
+	// Default to ~upcoming because team-scoped selectors (scope field)
+	// are not yet available in any dated API version.
+	// TODO: switch to a fixed version once one supports team scope.
 	if protoVersion == "" {
 		c.ProtoVersion = ProtoUpcoming
 	}
