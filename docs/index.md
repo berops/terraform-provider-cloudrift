@@ -18,4 +18,5 @@ Interact with CloudRift platform
 
 - `base_url` (String) Base URL for the CloudRift platform API. If not specified the provider has a built in default Base URL that will be used.May also be provided via CLOUDRIFT_BASE_URL environment variable.
 - `proto_version` (String) Protocol Version to be used for the CloudRift platform API.If not specified the provider has a built in default version that will be used. May also be provided via CLOUDRIFT_PROTO_VERSION environment variable.
+- `team_id` (String) Team ID for team-scoped operations (instance provisioning). May also be provided via CLOUDRIFT_TEAM_ID environment variable.
 - `token` (String, Sensitive) Token for CloudRift platform API. May also be provided via CLOUDRIFT_TOKEN environment variable.

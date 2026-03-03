@@ -22,13 +22,16 @@ type instanceTypeVariantDatacenterModel struct {
 }
 
 type instanceTypeVariantModel struct {
-	Name        types.String                         `tfsdk:"name"`
-	CpuCount    types.Int64                          `tfsdk:"cpu_count"`
-	GpuCount    types.Int64                          `tfsdk:"gpu_count"`
-	Disk        types.Int64                          `tfsdk:"disk"`
-	DRAM        types.Int64                          `tfsdk:"dram"`
-	CostPerHour types.Float64                        `tfsdk:"cost_per_hour"`
-	Datacenters []instanceTypeVariantDatacenterModel `tfsdk:"datacenters"`
+	Name            types.String                         `tfsdk:"name"`
+	CpuCount        types.Int64                          `tfsdk:"cpu_count"`
+	LogicalCpuCount types.Int64                          `tfsdk:"logical_cpu_count"`
+	GpuCount        types.Int64                          `tfsdk:"gpu_count"`
+	Disk            types.Int64                          `tfsdk:"disk"`
+	DRAM            types.Int64                          `tfsdk:"dram"`
+	Vram            types.Int64                          `tfsdk:"vram"`
+	CostPerHour     types.Float64                        `tfsdk:"cost_per_hour"`
+	MigProfile      types.String                         `tfsdk:"mig_profile"`
+	Datacenters     []instanceTypeVariantDatacenterModel `tfsdk:"datacenters"`
 }
 
 type instanceTypeModel struct {
@@ -76,7 +79,7 @@ func (d *instanceTypesSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Computed:            true,
 						},
 						"variants": schema.ListNestedAttribute{
-							MarkdownDescription: "Variants of the Instance Type	",
+							MarkdownDescription: "Variants of the Instance Type",
 							Computed:            true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -86,6 +89,10 @@ func (d *instanceTypesSource) Schema(_ context.Context, _ datasource.SchemaReque
 									},
 									"cpu_count": schema.Int64Attribute{
 										MarkdownDescription: "Number of CPUs",
+										Computed:            true,
+									},
+									"logical_cpu_count": schema.Int64Attribute{
+										MarkdownDescription: "Logical CPU count (cpu_count * 2)",
 										Computed:            true,
 									},
 									"gpu_count": schema.Int64Attribute{
@@ -100,8 +107,16 @@ func (d *instanceTypesSource) Schema(_ context.Context, _ datasource.SchemaReque
 										MarkdownDescription: "DRAM size",
 										Computed:            true,
 									},
+									"vram": schema.Int64Attribute{
+										MarkdownDescription: "VRAM per GPU in bytes",
+										Computed:            true,
+									},
 									"cost_per_hour": schema.Float64Attribute{
 										MarkdownDescription: "Cost per Hour",
+										Computed:            true,
+									},
+									"mig_profile": schema.StringAttribute{
+										MarkdownDescription: "MIG profile name for fractional GPU allocation",
 										Computed:            true,
 									},
 									"datacenters": schema.ListNestedAttribute{
@@ -142,7 +157,7 @@ func (d *instanceTypesSource) Configure(_ context.Context, req datasource.Config
 	client, ok := req.ProviderData.(*cloudriftapi.HttpClient)
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected DatSource Configure Type",
+			"Unexpected DataSource Configure Type",
 			fmt.Sprintf("Expected *cloudriftapi.HttpClient, got: %T. Please report this issue to the provider developers.",
 				req.ProviderData,
 			),
@@ -184,14 +199,20 @@ func (d *instanceTypesSource) Read(ctx context.Context, req datasource.ReadReque
 
 		for _, v := range t.Variants {
 			n := instanceTypeVariantModel{
-				Name:        types.StringValue(v.Name),
-				CpuCount:    types.Int64Value(int64(v.CpuCount)),
-				Disk:        types.Int64Value(v.Disk),
-				DRAM:        types.Int64Value(v.Dram),
-				CostPerHour: types.Float64Value(v.CostPerHour),
+				Name:            types.StringValue(v.Name),
+				CpuCount:        types.Int64Value(int64(v.CpuCount)),
+				LogicalCpuCount: types.Int64Value(int64(v.LogicalCpuCount)),
+				Disk:            types.Int64Value(v.Disk),
+				DRAM:            types.Int64Value(v.Dram),
+				Vram:            types.Int64Value(v.Vram),
+				CostPerHour:     types.Float64Value(v.CostPerHour),
+				MigProfile:      types.StringNull(),
 			}
 			if v.GpuCount != nil {
 				n.GpuCount = types.Int64Value(int64(*v.GpuCount))
+			}
+			if v.MigProfile != nil {
+				n.MigProfile = types.StringValue(*v.MigProfile)
 			}
 			for dcName, nodeCount := range v.NodesPerDc {
 				dc := instanceTypeVariantDatacenterModel{

@@ -8,6 +8,8 @@ on:
     paths-ignore:
       - "README.md"
   push:
+    branches:
+      - master
     paths-ignore:
       - "README.md"
 
@@ -50,34 +52,52 @@ jobs:
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'make generate' command and commit."; exit 1)
 
-  # # Run acceptance tests in a matrix with Terraform CLI versions
-  # test:
-  #   name: Terraform Provider Acceptance Tests
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 15
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       # list whatever Terraform versions here you would like to support
-  #       terraform:
-  #         - '1.0.*'
-  #         - '1.1.*'
-  #         - '1.2.*'
-  #         - '1.3.*'
-  #         - '1.4.*'
-  #   steps:
-  #     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-  #     - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
-  #       with:
-  #         go-version-file: 'go.mod'
-  #         cache: true
-  #     - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
-  #       with:
-  #         terraform_version: ${{ matrix.terraform }}
-  #         terraform_wrapper: false
-  #     - run: go mod download
-  #     - env:
-  #         TF_ACC: "1"
-  #       run: go test -v -cover ./internal/provider/
-  #       timeout-minutes: 10
+  # Run unit tests with mock API server (no secrets needed)
+  unit-test:
+    name: Unit Tests
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_wrapper: false
+      - run: go mod download
+      - name: Run unit tests
+        env:
+          TF_ACC: "1"
+        run: go test -v -cover -timeout=120s -parallel=10 -run "^Test_" ./internal/provider/
+
+  # Run acceptance tests against real CloudRift API
+  acceptance-test:
+    name: Acceptance Tests
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Only run when secrets are available (not on fork PRs)
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    env:
+      CLOUDRIFT_TOKEN: ${{ secrets.CLOUDRIFT_TOKEN }}
+      CLOUDRIFT_TEAM_ID: ${{ secrets.CLOUDRIFT_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - run: go mod download
+      - name: Generate test SSH key
+        if: env.CLOUDRIFT_TOKEN != ''
+        run: |
+          ssh-keygen -t ed25519 -f /tmp/ci-test-key -N "" -q
+          echo "CLOUDRIFT_TEST_SSH_PUBLIC_KEY=$(cat /tmp/ci-test-key.pub)" >> $GITHUB_ENV
+      - name: Run acceptance tests
+        if: env.CLOUDRIFT_TOKEN != ''
+        env:
+          TF_ACC: "1"
+        run: go test -v -cover -timeout=40m -run "^TestAcc_" ./internal/provider/

@@ -1,14 +1,42 @@
 package provider
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
+
+func Test_SSHKeyResource_TeamApiKeyError(t *testing.T) {
+	t.Parallel()
+
+	server := defaultHttpTestServer(map[string]func(w http.ResponseWriter, req *http.Request){
+		"/api/v1/ssh-keys/add": func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte("User cannot be authenticated from the request"))
+		},
+		"/api/v1/ssh-keys/list": func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"data":{"keys":[]}}`))
+		},
+	})
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig(server.URL, "1.0") + `resource "cloudrift_ssh_key" "default" {
+					name = "test"
+					public_key = "ssh-rsa AAAA test"
+				}`,
+				ExpectError: regexp.MustCompile("(?i)team API key"),
+			},
+		},
+	})
+}
 
 func Test_SSHKeyResource(t *testing.T) {
 	t.Parallel()
@@ -17,61 +45,9 @@ func Test_SSHKeyResource(t *testing.T) {
 	publicKey := "ssh-rsa AAAA anotheruser"
 
 	server := defaultHttpTestServer(map[string]func(w http.ResponseWriter, req *http.Request){
-		"/api/v1/ssh-keys/add": func(w http.ResponseWriter, req *http.Request) {
-			if req.Method == http.MethodPost {
-				var input struct {
-					Data struct {
-						Name      string `json:"name"`
-						PublicKey string `json:"public_key"`
-					} `json:"data"`
-				}
-
-				body, _ := io.ReadAll(req.Body)
-				_ = json.Unmarshal(body, &input)
-
-				resp := fmt.Sprintf(`
-					{
-						"data": {
-							"public_key": {
-								"id": "11111",
-								"name": "%s",
-								"public_key": "%s"
-							}
-						}
-					}
-				`, input.Data.Name, input.Data.PublicKey)
-
-				w.Header().Set("Content-Type", "json")
-				w.WriteHeader(http.StatusCreated)
-				_, _ = w.Write([]byte(resp))
-				return
-			}
-		},
-		"/api/v1/ssh-keys/list": func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "json")
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write(fmt.Appendf(nil, `
-				{
-					"data": {
-						"keys": [
-							{
-								"id": "1",
-								"name": "test-key",
-								"public_key": "ssh-rsa AAAA testuser"
-							},
-							{
-								"id": "11111",
-								"name": "%s",
-								"public_key": "%s"
-							}
-						]
-					}
-				}
-			`, keyName, publicKey))
-		},
-		"/api/v1/ssh-keys/11111": func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		},
+		"/api/v1/ssh-keys/add":   sshKeyAddHandler(),
+		"/api/v1/ssh-keys/list":  sshKeyListHandlerWithKey(keyName, publicKey),
+		"/api/v1/ssh-keys/11111": sshKeyDeleteHandler(),
 	})
 
 	resource.Test(t, resource.TestCase{

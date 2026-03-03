@@ -18,7 +18,12 @@ func Test_RecipesDataSource(t *testing.T) {
 				Config: providerConfig(server.URL, "1.0") + `data "cloudrift_recipes" "default" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.cloudrift_recipes.default", "groups.0.recipes.0.name", "ubuntu"),
+					resource.TestCheckResourceAttr("data.cloudrift_recipes.default", "groups.0.recipes.0.description", "Ubuntu 22.04 LTS"),
+					resource.TestCheckResourceAttr("data.cloudrift_recipes.default", "groups.0.recipes.0.tags.#", "2"),
+					resource.TestCheckResourceAttr("data.cloudrift_recipes.default", "groups.0.recipes.0.tags.0", "linux"),
+					resource.TestCheckResourceAttr("data.cloudrift_recipes.default", "groups.0.recipes.0.tags.1", "ubuntu"),
 					resource.TestCheckResourceAttr("data.cloudrift_recipes.default", "groups.0.recipes.1.name", "ubuntu-2"),
+					resource.TestCheckResourceAttr("data.cloudrift_recipes.default", "groups.0.recipes.1.tags.#", "0"),
 				),
 			},
 		},

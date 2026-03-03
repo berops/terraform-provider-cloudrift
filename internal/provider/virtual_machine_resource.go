@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Polling internval for the creation/destruction of resources.
+// Polling interval for the creation/destruction of resources.
 const InstancePollingInterval = 5 * time.Second
 
 var (
@@ -51,6 +51,7 @@ type virtualMachineModel struct {
 	InstanceType types.String `tfsdk:"instance_type"`
 
 	VirtualMachines types.List `tfsdk:"virtual_machines"`
+	PortMappings    types.List `tfsdk:"port_mappings"`
 
 	// Write only attributes.
 	Metadata   *virtualMachineMetadataModel `tfsdk:"metadata"`
@@ -162,6 +163,22 @@ func (r *virtualMachineResource) Schema(_ context.Context, req resource.SchemaRe
 					},
 				},
 			},
+			"port_mappings": schema.ListNestedAttribute{
+				MarkdownDescription: "Port mappings for shared-IP instances. Each mapping pairs an external port on the shared IP to an internal port on the VM.",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"host_port": schema.Int64Attribute{
+							MarkdownDescription: "Port on the host/shared IP.",
+							Computed:            true,
+						},
+						"guest_port": schema.Int64Attribute{
+							MarkdownDescription: "Port on the VM.",
+							Computed:            true,
+						},
+					},
+				},
+			},
 			"metadata": schema.SingleNestedAttribute{
 				MarkdownDescription: "Option to provide metadata. Currently supported is `startup_commands`.",
 				Optional:            true,
@@ -264,64 +281,49 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 	}
 
 	id := ids.Data.InstanceIds[0]
-	plan.ID = types.StringValue(id) // always assing atleast the ID to the state file.
+	plan.ID = types.StringValue(id) // always assign at least the ID to the state file.
 
 	var last *cloudriftapi.InstanceAndUsageInfo
 
+	// savePartialState persists whatever we know about the instance so far.
+	savePartialState := func() {
+		if last != nil {
+			resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
+		}
+		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	}
+
 	// The provisioning timeout is generous here, as usually the VM is provisioned
-	// within 2 - 6 mins. The timeout here is in case of failure so that the we eventually
+	// within 2 - 6 mins. The timeout here is in case of failure so that we eventually
 	// exit and don't wait for the VM infinitely.
 	provisioningTimeout := time.After(28 * time.Minute)
 
-	// we have successfully rented out the VM. Poll until finished creating, or timeout is reached.
+	// We have successfully rented out the VM. Poll until finished creating, or timeout is reached.
 	for {
 		select {
 		case <-provisioningTimeout:
-			// Failed to provisioning VM within the requested timeout.
-			//
-			// If there was some state previously fetched, use it to store it in the state file.
-			if last != nil {
-				resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
-			}
-
-			// Save any partial state into the state file.
-			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
-
+			savePartialState()
 			resp.Diagnostics.AddError(
 				"Provisioning timeout reached",
 				"Provisioning timeout reached before finished waiting on instance creation",
 			)
-
 			return
+
 		case <-ctx.Done():
-			// Context cancelled.
-			//
-			// If there was some state previously fetched, use it to store it in the state file.
-			if last != nil {
-				resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
-			}
-
-			// Save any partial state into the state file.
-			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
-
+			savePartialState()
 			if err := ctx.Err(); err != nil {
 				resp.Diagnostics.AddError(
 					"Polling Interval Canceled",
 					"Polling interval canceled before finished waiting on instance creation: "+err.Error(),
 				)
 			}
-
 			return
+
 		case <-time.After(InstancePollingInterval):
 			current, err := r.client.GetInstance(id)
 			if err != nil {
 				if !errors.Is(err, cloudriftapi.ErrNotFound) {
-					if last != nil {
-						resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
-					}
-					// If there was an API error, store the last know state of the virtual machine
-					// in the state file.
-					resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+					savePartialState()
 				}
 				resp.Diagnostics.AddError(
 					"Error creating Virtual Machine",
@@ -338,17 +340,10 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			// it seems to be checking the [VirtualMachines] array for readiness after
 			// which it signals that the user can connect to the VM, we try to mimic this
 			// here.
-			vmReady := false
-			if len(last.VirtualMachines) > 0 && last.VirtualMachines[0].Ready {
-				vmReady = true
-			}
+			vmReady := len(last.VirtualMachines) > 0 && last.VirtualMachines[0].Ready
 
 			if last.Status == cloudriftapi.Active && vmReady {
-				resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
-				resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
+				savePartialState()
 				return
 			}
 		}
@@ -470,6 +465,12 @@ func populateModelFromInstanceResponse(m *virtualMachineModel, data *cloudriftap
 		m.InstanceType = types.StringValue(data.ResourceInfo.InstanceType)
 	}
 
+	vmAttrTypes := map[string]attr.Type{
+		"vmid":     types.Int64Type,
+		"name":     types.StringType,
+		"username": types.StringType,
+	}
+
 	var vms []attr.Value
 	for _, vm := range data.VirtualMachines {
 		model := virtualMachineInfoModel{
@@ -482,11 +483,7 @@ func populateModelFromInstanceResponse(m *virtualMachineModel, data *cloudriftap
 			}
 		}
 
-		obj, d := types.ObjectValue(map[string]attr.Type{
-			"vmid":     types.Int64Type,
-			"name":     types.StringType,
-			"username": types.StringType,
-		}, map[string]attr.Value{
+		obj, d := types.ObjectValue(vmAttrTypes, map[string]attr.Value{
 			"vmid":     model.VmID,
 			"name":     model.Name,
 			"username": model.Username,
@@ -497,28 +494,59 @@ func populateModelFromInstanceResponse(m *virtualMachineModel, data *cloudriftap
 	}
 
 	var valueDiags diag.Diagnostics
-	m.VirtualMachines, valueDiags = types.ListValue(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"vmid":     types.Int64Type,
-			"name":     types.StringType,
-			"username": types.StringType,
-		},
-	}, vms)
-
+	m.VirtualMachines, valueDiags = types.ListValue(types.ObjectType{AttrTypes: vmAttrTypes}, vms)
 	diags = append(diags, valueDiags...)
+
+	// Port mappings for shared-IP instances.
+	portMappingAttrTypes := map[string]attr.Type{
+		"host_port":  types.Int64Type,
+		"guest_port": types.Int64Type,
+	}
+	portMappingObjType := types.ObjectType{AttrTypes: portMappingAttrTypes}
+
+	if data.PortMappings != nil && len(*data.PortMappings) > 0 {
+		var pmValues []attr.Value
+		for i, pm := range *data.PortMappings {
+			if len(pm) < 2 {
+				diags = append(diags, diag.NewWarningDiagnostic(
+					"Invalid port mapping entry",
+					fmt.Sprintf("Port mapping at index %d has fewer than 2 values, skipping.", i),
+				))
+				continue
+			}
+			hostPort, ok1 := pm[0].(float64)
+			guestPort, ok2 := pm[1].(float64)
+			if !ok1 || !ok2 {
+				diags = append(diags, diag.NewWarningDiagnostic(
+					"Invalid port mapping entry",
+					fmt.Sprintf("Port mapping at index %d has non-numeric values, skipping.", i),
+				))
+				continue
+			}
+			obj, d := types.ObjectValue(portMappingAttrTypes, map[string]attr.Value{
+				"host_port":  types.Int64Value(int64(hostPort)),
+				"guest_port": types.Int64Value(int64(guestPort)),
+			})
+			diags = append(diags, d...)
+			pmValues = append(pmValues, obj)
+		}
+		m.PortMappings, valueDiags = types.ListValue(portMappingObjType, pmValues)
+		diags = append(diags, valueDiags...)
+	} else {
+		m.PortMappings = types.ListNull(portMappingObjType)
+	}
 
 	// Since write-only attributes are supported on newer tf versions, have a workaround.
 	// Carry over the previous state for the write only attributes, since the API for fetching
 	// Instances does not return these.
 	// https://discuss.hashicorp.com/t/handling-attribute-required-during-create-but-not-returned-during-read/74613
 	//
-	// state.Metada = state.Metadata
+	// state.Metadata = state.Metadata
 	// state.Recipe = state.Recipe
 	// state.Datacenter = state.Datacenter
 	// state.SSHKeyID = state.SSHKeyID
 
 	return diags
-
 }
 
 func (r *virtualMachineResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

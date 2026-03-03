@@ -33,6 +33,9 @@ type CloudRiftProviderModel struct {
 	// Optional Protocol Version configurable at the provider level, if not set the
 	// default protocol version will be used.
 	ProtoVersion types.String `tfsdk:"proto_version"`
+
+	// Optional Team ID for team-scoped operations (instance provisioning).
+	TeamID types.String `tfsdk:"team_id"`
 }
 
 type CloudRiftProvider struct {
@@ -71,6 +74,11 @@ func (p *CloudRiftProvider) Schema(ctx context.Context, req provider.SchemaReque
 				MarkdownDescription: "Protocol Version to be used for the CloudRift platform API." +
 					"If not specified the provider has a built in default version that will be used. May also be provided via CLOUDRIFT_PROTO_VERSION environment variable.",
 				Optional: true, // can be fetched from env.
+			},
+			"team_id": schema.StringAttribute{
+				Description:         "Team ID for team-scoped operations (instance provisioning). May also be provided via CLOUDRIFT_TEAM_ID environment variable.",
+				MarkdownDescription: "Team ID for team-scoped operations (instance provisioning). May also be provided via CLOUDRIFT_TEAM_ID environment variable.",
+				Optional:            true,
 			},
 		},
 	}
@@ -111,6 +119,15 @@ func (p *CloudRiftProvider) Configure(ctx context.Context, req provider.Configur
 		)
 	}
 
+	if config.TeamID.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("team_id"),
+			"Unknown CloudRift Team ID",
+			"The provider cannot create the CloudRift API client as there is an unknown configuration for the CloudRift Team ID."+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the CLOUDRIFT_TEAM_ID environment variable.",
+		)
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -118,6 +135,7 @@ func (p *CloudRiftProvider) Configure(ctx context.Context, req provider.Configur
 	token := os.Getenv("CLOUDRIFT_TOKEN")
 	baseURL := os.Getenv("CLOUDRIFT_BASE_URL")
 	protoVersion := os.Getenv("CLOUDRIFT_PROTO_VERSION")
+	teamID := os.Getenv("CLOUDRIFT_TEAM_ID")
 
 	if !config.Token.IsNull() {
 		token = config.Token.ValueString()
@@ -131,12 +149,19 @@ func (p *CloudRiftProvider) Configure(ctx context.Context, req provider.Configur
 		protoVersion = config.ProtoVersion.ValueString()
 	}
 
+	if !config.TeamID.IsNull() {
+		teamID = config.TeamID.ValueString()
+	}
+
 	if baseURL == "" {
 		baseURL = cloudriftapi.Endpoint
 	}
 
+	// Default to ~upcoming because team-scoped selectors (scope field)
+	// are not yet available in any dated API version.
+	// TODO: switch to a fixed version once one supports team scope.
 	if protoVersion == "" {
-		protoVersion = cloudriftapi.Proto20250610
+		protoVersion = cloudriftapi.ProtoUpcoming
 	}
 
 	if token == "" {
@@ -153,7 +178,7 @@ func (p *CloudRiftProvider) Configure(ctx context.Context, req provider.Configur
 		return
 	}
 
-	client, err := cloudriftapi.NewCustom(baseURL, token, protoVersion, cloudriftapi.WithRetryableHttpClient(4))
+	client, err := cloudriftapi.NewCustom(baseURL, token, protoVersion, teamID, cloudriftapi.WithRetryableHttpClient(4))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to create CloudRift API Client",

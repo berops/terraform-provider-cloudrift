@@ -2,17 +2,16 @@ terraform {
   required_providers {
     cloudrift = {
       source = "berops/cloudrift"
-      # version = "..."
     }
   }
 }
 
 provider "cloudrift" {
-  # set CLOUDRIFT_TOKEN env or:
-  # token = ""
+  # Set CLOUDRIFT_TOKEN env var or uncomment:
+  # token = "rift_..."
 }
 
 resource "cloudrift_ssh_key" "primary" {
   name       = "primary"
-  public_key = file("~/.ssh/id_ed25519.pub")
+  public_key = trimspace(file("~/.ssh/id_ed25519.pub"))
 }

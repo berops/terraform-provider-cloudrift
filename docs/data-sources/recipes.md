@@ -26,7 +26,7 @@ Read-Only:
 
 - `description` (String) Description of the group
 - `name` (String) Name of the group containing related recipes
-- `recipes` (Attributes List) Recipes beloning to the group (see [below for nested schema](#nestedatt--groups--recipes))
+- `recipes` (Attributes List) Recipes belonging to the group (see [below for nested schema](#nestedatt--groups--recipes))
 
 <a id="nestedatt--groups--recipes"></a>
 ### Nested Schema for `groups.recipes`
@@ -35,3 +35,4 @@ Read-Only:
 
 - `description` (String) Description of the recipe
 - `name` (String) Name of the recipe
+- `tags` (List of String) Tags for the recipe

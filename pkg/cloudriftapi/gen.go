@@ -1,25 +1,23 @@
-// The api.json is downloaded from https://api.cloudrift.ai/api-docs/openapi2.json (19th August, 2025)
-// To generate a go client from the spec several changes had to be made to the file, including changes
-// to the described API.
+// Regeneration workflow:
 //
-// The API had to be translated to the openapi version 3.0.4
-// Removed `"items": false`, fields
-// Removed IpRangeSelector as there was no such type in the API, for endpoint ListIpRangesRequestProto.
-// Removed ProviderSelector as there was no such type in the API, for endpoint ListIpRangesRequestProto.
-// Replaced nullable types via the `oneOf` directive, by having `"type": "...", "nullable": true`
+//  1. Download the raw spec:
+//     curl -s https://api.cloudrift.ai/api-docs/openapi2.json > api_raw.json
 //
-// several endpoints seems to return code 200 on success, but the API describes the returns as 201
+//  2. Patch the spec (fixes oapi-codegen incompatibilities):
+//     go run patchspec.go
 //
-// - Instances
-// - InstanceTypes
-// - Recipes
+//  3. Generate the Go client:
+//     go generate
 //
-// Similarly for the InstanceUserInstructions.instruction_template, changed type "array" to "string" to reflect the actuall implementation.
+// The patchspec.go tool applies the following transformations to api_raw.json → api.json:
+//   - Downgrade OpenAPI 3.1.0 → 3.0.4 (oapi-codegen does not support 3.1.0)
+//   - Replace "items": false with "items": {} (oapi-codegen cannot parse boolean items)
+//   - Convert 3.1.0 nullable types ["type", "null"] → 3.0.x "nullable": true
+//   - Convert oneOf with {"type":"null"} → 3.0.x nullable
+//   - Fix response codes 201 → 200 (API actually returns 200)
 //
-// The instance-types list return type was adjusted to instaluce the InstanceVariantInfo as a reference which was missing.
-//
-// The generated file is mostly used for its types. A custom client has been created for interaction with the CloudRift API
-// that leverages the generated types.
+// The generated file is mostly used for its types. A custom client has been created
+// for interaction with the CloudRift API that leverages the generated types.
 //
 //go:generate go tool oapi-codegen -generate=types,client -package cloudriftapi -o cloudriftapi.gen.go api.json
 package cloudriftapi

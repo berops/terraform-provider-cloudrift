@@ -22,11 +22,6 @@ const (
 	TokenScopes       = "token.Scopes"
 )
 
-// Defines values for AccountSelector0.
-const (
-	ByToken AccountSelector0 = "ByToken"
-)
-
 // Defines values for ApiKeySelector2.
 const (
 	ApiKeySelector2All ApiKeySelector2 = "All"
@@ -64,10 +59,32 @@ const (
 	InstanceTypeSelector0All InstanceTypeSelector0 = "All"
 )
 
+// Defines values for InstanceVolumeSelector1.
+const (
+	InstanceVolumeSelector1None InstanceVolumeSelector1 = "None"
+)
+
 // Defines values for KeyStatus.
 const (
 	KeyStatusError   KeyStatus = "error"
 	KeyStatusSuccess KeyStatus = "success"
+)
+
+// Defines values for NetworkSelector1.
+const (
+	NetworkSelector1All NetworkSelector1 = "All"
+)
+
+// Defines values for NodeDrainState.
+const (
+	NodeDrainStateDrained  NodeDrainState = "Drained"
+	NodeDrainStateDraining NodeDrainState = "Draining"
+	NodeDrainStateNone     NodeDrainState = "None"
+)
+
+// Defines values for NodeHealthStatus0.
+const (
+	Healthy NodeHealthStatus0 = "Healthy"
 )
 
 // Defines values for NodeStatus.
@@ -76,6 +93,11 @@ const (
 	NotResponding NodeStatus = "NotResponding"
 	Offline       NodeStatus = "Offline"
 	Ready         NodeStatus = "Ready"
+)
+
+// Defines values for ProviderSelector0.
+const (
+	ProviderSelector0All ProviderSelector0 = "All"
 )
 
 // Defines values for ReservationSelector0.
@@ -90,9 +112,19 @@ const (
 	ResponseStatusSuccess        ResponseStatus = "success"
 )
 
+// Defines values for SelectorScope0.
+const (
+	Personal SelectorScope0 = "Personal"
+)
+
+// Defines values for SelectorScope3.
+const (
+	SelectorScope3All SelectorScope3 = "All"
+)
+
 // Defines values for SshKeySelector1.
 const (
-	All SshKeySelector1 = "All"
+	SshKeySelector1All SshKeySelector1 = "All"
 )
 
 // Defines values for TeamRole.
@@ -102,40 +134,41 @@ const (
 	Owner  TeamRole = "Owner"
 )
 
+// Defines values for VirtDomainState.
+const (
+	Blocked     VirtDomainState = "Blocked"
+	Crashed     VirtDomainState = "Crashed"
+	NoState     VirtDomainState = "NoState"
+	PMSuspended VirtDomainState = "PMSuspended"
+	Paused      VirtDomainState = "Paused"
+	Running     VirtDomainState = "Running"
+	Shutdown    VirtDomainState = "Shutdown"
+	Shutoff     VirtDomainState = "Shutoff"
+)
+
+// Defines values for VolumeSelector2.
+const (
+	All VolumeSelector2 = "All"
+)
+
+// Defines values for VolumeStatus.
+const (
+	Attached  VolumeStatus = "Attached"
+	Available VolumeStatus = "Available"
+	Creating  VolumeStatus = "Creating"
+	Deleting  VolumeStatus = "Deleting"
+	Error     VolumeStatus = "Error"
+)
+
 // AccountInfoProto defines model for AccountInfoProto.
 type AccountInfoProto struct {
 	Data struct {
-		// Balance Amount of money in currency units (cents)
-		Balance int64 `json:"balance"`
-
-		// CurrentCostPerHour Current cost per hour in currency units (cents)
-		CurrentCostPerHour *float64 `json:"current_cost_per_hour"`
-
-		// DisputeFees Dispute fees that are charged by the payment processor
-		DisputeFees int64 `json:"dispute_fees"`
-
-		// Disputed Disputed amount, i.e. the amount that is disputed by the user and thus frozen
-		Disputed int64 `json:"disputed"`
-
-		// Pending Amount of money pending to be credited/debited
-		Pending float64 `json:"pending"`
+		// Balance Balance in USD
+		Balance float64 `json:"balance"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
 	Version string `json:"version"`
-}
-
-// AccountSelector defines model for AccountSelector.
-type AccountSelector struct {
-	union json.RawMessage
-}
-
-// AccountSelector0 defines model for AccountSelector.0.
-type AccountSelector0 string
-
-// AccountSelector1 defines model for .
-type AccountSelector1 struct {
-	ByTeam string `json:"ByTeam"`
 }
 
 // AddApiKeyRequestProto defines model for AddApiKeyRequestProto.
@@ -175,6 +208,31 @@ type AddApiKeyResponseProto struct {
 	Version string `json:"version"`
 }
 
+// AddInstanceTypeRequestProto defines model for AddInstanceTypeRequestProto.
+type AddInstanceTypeRequestProto struct {
+	Data struct {
+		InstanceType InstanceTypeInfo `json:"instance_type"`
+
+		// Providers List of providers that the instance type should be available on
+		Providers *[]string `json:"providers"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// AddInstanceVariantRequestProto defines model for AddInstanceVariantRequestProto.
+type AddInstanceVariantRequestProto struct {
+	Data struct {
+		// InstanceTypeName Instance type name
+		InstanceTypeName string                 `json:"instance_type_name"`
+		Variant          InstanceVariantRawInfo `json:"variant"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // AddNetworkRequestProto defines model for AddNetworkRequestProto.
 type AddNetworkRequestProto struct {
 	Data struct {
@@ -201,6 +259,9 @@ type AddNetworkRequestProto struct {
 
 		// TeamId Optional team ID
 		TeamId *string `json:"team_id"`
+
+		// TeamName Optional team name (alternative to team_id)
+		TeamName *string `json:"team_name"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -212,6 +273,75 @@ type AddNetworkResponseProto struct {
 	Data struct {
 		// Id ID of the created network
 		Id string `json:"id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// AddRecipeDetails defines model for AddRecipeDetails.
+type AddRecipeDetails struct {
+	union json.RawMessage
+}
+
+// AddRecipeDetails0 defines model for .
+type AddRecipeDetails0 struct {
+	Docker struct {
+		// Command Docker command to run the recipe
+		Command []string `json:"command"`
+
+		// Env Environment variables to set
+		Env [][]interface{} `json:"env"`
+
+		// Image Docker image corresponding to the recipe
+		Image string `json:"image"`
+
+		// Ports Ports to expose in the format <host>:<container>:<tcp|udp|sctp>
+		Ports []string `json:"ports"`
+	} `json:"Docker"`
+}
+
+// AddRecipeDetails1 defines model for .
+type AddRecipeDetails1 struct {
+	VirtualMachine struct {
+		Architecture *string `json:"architecture"`
+		CloudinitUrl *string `json:"cloudinit_url"`
+
+		// ImageUrl VM image to use for the recipe
+		ImageUrl string  `json:"image_url"`
+		OsFamily *string `json:"os_family"`
+	} `json:"VirtualMachine"`
+}
+
+// AddRecipeRequestProto defines model for AddRecipeRequestProto.
+type AddRecipeRequestProto struct {
+	Data struct {
+		// Description Description of the recipe
+		Description string           `json:"description"`
+		Details     AddRecipeDetails `json:"details"`
+
+		// Global If true, create a global recipe (no owner). Only admins can set this to true.
+		// Regular users' recipes are always owned by them.
+		Global *bool `json:"global,omitempty"`
+
+		// GroupName Optional group name to add the recipe to
+		GroupName *string `json:"group_name"`
+
+		// InstructionsUrl URL to the instructions for the recipe, if available
+		InstructionsUrl *string `json:"instructions_url"`
+
+		// LogoUrl Logo of the recipe, if available, e.g. Ubuntu, PyTorch or Jupyter logo
+		LogoUrl *string `json:"logo_url"`
+
+		// Name Name of the recipe
+		Name string `json:"name"`
+
+		// Tags Tags for the recipe to help users find it and filter by them
+		Tags *[]string `json:"tags"`
+
+		// TeamId Optional team ID to assign ownership to a team instead of the user.
+		// The user must be a member of the team to create team-owned recipes.
+		TeamId *string `json:"team_id"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -318,6 +448,44 @@ type BulkServiceChargeResponseProto struct {
 	Version string `json:"version"`
 }
 
+// CancelDrainRequestProto defines model for CancelDrainRequestProto.
+type CancelDrainRequestProto struct {
+	// Data Request to cancel an active drain
+	Data struct {
+		// Selector Selector for node drain operations
+		Selector NodeDrainSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// CancelDrainResponseProto defines model for CancelDrainResponseProto.
+type CancelDrainResponseProto struct {
+	Data struct {
+		NodeIds []string `json:"node_ids"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// CapabilitiesResponseProto defines model for CapabilitiesResponseProto.
+type CapabilitiesResponseProto struct {
+	Data struct {
+		Features []GlobalCapability `json:"features"`
+
+		// IsAdmin Whether the current account has an admin role.
+		IsAdmin bool `json:"is_admin"`
+
+		// ProviderName Name of the compute provider associated with the current account, if any.
+		ProviderName *string `json:"provider_name"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // ComputeProviderInfo defines model for ComputeProviderInfo.
 type ComputeProviderInfo struct {
 	// Datacenters Data centers where the provider has resources
@@ -377,6 +545,34 @@ type CpuInfo struct {
 	VendorLogoUrl *string `json:"vendor_logo_url"`
 }
 
+// CreateReservationRequestProto defines model for CreateReservationRequestProto.
+type CreateReservationRequestProto struct {
+	Data struct {
+		// ExecutorId ID of the executor to attach the reservation to
+		ExecutorId string `json:"executor_id"`
+
+		// ReservationTypeId ID of the reservation type determining duration/discount
+		ReservationTypeId string `json:"reservation_type_id"`
+
+		// TeamId Optional team ID
+		TeamId *string `json:"team_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// CreateReservationResponseProto defines model for CreateReservationResponseProto.
+type CreateReservationResponseProto struct {
+	Data struct {
+		// ReservationId ID of the created reservation
+		ReservationId string `json:"reservation_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // CreateTeamRequestProto defines model for CreateTeamRequestProto.
 type CreateTeamRequestProto struct {
 	Data struct {
@@ -404,6 +600,42 @@ type CreateTeamResponseProto struct {
 	Version string `json:"version"`
 }
 
+// CreateVolumeRequestProto defines model for CreateVolumeRequestProto.
+type CreateVolumeRequestProto struct {
+	Data struct {
+		// Datacenter Datacenter name where the volume should be created
+		Datacenter string `json:"datacenter"`
+
+		// Description Optional description
+		Description *string `json:"description"`
+
+		// Name Volume name
+		Name string `json:"name"`
+
+		// SizeGb Volume size in GB
+		SizeGb int32 `json:"size_gb"`
+
+		// TeamId Team ID in case of a team volume
+		TeamId *string `json:"team_id"`
+
+		// VolumeTypeName Volume type name
+		VolumeTypeName string `json:"volume_type_name"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// CreateVolumeResponseProto defines model for CreateVolumeResponseProto.
+type CreateVolumeResponseProto struct {
+	Data struct {
+		Volume VolumeInfo `json:"volume"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // DataCenterInfo defines model for DataCenterInfo.
 type DataCenterInfo struct {
 	// CountryCode Data center country code
@@ -418,8 +650,8 @@ type DataCenterInfo struct {
 
 // DatacenterNetworks defines model for DatacenterNetworks.
 type DatacenterNetworks struct {
-	Datacenter string   `json:"datacenter"`
-	Networks   []string `json:"networks"`
+	Datacenter string        `json:"datacenter"`
+	Networks   []NetworkInfo `json:"networks"`
 }
 
 // DeleteApiKeysRequestProto defines model for DeleteApiKeysRequestProto.
@@ -442,6 +674,45 @@ type DeleteApiKeysResponseProto struct {
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
 	Version string `json:"version"`
+}
+
+// DeleteNetworkRequestProto defines model for DeleteNetworkRequestProto.
+type DeleteNetworkRequestProto struct {
+	Data struct {
+		// Selector Selector for identifying a network
+		Selector DeleteNetworkSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// DeleteNetworkResponseProto defines model for DeleteNetworkResponseProto.
+type DeleteNetworkResponseProto struct {
+	Data struct {
+		// ActiveInstanceCount Number of active instances that were using this network
+		ActiveInstanceCount int64 `json:"active_instance_count"`
+
+		// DeletedIds IDs of deleted networks
+		DeletedIds []string `json:"deleted_ids"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// DeleteNetworkSelector Selector for identifying a network
+type DeleteNetworkSelector struct {
+	union json.RawMessage
+}
+
+// DeleteNetworkSelector0 Select network by datacenter and name
+type DeleteNetworkSelector0 struct {
+	// ByDatacenterAndName Select network by datacenter and name
+	ByDatacenterAndName struct {
+		Datacenter string `json:"datacenter"`
+		Network    string `json:"network"`
+	} `json:"ByDatacenterAndName"`
 }
 
 // DeleteSshKeyRequestProto defines model for DeleteSshKeyRequestProto.
@@ -486,16 +757,108 @@ type DockerRegistryAuth0 struct {
 	} `json:"UsernamePassword"`
 }
 
+// DrainNodeRequestProto defines model for DrainNodeRequestProto.
+type DrainNodeRequestProto struct {
+	// Data Request to start draining nodes
+	Data struct {
+		// CustomMessage Custom message to include in the notification email (uses default if not provided)
+		CustomMessage *string `json:"custom_message"`
+
+		// GracePeriodSecs Grace period in seconds before instances are terminated
+		// Common values: 86400 (24h), 172800 (2d), 259200 (3d), 604800 (1 week)
+		GracePeriodSecs int64 `json:"grace_period_secs"`
+
+		// NotifyUsers Whether to send notification emails to users with active instances
+		NotifyUsers *bool `json:"notify_users,omitempty"`
+
+		// Selector Selector for node drain operations
+		Selector NodeDrainSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// DrainNodeResponseProto defines model for DrainNodeResponseProto.
+type DrainNodeResponseProto struct {
+	// Data Response after starting node drain
+	Data struct {
+		Results []NodeDrainResult `json:"results"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// EmailVerificationResendRequestProto defines model for EmailVerificationResendRequestProto.
+type EmailVerificationResendRequestProto struct {
+	Data struct {
+		// Email Email to send the verification link
+		Email string `json:"email"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// ExternalTransactionAccountSelector defines model for ExternalTransactionAccountSelector.
+type ExternalTransactionAccountSelector struct {
+	union json.RawMessage
+}
+
+// ExternalTransactionAccountSelector0 defines model for .
+type ExternalTransactionAccountSelector0 struct {
+	ComputeProvider struct {
+		// Name Name of the compute provider
+		Name string `json:"name"`
+	} `json:"ComputeProvider"`
+}
+
+// ExternalTransactionAccountSelector1 defines model for .
+type ExternalTransactionAccountSelector1 struct {
+	TeamByName struct {
+		// Name Name of the team
+		Name string `json:"name"`
+	} `json:"TeamByName"`
+}
+
 // ExternalTransactionRequestProto defines model for ExternalTransactionRequestProto.
 type ExternalTransactionRequestProto struct {
 	Data struct {
-		Account AccountSelector `json:"account"`
+		Account ExternalTransactionAccountSelector `json:"account"`
 
 		// Amount Amount of money in currency units (cents)
 		Amount int64 `json:"amount"`
 
 		// Description Description of the payout
 		Description *string `json:"description"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// ForceDrainRequestProto defines model for ForceDrainRequestProto.
+type ForceDrainRequestProto struct {
+	// Data Request to force drain nodes (immediately terminate all instances)
+	// Only allowed when nodes are already in Draining state
+	Data struct {
+		// Reason Optional reason for force draining (shown to users in termination notice)
+		Reason *string `json:"reason"`
+
+		// Selector Selector for node drain operations
+		Selector NodeDrainSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// ForceDrainResponseProto defines model for ForceDrainResponseProto.
+type ForceDrainResponseProto struct {
+	// Data Response after force draining
+	Data struct {
+		Results []NodeForceDrainResult `json:"results"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -512,6 +875,18 @@ type GenerateSshKeyResponseProto struct {
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
 	Version string `json:"version"`
+}
+
+// GlobalCapability defines model for GlobalCapability.
+type GlobalCapability struct {
+	union json.RawMessage
+}
+
+// GlobalCapability0 defines model for .
+type GlobalCapability0 struct {
+	Nodes struct {
+		Read bool `json:"read"`
+	} `json:"nodes"`
 }
 
 // GpuInfo defines model for GpuInfo.
@@ -584,10 +959,14 @@ type InstanceAndUsageInfo struct {
 	// InternalHostAddress instance internal IP address (for implementation details)
 	InternalHostAddress *string `json:"internal_host_address"`
 
+	// MigProfile MIG profile name if this instance is using a fractional GPU (e.g., "1g.5gb")
+	MigProfile *string `json:"mig_profile"`
+
 	// NodeId ID of the node the instance is running on
 	NodeId          string                `json:"node_id"`
 	NodeMode        InstanceMode          `json:"node_mode"`
 	NodeStatus      NodeStatus            `json:"node_status"`
+	PortMappings    *[][]interface{}      `json:"port_mappings"`
 	ReservationData *ReservationDates     `json:"reservation_data,omitempty"`
 	ResourceInfo    *InstanceResourceInfo `json:"resource_info,omitempty"`
 	Status          InstanceStatus        `json:"status"`
@@ -595,6 +974,9 @@ type InstanceAndUsageInfo struct {
 
 	// VirtualMachines Virtual machines running on this instance
 	VirtualMachines []InstanceVirtualMachineInfo `json:"virtual_machines"`
+
+	// VolumeMounts Information about volumes mounted on the instance
+	VolumeMounts *[]VolumeInfo `json:"volume_mounts"`
 }
 
 // InstanceBareMetalInfo defines model for InstanceBareMetalInfo.
@@ -612,7 +994,8 @@ type InstanceConfiguration struct {
 // InstanceConfiguration0 defines model for .
 type InstanceConfiguration0 struct {
 	BareMetal struct {
-		SshKey InstanceSshKeySelector `json:"ssh_key"`
+		SshKey  InstanceSshKeySelector  `json:"ssh_key"`
+		Volumes *InstanceVolumeSelector `json:"volumes,omitempty"`
 	} `json:"BareMetal"`
 }
 
@@ -626,8 +1009,12 @@ type InstanceConfiguration1 struct {
 		CloudinitUrl *string `json:"cloudinit_url"`
 
 		// ImageUrl ULR of the image to use for the VM
-		ImageUrl string                  `json:"image_url"`
-		SshKey   *InstanceSshKeySelector `json:"ssh_key,omitempty"`
+		ImageUrl string `json:"image_url"`
+
+		// Ports Ports to expose
+		Ports   *[]string               `json:"ports"`
+		SshKey  *InstanceSshKeySelector `json:"ssh_key,omitempty"`
+		Volumes *InstanceVolumeSelector `json:"volumes,omitempty"`
 	} `json:"VirtualMachine"`
 }
 
@@ -647,8 +1034,9 @@ type InstanceConfiguration2 struct {
 		Name *string `json:"name"`
 
 		// Ports Ports to expose in the format <host>:<container>/<tcp|udp|sctp>
-		Ports        *[]string           `json:"ports"`
-		RegistryAuth *DockerRegistryAuth `json:"registry_auth,omitempty"`
+		Ports        *[]string               `json:"ports"`
+		RegistryAuth *DockerRegistryAuth     `json:"registry_auth,omitempty"`
+		Volumes      *InstanceVolumeSelector `json:"volumes,omitempty"`
 	} `json:"Docker"`
 }
 
@@ -733,14 +1121,70 @@ type InstanceType struct {
 	// BrandShort Short and recognizable brand name of the core instance hardware for easier navigation
 	BrandShort *string `json:"brand_short"`
 
+	// CostPerHour Cost of the instance per hour in currency units (cents)
+	CostPerHour int64 `json:"cost_per_hour"`
+
+	// Datacenters List of datacenters where this instance type is available
+	Datacenters []InstanceTypeDatacenter `json:"datacenters"`
+
 	// Manufacturer Used to display GPU or CPU (if no GPU is present) vendor to the user for easier navigation
 	Manufacturer *string `json:"manufacturer"`
 
 	// Name Instance type name
 	Name string `json:"name"`
 
-	// Variants List of variants of the Instance Type
+	// Variants Slice options for this instance type
 	Variants []InstanceVariantInfo `json:"variants"`
+}
+
+// InstanceTypeDatacenter defines model for InstanceTypeDatacenter.
+type InstanceTypeDatacenter struct {
+	// CountryCode Country code of the datacenter
+	CountryCode *string `json:"country_code"`
+
+	// Name Datacenter name
+	Name string `json:"name"`
+
+	// ProviderLogo Provider logo URL/path
+	ProviderLogo *string `json:"provider_logo"`
+
+	// ProviderName Provider name
+	ProviderName string `json:"provider_name"`
+}
+
+// InstanceTypeInfo defines model for InstanceTypeInfo.
+type InstanceTypeInfo struct {
+	// BrandShort Short and recognizable brand name of the core instance hardware for easier navigation
+	BrandShort *string `json:"brand_short"`
+
+	// CostPerHour Cost of the instance per hour in currency units (cents)
+	CostPerHour int64 `json:"cost_per_hour"`
+
+	// Manufacturer Used to display GPU or CPU (if no GPU is present) vendor to the user for easier navigation
+	Manufacturer *string `json:"manufacturer"`
+
+	// Name Instance type name
+	Name string `json:"name"`
+}
+
+// InstanceTypeResponseProto defines model for InstanceTypeResponseProto.
+type InstanceTypeResponseProto struct {
+	Data struct {
+		// BrandShort Short and recognizable brand name of the core instance hardware for easier navigation
+		BrandShort *string `json:"brand_short"`
+
+		// CostPerHour Cost of the instance per hour in currency units (cents)
+		CostPerHour int64 `json:"cost_per_hour"`
+
+		// Manufacturer Used to display GPU or CPU (if no GPU is present) vendor to the user for easier navigation
+		Manufacturer *string `json:"manufacturer"`
+
+		// Name Instance type name
+		Name string `json:"name"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
 }
 
 // InstanceTypeSelector defines model for InstanceTypeSelector.
@@ -819,6 +1263,9 @@ type InstanceVariant struct {
 	// GpuCount GPU count
 	GpuCount *int32 `json:"gpu_count"`
 
+	// MigProfile MIG profile name for fractional GPU allocation (e.g., "1g.5gb", "2g.10gb")
+	MigProfile *string `json:"mig_profile"`
+
 	// Name Instance variant name including instance type name
 	Name string `json:"name"`
 
@@ -850,10 +1297,14 @@ type InstanceVariantInfo struct {
 	GpuCount *int32 `json:"gpu_count"`
 
 	// IpAvailabilityPerDc IP availability information per datacenter
+	// This leaves room to add extra fields in the future like the number of public IPs available
 	IpAvailabilityPerDc map[string]IpAvailability `json:"ip_availability_per_dc"`
 
 	// LogicalCpuCount Logical CPU count (cpu_count * 2)
 	LogicalCpuCount int32 `json:"logical_cpu_count"`
+
+	// MigProfile MIG profile name for fractional GPU allocation (e.g., "1g.5gb", "2g.10gb")
+	MigProfile *string `json:"mig_profile"`
 
 	// Name Instance variant name including instance type name
 	Name string `json:"name"`
@@ -864,17 +1315,111 @@ type InstanceVariantInfo struct {
 	// NodesPerDc Number of nodes that this variant is available on per datacenter
 	NodesPerDc map[string]int32 `json:"nodes_per_dc"`
 
+	// VolumeTypesPerDc Available volume types per datacenter
+	VolumeTypesPerDc map[string][]VolumeTypeAvailability `json:"volume_types_per_dc"`
+
 	// Vram VRAM per GPU
 	Vram int64 `json:"vram"`
 }
 
+// InstanceVariantRawInfo defines model for InstanceVariantRawInfo.
+type InstanceVariantRawInfo struct {
+	// CpuCount CPU count
+	CpuCount int32 `json:"cpu_count"`
+
+	// Disk Disk size in bytes
+	Disk int64 `json:"disk"`
+
+	// Dram RAM size
+	Dram int64 `json:"dram"`
+
+	// GpuCount GPU count
+	GpuCount *int32 `json:"gpu_count"`
+
+	// InstanceFraction Instance fraction
+	InstanceFraction []int32 `json:"instance_fraction"`
+
+	// MigProfile MIG profile name for fractional GPU allocation (e.g., "1g.5gb", "2g.10gb")
+	MigProfile *string `json:"mig_profile"`
+
+	// Name Instance variant name
+	Name string `json:"name"`
+
+	// Vram VRAM per GPU
+	Vram int64 `json:"vram"`
+}
+
+// InstanceVariantResponseProto defines model for InstanceVariantResponseProto.
+type InstanceVariantResponseProto struct {
+	Data struct {
+		// CpuCount CPU count
+		CpuCount int32 `json:"cpu_count"`
+
+		// Disk Disk size in bytes
+		Disk int64 `json:"disk"`
+
+		// Dram RAM size
+		Dram int64 `json:"dram"`
+
+		// GpuCount GPU count
+		GpuCount *int32 `json:"gpu_count"`
+
+		// InstanceFraction Instance fraction
+		InstanceFraction []int32 `json:"instance_fraction"`
+
+		// MigProfile MIG profile name for fractional GPU allocation (e.g., "1g.5gb", "2g.10gb")
+		MigProfile *string `json:"mig_profile"`
+
+		// Name Instance variant name
+		Name string `json:"name"`
+
+		// Vram VRAM per GPU
+		Vram int64 `json:"vram"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// InstanceVariantSelector defines model for InstanceVariantSelector.
+type InstanceVariantSelector struct {
+	union json.RawMessage
+}
+
+// InstanceVariantSelector0 defines model for .
+type InstanceVariantSelector0 struct {
+	ByInstanceTypeAndName struct {
+		// InstanceType Instance type name
+		InstanceType string `json:"instance_type"`
+
+		// Variant Instance variant name
+		Variant string `json:"variant"`
+	} `json:"ByInstanceTypeAndName"`
+}
+
 // InstanceVirtualMachineInfo defines model for InstanceVirtualMachineInfo.
 type InstanceVirtualMachineInfo struct {
-	LoginInfo *InstanceLoginInfo `json:"login_info,omitempty"`
-	Name      string             `json:"name"`
-	Ready     bool               `json:"ready"`
-	Vmid      int32              `json:"vmid"`
+	LoginInfo     *InstanceLoginInfo `json:"login_info,omitempty"`
+	MemoryUsageKb *int32             `json:"memory_usage_kb"`
+	Name          string             `json:"name"`
+	Ready         bool               `json:"ready"`
+	State         VirtDomainState    `json:"state"`
+	Vmid          int32              `json:"vmid"`
 }
+
+// InstanceVolumeSelector defines model for InstanceVolumeSelector.
+type InstanceVolumeSelector struct {
+	union json.RawMessage
+}
+
+// InstanceVolumeSelector0 List of volume mounts
+type InstanceVolumeSelector0 struct {
+	// Mounts List of volume mounts
+	Mounts []VolumeMount `json:"Mounts"`
+}
+
+// InstanceVolumeSelector1 No volumes
+type InstanceVolumeSelector1 string
 
 // InstancesSelector defines model for InstancesSelector.
 type InstancesSelector struct {
@@ -887,15 +1432,22 @@ type InstancesSelector0 struct {
 	ById []string `json:"ById"`
 }
 
-// InstancesSelector1 Retrieve information about active/activating/deactivating/inactive user instances
+// InstancesSelector1 Retrieve information about instances by status with optional scope
 type InstancesSelector1 struct {
-	// ByStatus Retrieve information about active/activating/deactivating/inactive user instances
-	ByStatus []InstanceStatus `json:"ByStatus"`
+	// ByStatus Selector for filtering instances by status, with optional scope control.
+	ByStatus StatusSelector `json:"ByStatus"`
 }
 
-// InstancesSelector2 defines model for .
+// InstancesSelector2 Retrieve instances from a named cluster with optional scope
 type InstancesSelector2 struct {
-	ByTeamId string `json:"ByTeamId"`
+	// ByClusterName Retrieve instances from a named cluster with optional scope
+	ByClusterName string `json:"ByClusterName"`
+}
+
+// InstancesSelector3 List all instances on a specific node (admin or provider root user only)
+type InstancesSelector3 struct {
+	// ByNodeId List all instances on a specific node (admin or provider root user only)
+	ByNodeId string `json:"ByNodeId"`
 }
 
 // IpAvailability defines model for IpAvailability.
@@ -988,28 +1540,6 @@ type ListInstancesResponseProto struct {
 	Version string `json:"version"`
 }
 
-// ListIpRangesRequestProto defines model for ListIpRangesRequestProto.
-type ListIpRangesRequestProto struct {
-	Data struct {
-		// Selector Which IP ranges to retrieve
-		Selector interface{} `json:"selector"`
-	} `json:"data"`
-
-	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
-	Version string `json:"version"`
-}
-
-// ListIpRangesResponseProto defines model for ListIpRangesResponseProto.
-type ListIpRangesResponseProto struct {
-	Data struct {
-		// Ranges All IPs available for allocation
-		Ranges []NetworkIpRanges `json:"ranges"`
-	} `json:"data"`
-
-	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
-	Version string `json:"version"`
-}
-
 // ListNetworksRequestProto defines model for ListNetworksRequestProto.
 type ListNetworksRequestProto struct {
 	Data struct {
@@ -1023,8 +1553,7 @@ type ListNetworksRequestProto struct {
 // ListNetworksResponseProto defines model for ListNetworksResponseProto.
 type ListNetworksResponseProto struct {
 	Data struct {
-		// DatacenterNetworks All Networks for the datacenter
-		DatacenterNetworks []DatacenterNetworks `json:"datacenter_networks"`
+		Networks []DatacenterNetworks `json:"networks"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -1034,8 +1563,7 @@ type ListNetworksResponseProto struct {
 // ListProviderNodesRequestProto defines model for ListProviderNodesRequestProto.
 type ListProviderNodesRequestProto struct {
 	Data struct {
-		// Selector Selector for filtering providers whose nodes to list
-		Selector *interface{} `json:"selector,omitempty"`
+		Selector *ProviderSelector `json:"selector,omitempty"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -1079,6 +1607,9 @@ type ListRecipesResponseProto struct {
 	Data struct {
 		// Groups List of the recipe groups available for renting
 		Groups []RecipeGroup `json:"groups"`
+
+		// OtherRecipes List of all recipes without any group assigned
+		OtherRecipes []Recipe `json:"other_recipes"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -1136,6 +1667,30 @@ type ListTeamsResponseProto struct {
 	Version string `json:"version"`
 }
 
+// ListVolumesRequestProto defines model for ListVolumesRequestProto.
+type ListVolumesRequestProto struct {
+	Data struct {
+		Selector VolumeSelector `json:"selector"`
+
+		// TeamId Team ID to list team volumes
+		TeamId *string `json:"team_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// ListVolumesResponseProto defines model for ListVolumesResponseProto.
+type ListVolumesResponseProto struct {
+	Data struct {
+		// Volumes List of volumes
+		Volumes []VolumeInfo `json:"volumes"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // LoginUserRequestProto defines model for LoginUserRequestProto.
 type LoginUserRequestProto struct {
 	Data struct {
@@ -1163,6 +1718,42 @@ type LoginUserResponseProto struct {
 	Version string `json:"version"`
 }
 
+// MeResponseProto defines model for MeResponseProto.
+type MeResponseProto struct {
+	Data struct {
+		// Email user email
+		Email string `json:"email"`
+
+		// Name user name
+		Name *string `json:"name"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// NetworkExecutorInfo defines model for NetworkExecutorInfo.
+type NetworkExecutorInfo struct {
+	Id string `json:"id"`
+	Ip string `json:"ip"`
+
+	// OwnerEmail Owner (node user) email
+	OwnerEmail string `json:"owner_email"`
+}
+
+// NetworkInfo defines model for NetworkInfo.
+type NetworkInfo struct {
+	Executors     *[]NetworkExecutorInfo `json:"executors,omitempty"`
+	Gateway       *string                `json:"gateway"`
+	Id            *string                `json:"id"`
+	Iface         *string                `json:"iface"`
+	IpRanges      *[]NetworkIpRange      `json:"ip_ranges,omitempty"`
+	Name          string                 `json:"name"`
+	Netmask       *int32                 `json:"netmask"`
+	ServerAddress *string                `json:"server_address"`
+	TeamId        *string                `json:"team_id"`
+}
+
 // NetworkIpRange defines model for NetworkIpRange.
 type NetworkIpRange struct {
 	// ExternalFrom Optional external start mapped 1:1 to [from, to]
@@ -1178,23 +1769,102 @@ type NetworkIpRange struct {
 	To string `json:"to"`
 }
 
-// NetworkIpRanges defines model for NetworkIpRanges.
-type NetworkIpRanges struct {
-	Network string `json:"network"`
-
-	// NetworkIpRanges All IPs available for allocation
-	NetworkIpRanges []NetworkIpRange `json:"network_ip_ranges"`
-}
-
 // NetworkSelector defines model for NetworkSelector.
 type NetworkSelector struct {
 	union json.RawMessage
 }
 
-// NetworkSelector0 Retrieve the Networks in specific datacenters
+// NetworkSelector0 Retrieve networks in specific datacenters
 type NetworkSelector0 struct {
-	// ByDataCenter Retrieve the Networks in specific datacenters
+	// ByDataCenter Retrieve networks in specific datacenters
 	ByDataCenter []string `json:"ByDataCenter"`
+}
+
+// NetworkSelector1 Retrieve all networks (admin: all in DB, provider: all in owned datacenters)
+type NetworkSelector1 string
+
+// NetworkSelector2 Retrieve networks for a specific team
+type NetworkSelector2 struct {
+	// ByTeamId Retrieve networks for a specific team
+	ByTeamId string `json:"ByTeamId"`
+}
+
+// NetworkSelector3 Retrieve networks for a specific provider (by provider name)
+type NetworkSelector3 struct {
+	// ByProvider Retrieve networks for a specific provider (by provider name)
+	ByProvider string `json:"ByProvider"`
+}
+
+// NodeDrainInfo Information about the drain state of a node
+type NodeDrainInfo struct {
+	// GracePeriodSecs Grace period in seconds
+	GracePeriodSecs *int64 `json:"grace_period_secs"`
+
+	// NotificationSent Whether notification was sent to users
+	NotificationSent bool `json:"notification_sent"`
+
+	// Reason Optional reason for the drain
+	Reason *string `json:"reason"`
+
+	// ScheduledStopAt When instances will be terminated (started_at + grace_period)
+	ScheduledStopAt *string `json:"scheduled_stop_at"`
+
+	// StartedAt When the drain was started
+	StartedAt *string `json:"started_at"`
+
+	// State State of node draining process
+	State NodeDrainState `json:"state"`
+}
+
+// NodeDrainResult Result of draining a single node
+type NodeDrainResult struct {
+	// ActiveInstanceCount Number of active (non-root) instances on this node
+	ActiveInstanceCount int32 `json:"active_instance_count"`
+
+	// DrainInfo Information about the drain state of a node
+	DrainInfo NodeDrainInfo `json:"drain_info"`
+	NodeId    string        `json:"node_id"`
+
+	// UsersNotified Number of users notified via email
+	UsersNotified int32 `json:"users_notified"`
+}
+
+// NodeDrainSelector Selector for node drain operations
+type NodeDrainSelector struct {
+	union json.RawMessage
+}
+
+// NodeDrainSelector0 Select nodes by ID
+type NodeDrainSelector0 struct {
+	// ById Select nodes by ID
+	ById []string `json:"ById"`
+}
+
+// NodeDrainState State of node draining process
+type NodeDrainState string
+
+// NodeForceDrainResult Result of force draining a single node
+type NodeForceDrainResult struct {
+	// InstancesTerminated Number of instances that were terminated
+	InstancesTerminated int32  `json:"instances_terminated"`
+	NodeId              string `json:"node_id"`
+}
+
+// NodeHealthStatus defines model for NodeHealthStatus.
+type NodeHealthStatus struct {
+	union json.RawMessage
+}
+
+// NodeHealthStatus0 defines model for NodeHealthStatus.0.
+type NodeHealthStatus0 string
+
+// NodeHealthStatus1 defines model for .
+type NodeHealthStatus1 struct {
+	Unhealthy struct {
+		ErrorCode     string `json:"error_code"`
+		ErrorMessage  string `json:"error_message"`
+		LastHealthyAt string `json:"last_healthy_at"`
+	} `json:"Unhealthy"`
 }
 
 // NodeSelector defines model for NodeSelector.
@@ -1263,15 +1933,9 @@ type PromoCodeRequestProto struct {
 	Version string `json:"version"`
 }
 
-// ProviderNodeInfo defines model for ProviderNodeInfo.
-type ProviderNodeInfo struct {
+// ProviderNodeHardwareInfo defines model for ProviderNodeHardwareInfo.
+type ProviderNodeHardwareInfo struct {
 	Cpu CpuInfo `json:"cpu"`
-
-	// CpuCoresAvailable Number of CPU cores available on the node, i.e. not allocated by the executor
-	CpuCoresAvailable int32 `json:"cpu_cores_available"`
-
-	// CpuCoresAvailableMask Available CPU cores as a hex number making a bitmask
-	CpuCoresAvailableMask string `json:"cpu_cores_available_mask"`
 
 	// Disks Disks available on the node
 	Disks []DiskInfo `json:"disks"`
@@ -1279,21 +1943,66 @@ type ProviderNodeInfo struct {
 	// Dram Total node DRAM
 	Dram int64 `json:"dram"`
 
-	// DramAvailable DRAM available for renting
-	DramAvailable int64 `json:"dram_available"`
-
 	// Gpus Number of gpus on the node
 	Gpus []GpuInfo `json:"gpus"`
+}
+
+// ProviderNodeInfo Updated ProviderNodeInfo with drain information
+type ProviderNodeInfo struct {
+	// ActiveInstanceCount Number of active (non-root) instances on this node
+	ActiveInstanceCount int32   `json:"active_instance_count"`
+	ClientVersion       *string `json:"client_version"`
+
+	// CountryCode Country code of the node location
+	CountryCode *string `json:"country_code"`
+
+	// DrainInfo Information about the drain state of a node
+	DrainInfo   *NodeDrainInfo           `json:"drain_info,omitempty"`
+	Hardware    ProviderNodeHardwareInfo `json:"hardware"`
+	HealthState NodeHealthStatus         `json:"health_state"`
+	Hostname    *string                  `json:"hostname"`
+
+	// Id ID of the node to be used in rent API request
+	Id        string        `json:"id"`
+	Instance  *InstanceInfo `json:"instance,omitempty"`
+	IpAddress *string       `json:"ip_address"`
+
+	// ListOnMarketplace Whether the node is listed on the marketplace for new rentals
+	ListOnMarketplace *bool                       `json:"list_on_marketplace,omitempty"`
+	Status            NodeStatus                  `json:"status"`
+	Utilization       ProviderNodeUtilizationInfo `json:"utilization"`
+}
+
+// ProviderNodeUtilizationInfo defines model for ProviderNodeUtilizationInfo.
+type ProviderNodeUtilizationInfo struct {
+	// CpuCoresAvailable Number of CPU cores available on the node, i.e. not allocated by the executor
+	CpuCoresAvailable int32 `json:"cpu_cores_available"`
+
+	// CpuCoresAvailableMask Available CPU cores as a hex number making a bitmask
+	CpuCoresAvailableMask string `json:"cpu_cores_available_mask"`
+
+	// DramAvailable DRAM available for renting
+	DramAvailable int64 `json:"dram_available"`
 
 	// GpusAvailable Number of GPUs available for renting
 	GpusAvailable int32 `json:"gpus_available"`
 
 	// GpusAvailableMask Available GPUs as a hex number making a bitmask
 	GpusAvailableMask string `json:"gpus_available_mask"`
+}
 
-	// Id ID of the node to be used in rent API request
-	Id       string        `json:"id"`
-	Instance *InstanceInfo `json:"instance,omitempty"`
+// ProviderSelector defines model for ProviderSelector.
+type ProviderSelector struct {
+	union json.RawMessage
+}
+
+// ProviderSelector0 Select all providers
+type ProviderSelector0 string
+
+// ProviderSelector1 Select providers by name
+type ProviderSelector1 struct {
+	// ByName Select providers by name
+	ByName []string `json:"ByName"`
 }
 
 // Recipe defines model for Recipe.
@@ -1368,6 +2077,26 @@ type RecipeGroup struct {
 	Tags []string `json:"tags"`
 }
 
+// RecipeSelector defines model for RecipeSelector.
+type RecipeSelector struct {
+	union json.RawMessage
+}
+
+// RecipeSelector0 defines model for .
+type RecipeSelector0 struct {
+	Name []string `json:"Name"`
+}
+
+// RecipeSelector1 defines model for .
+type RecipeSelector1 struct {
+	Tag []string `json:"Tag"`
+}
+
+// RecipeSelector2 defines model for .
+type RecipeSelector2 struct {
+	Group []string `json:"Group"`
+}
+
 // RegisterUserRequestProto defines model for RegisterUserRequestProto.
 type RegisterUserRequestProto struct {
 	Data struct {
@@ -1389,6 +2118,36 @@ type RegisterUserRequestProto struct {
 	Version string `json:"version"`
 }
 
+// RemoveInstanceTypeRequestProto defines model for RemoveInstanceTypeRequestProto.
+type RemoveInstanceTypeRequestProto struct {
+	Data struct {
+		Selector InstanceTypeSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// RemoveInstanceVariantRequestProto defines model for RemoveInstanceVariantRequestProto.
+type RemoveInstanceVariantRequestProto struct {
+	Data struct {
+		Selector InstanceVariantSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// RemoveRecipeOrGroupRequestProto defines model for RemoveRecipeOrGroupRequestProto.
+type RemoveRecipeOrGroupRequestProto struct {
+	Data struct {
+		Selector RecipeSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // RemoveTeamMemberRequestProto defines model for RemoveTeamMemberRequestProto.
 type RemoveTeamMemberRequestProto struct {
 	Data struct {
@@ -1402,7 +2161,12 @@ type RemoveTeamMemberRequestProto struct {
 // RentInstanceRequestProto defines model for RentInstanceRequestProto.
 type RentInstanceRequestProto struct {
 	Data struct {
-		Config InstanceConfiguration `json:"config"`
+		// ClusterName Optional cluster name
+		ClusterName *string               `json:"cluster_name"`
+		Config      InstanceConfiguration `json:"config"`
+
+		// Name Optional Instance name
+		Name *string `json:"name"`
 
 		// Network Optional Network name
 		Network *string `json:"network"`
@@ -1490,8 +2254,63 @@ type ReservationType struct {
 	PriceFactor float64          `json:"price_factor"`
 }
 
+// ResetInstancesRequestProto defines model for ResetInstancesRequestProto.
+type ResetInstancesRequestProto struct {
+	Data struct {
+		Selector InstancesSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // ResponseStatus defines model for ResponseStatus.
 type ResponseStatus string
+
+// ResumeNodeRequestProto defines model for ResumeNodeRequestProto.
+type ResumeNodeRequestProto struct {
+	// Data Request to resume nodes (bring them back online after being drained)
+	Data struct {
+		// Selector Selector for node drain operations
+		Selector NodeDrainSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// ResumeNodeResponseProto defines model for ResumeNodeResponseProto.
+type ResumeNodeResponseProto struct {
+	Data struct {
+		NodeIds []string `json:"node_ids"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// SelectorScope Controls which clusters a selector searches.
+type SelectorScope struct {
+	union json.RawMessage
+}
+
+// SelectorScope0 Only the user's personal cluster
+type SelectorScope0 string
+
+// SelectorScope1 Only the specified team clusters
+type SelectorScope1 struct {
+	// Teams Only the specified team clusters
+	Teams []string `json:"Teams"`
+}
+
+// SelectorScope2 Personal cluster plus the specified team clusters
+type SelectorScope2 struct {
+	// PersonalAndTeams Personal cluster plus the specified team clusters
+	PersonalAndTeams []string `json:"PersonalAndTeams"`
+}
+
+// SelectorScope3 Personal cluster plus all teams the user is a member of
+type SelectorScope3 string
 
 // ServiceCharge defines model for ServiceCharge.
 type ServiceCharge struct {
@@ -1564,6 +2383,33 @@ type SshKeySelector0 struct {
 // SshKeySelector1 defines model for SshKeySelector.1.
 type SshKeySelector1 string
 
+// StartInstancesRequestProto defines model for StartInstancesRequestProto.
+type StartInstancesRequestProto struct {
+	Data struct {
+		Selector InstancesSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// StatusSelector Selector for filtering instances by status, with optional scope control.
+type StatusSelector struct {
+	// Scope Controls which clusters a selector searches.
+	Scope    *SelectorScope   `json:"scope,omitempty"`
+	Statuses []InstanceStatus `json:"statuses"`
+}
+
+// StopInstancesRequestProto defines model for StopInstancesRequestProto.
+type StopInstancesRequestProto struct {
+	Data struct {
+		Selector InstancesSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // StripeTransactionInfo defines model for StripeTransactionInfo.
 type StripeTransactionInfo struct {
 	union json.RawMessage
@@ -1626,6 +2472,23 @@ type Team struct {
 	Name        string  `json:"name"`
 	UpdatedAt   string  `json:"updated_at"`
 	UserRole    string  `json:"user_role"`
+}
+
+// TeamAssignment Selector for team assignment
+type TeamAssignment struct {
+	union json.RawMessage
+}
+
+// TeamAssignment0 Assign by team ID (null to make public)
+type TeamAssignment0 struct {
+	// ById Assign by team ID (null to make public)
+	ById *string `json:"ById"`
+}
+
+// TeamAssignment1 Assign by team name
+type TeamAssignment1 struct {
+	// ByName Assign by team name
+	ByName string `json:"ByName"`
 }
 
 // TeamMember defines model for TeamMember.
@@ -1802,6 +2665,15 @@ type TransactionInfo6 struct {
 	} `json:"External"`
 }
 
+// TransactionInfo7 Promotional transaction, e.g., signup bonus
+type TransactionInfo7 struct {
+	// PromoTransaction Promotional transaction, e.g., signup bonus
+	PromoTransaction struct {
+		// Description Description of the promo
+		Description string `json:"description"`
+	} `json:"PromoTransaction"`
+}
+
 // UpdateApiKeysRequestProto defines model for UpdateApiKeysRequestProto.
 type UpdateApiKeysRequestProto struct {
 	Data struct {
@@ -1829,6 +2701,109 @@ type UpdateApiKeysResponseProto struct {
 	Version string `json:"version"`
 }
 
+// UpdateInstanceTypeRequestProto defines model for UpdateInstanceTypeRequestProto.
+type UpdateInstanceTypeRequestProto struct {
+	Data struct {
+		InstanceType InstanceTypeInfo     `json:"instance_type"`
+		Selector     InstanceTypeSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// UpdateInstanceVariantRequestProto defines model for UpdateInstanceVariantRequestProto.
+type UpdateInstanceVariantRequestProto struct {
+	Data struct {
+		Selector InstanceVariantSelector `json:"selector"`
+		Variant  InstanceVariantRawInfo  `json:"variant"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// UpdateNetworkRequestProto defines model for UpdateNetworkRequestProto.
+type UpdateNetworkRequestProto struct {
+	Data struct {
+		// Selector Selector for identifying a network to update
+		Selector UpdateNetworkSelector `json:"selector"`
+
+		// Team Selector for team assignment
+		Team TeamAssignment `json:"team"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// UpdateNetworkResponseProto defines model for UpdateNetworkResponseProto.
+type UpdateNetworkResponseProto struct {
+	Data struct {
+		// UpdatedIds IDs of updated networks
+		UpdatedIds []string `json:"updated_ids"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// UpdateNetworkSelector Selector for identifying a network to update
+type UpdateNetworkSelector struct {
+	union json.RawMessage
+}
+
+// UpdateNetworkSelector0 Select network by datacenter and name
+type UpdateNetworkSelector0 struct {
+	// ByDatacenterAndName Select network by datacenter and name
+	ByDatacenterAndName struct {
+		Datacenter string `json:"datacenter"`
+		Network    string `json:"network"`
+	} `json:"ByDatacenterAndName"`
+}
+
+// UpdateProviderNodeInstanceTypeRequestProto defines model for UpdateProviderNodeInstanceTypeRequestProto.
+type UpdateProviderNodeInstanceTypeRequestProto struct {
+	Data struct {
+		// InstanceTypeName Instance type name
+		InstanceTypeName string `json:"instance_type_name"`
+
+		// NodeId Node ID
+		NodeId string `json:"node_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// UpdateReservationRequestProto defines model for UpdateReservationRequestProto.
+type UpdateReservationRequestProto struct {
+	Data struct {
+		// ExecutorId ID of the executor whose active reservation should be extended
+		ExecutorId string `json:"executor_id"`
+
+		// ReservationTypeId ID of the reservation type determining how much time to add
+		ReservationTypeId string `json:"reservation_type_id"`
+
+		// TeamId Optional team ID
+		TeamId *string `json:"team_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// UpdateReservationResponseProto defines model for UpdateReservationResponseProto.
+type UpdateReservationResponseProto struct {
+	Data struct {
+		// ReservationId ID of the updated active reservation
+		ReservationId string `json:"reservation_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // UpdateTeamMembershipRequestProto defines model for UpdateTeamMembershipRequestProto.
 type UpdateTeamMembershipRequestProto struct {
 	Data struct {
@@ -1838,6 +2813,127 @@ type UpdateTeamMembershipRequestProto struct {
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
 	Version string `json:"version"`
+}
+
+// UpdateVolumeRequestProto defines model for UpdateVolumeRequestProto.
+type UpdateVolumeRequestProto struct {
+	Data struct {
+		// Name New volume name
+		Name string `json:"name"`
+
+		// TeamId Team ID in case of team volumes
+		TeamId *string `json:"team_id"`
+
+		// VolumeId Volume ID
+		VolumeId string `json:"volume_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// UpdateVolumeResponseProto defines model for UpdateVolumeResponseProto.
+type UpdateVolumeResponseProto struct {
+	Data struct {
+		Volume VolumeInfo `json:"volume"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// VirtDomainState defines model for VirtDomainState.
+type VirtDomainState string
+
+// VolumeInfo defines model for VolumeInfo.
+type VolumeInfo struct {
+	// AttachedExecutorId Executor ID if the volume is mounted to one
+	AttachedExecutorId string `json:"attached_executor_id"`
+
+	// CephImage Ceph image name
+	CephImage string `json:"ceph_image"`
+
+	// CephPool Ceph pool name
+	CephPool string `json:"ceph_pool"`
+
+	// CostPerMonth Cost per month in currency units (before hourly conversion)
+	CostPerMonth int64 `json:"cost_per_month"`
+
+	// CreatedAt Creation timestamp
+	CreatedAt string `json:"created_at"`
+
+	// DatacenterName Datacenter name where the volume is located (first datacenter)
+	DatacenterName string `json:"datacenter_name"`
+
+	// Datacenters All datacenters where the volume is accessible
+	Datacenters []string `json:"datacenters"`
+
+	// Description Optional description
+	Description *string `json:"description"`
+
+	// DiskUsage Volume disk usage in bytes
+	DiskUsage int64 `json:"disk_usage"`
+
+	// Id Volume ID
+	Id string `json:"id"`
+
+	// MountPath Mount path in the instance
+	MountPath *string `json:"mount_path"`
+
+	// Name Volume name
+	Name string `json:"name"`
+
+	// SizeGb Volume size in GB
+	SizeGb int32        `json:"size_gb"`
+	Status VolumeStatus `json:"status"`
+
+	// UpdatedAt Last update timestamp
+	UpdatedAt string `json:"updated_at"`
+}
+
+// VolumeMount defines model for VolumeMount.
+type VolumeMount struct {
+	// MountPath Mount path in the instance
+	MountPath *string        `json:"mount_path"`
+	Volume    VolumeSelector `json:"volume"`
+}
+
+// VolumeSelector defines model for VolumeSelector.
+type VolumeSelector struct {
+	union json.RawMessage
+}
+
+// VolumeSelector0 Select volumes by name
+type VolumeSelector0 struct {
+	// ByName Select volumes by name
+	ByName []string `json:"ByName"`
+}
+
+// VolumeSelector1 Select volumes by ID
+type VolumeSelector1 struct {
+	// ById Select volumes by ID
+	ById []string `json:"ById"`
+}
+
+// VolumeSelector2 Select all volumes
+type VolumeSelector2 string
+
+// VolumeStatus defines model for VolumeStatus.
+type VolumeStatus string
+
+// VolumeTypeAvailability defines model for VolumeTypeAvailability.
+type VolumeTypeAvailability struct {
+	// CostPerGbPerMonth Cost per GB per month in cents
+	CostPerGbPerMonth int64 `json:"cost_per_gb_per_month"`
+
+	// Name Volume type name
+	Name string `json:"name"`
+}
+
+// VerifyEmailParams defines parameters for VerifyEmail.
+type VerifyEmailParams struct {
+	// Token Email verification token
+	Token string `form:"token" json:"token"`
 }
 
 // CreateExternalTransactionJSONRequestBody defines body for CreateExternalTransaction for application/json ContentType.
@@ -1864,11 +2960,32 @@ type LoginJSONRequestBody = LoginUserRequestProto
 // RequestPasswordResetJSONRequestBody defines body for RequestPasswordReset for application/json ContentType.
 type RequestPasswordResetJSONRequestBody = PasswordResetVerifyRequestProto
 
+// ResendVerificationJSONRequestBody defines body for ResendVerification for application/json ContentType.
+type ResendVerificationJSONRequestBody = EmailVerificationResendRequestProto
+
 // ResetPasswordJSONRequestBody defines body for ResetPassword for application/json ContentType.
 type ResetPasswordJSONRequestBody = PasswordResetRequestProto
 
+// AddInstanceTypeJSONRequestBody defines body for AddInstanceType for application/json ContentType.
+type AddInstanceTypeJSONRequestBody = AddInstanceTypeRequestProto
+
+// AddInstanceVariantJSONRequestBody defines body for AddInstanceVariant for application/json ContentType.
+type AddInstanceVariantJSONRequestBody = AddInstanceVariantRequestProto
+
 // ListInstanceTypesJSONRequestBody defines body for ListInstanceTypes for application/json ContentType.
 type ListInstanceTypesJSONRequestBody = ListInstanceTypesRequestProto
+
+// RemoveInstanceTypeJSONRequestBody defines body for RemoveInstanceType for application/json ContentType.
+type RemoveInstanceTypeJSONRequestBody = RemoveInstanceTypeRequestProto
+
+// RemoveInstanceVariantJSONRequestBody defines body for RemoveInstanceVariant for application/json ContentType.
+type RemoveInstanceVariantJSONRequestBody = RemoveInstanceVariantRequestProto
+
+// UpdateInstanceTypeJSONRequestBody defines body for UpdateInstanceType for application/json ContentType.
+type UpdateInstanceTypeJSONRequestBody = UpdateInstanceTypeRequestProto
+
+// UpdateInstanceVariantJSONRequestBody defines body for UpdateInstanceVariant for application/json ContentType.
+type UpdateInstanceVariantJSONRequestBody = UpdateInstanceVariantRequestProto
 
 // ListInstancesJSONRequestBody defines body for ListInstances for application/json ContentType.
 type ListInstancesJSONRequestBody = ListInstancesRequestProto
@@ -1876,26 +2993,65 @@ type ListInstancesJSONRequestBody = ListInstancesRequestProto
 // RentInstanceJSONRequestBody defines body for RentInstance for application/json ContentType.
 type RentInstanceJSONRequestBody = RentInstanceRequestProto
 
+// ResetVmJSONRequestBody defines body for ResetVm for application/json ContentType.
+type ResetVmJSONRequestBody = ResetInstancesRequestProto
+
+// StartVmJSONRequestBody defines body for StartVm for application/json ContentType.
+type StartVmJSONRequestBody = StartInstancesRequestProto
+
+// StopVmJSONRequestBody defines body for StopVm for application/json ContentType.
+type StopVmJSONRequestBody = StopInstancesRequestProto
+
 // TerminateInstancesJSONRequestBody defines body for TerminateInstances for application/json ContentType.
 type TerminateInstancesJSONRequestBody = TerminateInstancesRequestProto
 
 // AddNetworkJSONRequestBody defines body for AddNetwork for application/json ContentType.
 type AddNetworkJSONRequestBody = AddNetworkRequestProto
 
+// DeleteNetworkJSONRequestBody defines body for DeleteNetwork for application/json ContentType.
+type DeleteNetworkJSONRequestBody = DeleteNetworkRequestProto
+
 // ListNetworksJSONRequestBody defines body for ListNetworks for application/json ContentType.
 type ListNetworksJSONRequestBody = ListNetworksRequestProto
 
-// ListIpRangesJSONRequestBody defines body for ListIpRanges for application/json ContentType.
-type ListIpRangesJSONRequestBody = ListIpRangesRequestProto
+// UpdateNetworkJSONRequestBody defines body for UpdateNetwork for application/json ContentType.
+type UpdateNetworkJSONRequestBody = UpdateNetworkRequestProto
+
+// CancelDrainJSONRequestBody defines body for CancelDrain for application/json ContentType.
+type CancelDrainJSONRequestBody = CancelDrainRequestProto
+
+// DrainNodeJSONRequestBody defines body for DrainNode for application/json ContentType.
+type DrainNodeJSONRequestBody = DrainNodeRequestProto
+
+// ForceDrainJSONRequestBody defines body for ForceDrain for application/json ContentType.
+type ForceDrainJSONRequestBody = ForceDrainRequestProto
+
+// ListNodesJSONRequestBody defines body for ListNodes for application/json ContentType.
+type ListNodesJSONRequestBody = ListProviderNodesRequestProto
+
+// ResumeNodeJSONRequestBody defines body for ResumeNode for application/json ContentType.
+type ResumeNodeJSONRequestBody = ResumeNodeRequestProto
+
+// UpdateProviderNodeInstanceTypeJSONRequestBody defines body for UpdateProviderNodeInstanceType for application/json ContentType.
+type UpdateProviderNodeInstanceTypeJSONRequestBody = UpdateProviderNodeInstanceTypeRequestProto
 
 // ListProvidersJSONRequestBody defines body for ListProviders for application/json ContentType.
 type ListProvidersJSONRequestBody = ListProvidersRequestProto
 
-// ListProviderNodesJSONRequestBody defines body for ListProviderNodes for application/json ContentType.
-type ListProviderNodesJSONRequestBody = ListProviderNodesRequestProto
+// AddRecipeJSONRequestBody defines body for AddRecipe for application/json ContentType.
+type AddRecipeJSONRequestBody = AddRecipeRequestProto
+
+// RemoveRecipeJSONRequestBody defines body for RemoveRecipe for application/json ContentType.
+type RemoveRecipeJSONRequestBody = RemoveRecipeOrGroupRequestProto
+
+// CreateAndAttachReservationJSONRequestBody defines body for CreateAndAttachReservation for application/json ContentType.
+type CreateAndAttachReservationJSONRequestBody = CreateReservationRequestProto
 
 // ListReservationsJSONRequestBody defines body for ListReservations for application/json ContentType.
 type ListReservationsJSONRequestBody = ListReservationsRequestProto
+
+// UpdateActiveReservationJSONRequestBody defines body for UpdateActiveReservation for application/json ContentType.
+type UpdateActiveReservationJSONRequestBody = UpdateReservationRequestProto
 
 // BulkChargeForServiceJSONRequestBody defines body for BulkChargeForService for application/json ContentType.
 type BulkChargeForServiceJSONRequestBody = BulkServiceChargeRequestProto
@@ -1924,22 +3080,31 @@ type UpdateTeamMembershipJSONRequestBody = UpdateTeamMembershipRequestProto
 // RegisterUserJSONRequestBody defines body for RegisterUser for application/json ContentType.
 type RegisterUserJSONRequestBody = RegisterUserRequestProto
 
-// AsAccountSelector0 returns the union data inside the AccountSelector as a AccountSelector0
-func (t AccountSelector) AsAccountSelector0() (AccountSelector0, error) {
-	var body AccountSelector0
+// CreateVolumeJSONRequestBody defines body for CreateVolume for application/json ContentType.
+type CreateVolumeJSONRequestBody = CreateVolumeRequestProto
+
+// ListVolumesJSONRequestBody defines body for ListVolumes for application/json ContentType.
+type ListVolumesJSONRequestBody = ListVolumesRequestProto
+
+// UpdateVolumeJSONRequestBody defines body for UpdateVolume for application/json ContentType.
+type UpdateVolumeJSONRequestBody = UpdateVolumeRequestProto
+
+// AsAddRecipeDetails0 returns the union data inside the AddRecipeDetails as a AddRecipeDetails0
+func (t AddRecipeDetails) AsAddRecipeDetails0() (AddRecipeDetails0, error) {
+	var body AddRecipeDetails0
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromAccountSelector0 overwrites any union data inside the AccountSelector as the provided AccountSelector0
-func (t *AccountSelector) FromAccountSelector0(v AccountSelector0) error {
+// FromAddRecipeDetails0 overwrites any union data inside the AddRecipeDetails as the provided AddRecipeDetails0
+func (t *AddRecipeDetails) FromAddRecipeDetails0(v AddRecipeDetails0) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeAccountSelector0 performs a merge with any union data inside the AccountSelector, using the provided AccountSelector0
-func (t *AccountSelector) MergeAccountSelector0(v AccountSelector0) error {
+// MergeAddRecipeDetails0 performs a merge with any union data inside the AddRecipeDetails, using the provided AddRecipeDetails0
+func (t *AddRecipeDetails) MergeAddRecipeDetails0(v AddRecipeDetails0) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1950,22 +3115,22 @@ func (t *AccountSelector) MergeAccountSelector0(v AccountSelector0) error {
 	return err
 }
 
-// AsAccountSelector1 returns the union data inside the AccountSelector as a AccountSelector1
-func (t AccountSelector) AsAccountSelector1() (AccountSelector1, error) {
-	var body AccountSelector1
+// AsAddRecipeDetails1 returns the union data inside the AddRecipeDetails as a AddRecipeDetails1
+func (t AddRecipeDetails) AsAddRecipeDetails1() (AddRecipeDetails1, error) {
+	var body AddRecipeDetails1
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromAccountSelector1 overwrites any union data inside the AccountSelector as the provided AccountSelector1
-func (t *AccountSelector) FromAccountSelector1(v AccountSelector1) error {
+// FromAddRecipeDetails1 overwrites any union data inside the AddRecipeDetails as the provided AddRecipeDetails1
+func (t *AddRecipeDetails) FromAddRecipeDetails1(v AddRecipeDetails1) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeAccountSelector1 performs a merge with any union data inside the AccountSelector, using the provided AccountSelector1
-func (t *AccountSelector) MergeAccountSelector1(v AccountSelector1) error {
+// MergeAddRecipeDetails1 performs a merge with any union data inside the AddRecipeDetails, using the provided AddRecipeDetails1
+func (t *AddRecipeDetails) MergeAddRecipeDetails1(v AddRecipeDetails1) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1976,12 +3141,12 @@ func (t *AccountSelector) MergeAccountSelector1(v AccountSelector1) error {
 	return err
 }
 
-func (t AccountSelector) MarshalJSON() ([]byte, error) {
+func (t AddRecipeDetails) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
 }
 
-func (t *AccountSelector) UnmarshalJSON(b []byte) error {
+func (t *AddRecipeDetails) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -2136,6 +3301,42 @@ func (t *ComputeProviderSelector) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsDeleteNetworkSelector0 returns the union data inside the DeleteNetworkSelector as a DeleteNetworkSelector0
+func (t DeleteNetworkSelector) AsDeleteNetworkSelector0() (DeleteNetworkSelector0, error) {
+	var body DeleteNetworkSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDeleteNetworkSelector0 overwrites any union data inside the DeleteNetworkSelector as the provided DeleteNetworkSelector0
+func (t *DeleteNetworkSelector) FromDeleteNetworkSelector0(v DeleteNetworkSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDeleteNetworkSelector0 performs a merge with any union data inside the DeleteNetworkSelector, using the provided DeleteNetworkSelector0
+func (t *DeleteNetworkSelector) MergeDeleteNetworkSelector0(v DeleteNetworkSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DeleteNetworkSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DeleteNetworkSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsDockerRegistryAuth0 returns the union data inside the DockerRegistryAuth as a DockerRegistryAuth0
 func (t DockerRegistryAuth) AsDockerRegistryAuth0() (DockerRegistryAuth0, error) {
 	var body DockerRegistryAuth0
@@ -2168,6 +3369,104 @@ func (t DockerRegistryAuth) MarshalJSON() ([]byte, error) {
 }
 
 func (t *DockerRegistryAuth) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsExternalTransactionAccountSelector0 returns the union data inside the ExternalTransactionAccountSelector as a ExternalTransactionAccountSelector0
+func (t ExternalTransactionAccountSelector) AsExternalTransactionAccountSelector0() (ExternalTransactionAccountSelector0, error) {
+	var body ExternalTransactionAccountSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExternalTransactionAccountSelector0 overwrites any union data inside the ExternalTransactionAccountSelector as the provided ExternalTransactionAccountSelector0
+func (t *ExternalTransactionAccountSelector) FromExternalTransactionAccountSelector0(v ExternalTransactionAccountSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeExternalTransactionAccountSelector0 performs a merge with any union data inside the ExternalTransactionAccountSelector, using the provided ExternalTransactionAccountSelector0
+func (t *ExternalTransactionAccountSelector) MergeExternalTransactionAccountSelector0(v ExternalTransactionAccountSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsExternalTransactionAccountSelector1 returns the union data inside the ExternalTransactionAccountSelector as a ExternalTransactionAccountSelector1
+func (t ExternalTransactionAccountSelector) AsExternalTransactionAccountSelector1() (ExternalTransactionAccountSelector1, error) {
+	var body ExternalTransactionAccountSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExternalTransactionAccountSelector1 overwrites any union data inside the ExternalTransactionAccountSelector as the provided ExternalTransactionAccountSelector1
+func (t *ExternalTransactionAccountSelector) FromExternalTransactionAccountSelector1(v ExternalTransactionAccountSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeExternalTransactionAccountSelector1 performs a merge with any union data inside the ExternalTransactionAccountSelector, using the provided ExternalTransactionAccountSelector1
+func (t *ExternalTransactionAccountSelector) MergeExternalTransactionAccountSelector1(v ExternalTransactionAccountSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ExternalTransactionAccountSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ExternalTransactionAccountSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsGlobalCapability0 returns the union data inside the GlobalCapability as a GlobalCapability0
+func (t GlobalCapability) AsGlobalCapability0() (GlobalCapability0, error) {
+	var body GlobalCapability0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGlobalCapability0 overwrites any union data inside the GlobalCapability as the provided GlobalCapability0
+func (t *GlobalCapability) FromGlobalCapability0(v GlobalCapability0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGlobalCapability0 performs a merge with any union data inside the GlobalCapability, using the provided GlobalCapability0
+func (t *GlobalCapability) MergeGlobalCapability0(v GlobalCapability0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GlobalCapability) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GlobalCapability) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -2524,6 +3823,104 @@ func (t *InstanceTypeSelector) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsInstanceVariantSelector0 returns the union data inside the InstanceVariantSelector as a InstanceVariantSelector0
+func (t InstanceVariantSelector) AsInstanceVariantSelector0() (InstanceVariantSelector0, error) {
+	var body InstanceVariantSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromInstanceVariantSelector0 overwrites any union data inside the InstanceVariantSelector as the provided InstanceVariantSelector0
+func (t *InstanceVariantSelector) FromInstanceVariantSelector0(v InstanceVariantSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeInstanceVariantSelector0 performs a merge with any union data inside the InstanceVariantSelector, using the provided InstanceVariantSelector0
+func (t *InstanceVariantSelector) MergeInstanceVariantSelector0(v InstanceVariantSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t InstanceVariantSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *InstanceVariantSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsInstanceVolumeSelector0 returns the union data inside the InstanceVolumeSelector as a InstanceVolumeSelector0
+func (t InstanceVolumeSelector) AsInstanceVolumeSelector0() (InstanceVolumeSelector0, error) {
+	var body InstanceVolumeSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromInstanceVolumeSelector0 overwrites any union data inside the InstanceVolumeSelector as the provided InstanceVolumeSelector0
+func (t *InstanceVolumeSelector) FromInstanceVolumeSelector0(v InstanceVolumeSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeInstanceVolumeSelector0 performs a merge with any union data inside the InstanceVolumeSelector, using the provided InstanceVolumeSelector0
+func (t *InstanceVolumeSelector) MergeInstanceVolumeSelector0(v InstanceVolumeSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsInstanceVolumeSelector1 returns the union data inside the InstanceVolumeSelector as a InstanceVolumeSelector1
+func (t InstanceVolumeSelector) AsInstanceVolumeSelector1() (InstanceVolumeSelector1, error) {
+	var body InstanceVolumeSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromInstanceVolumeSelector1 overwrites any union data inside the InstanceVolumeSelector as the provided InstanceVolumeSelector1
+func (t *InstanceVolumeSelector) FromInstanceVolumeSelector1(v InstanceVolumeSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeInstanceVolumeSelector1 performs a merge with any union data inside the InstanceVolumeSelector, using the provided InstanceVolumeSelector1
+func (t *InstanceVolumeSelector) MergeInstanceVolumeSelector1(v InstanceVolumeSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t InstanceVolumeSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *InstanceVolumeSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsInstancesSelector0 returns the union data inside the InstancesSelector as a InstancesSelector0
 func (t InstancesSelector) AsInstancesSelector0() (InstancesSelector0, error) {
 	var body InstancesSelector0
@@ -2602,6 +3999,32 @@ func (t *InstancesSelector) MergeInstancesSelector2(v InstancesSelector2) error 
 	return err
 }
 
+// AsInstancesSelector3 returns the union data inside the InstancesSelector as a InstancesSelector3
+func (t InstancesSelector) AsInstancesSelector3() (InstancesSelector3, error) {
+	var body InstancesSelector3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromInstancesSelector3 overwrites any union data inside the InstancesSelector as the provided InstancesSelector3
+func (t *InstancesSelector) FromInstancesSelector3(v InstancesSelector3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeInstancesSelector3 performs a merge with any union data inside the InstancesSelector, using the provided InstancesSelector3
+func (t *InstancesSelector) MergeInstancesSelector3(v InstancesSelector3) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t InstancesSelector) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
@@ -2638,12 +4061,188 @@ func (t *NetworkSelector) MergeNetworkSelector0(v NetworkSelector0) error {
 	return err
 }
 
+// AsNetworkSelector1 returns the union data inside the NetworkSelector as a NetworkSelector1
+func (t NetworkSelector) AsNetworkSelector1() (NetworkSelector1, error) {
+	var body NetworkSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNetworkSelector1 overwrites any union data inside the NetworkSelector as the provided NetworkSelector1
+func (t *NetworkSelector) FromNetworkSelector1(v NetworkSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNetworkSelector1 performs a merge with any union data inside the NetworkSelector, using the provided NetworkSelector1
+func (t *NetworkSelector) MergeNetworkSelector1(v NetworkSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNetworkSelector2 returns the union data inside the NetworkSelector as a NetworkSelector2
+func (t NetworkSelector) AsNetworkSelector2() (NetworkSelector2, error) {
+	var body NetworkSelector2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNetworkSelector2 overwrites any union data inside the NetworkSelector as the provided NetworkSelector2
+func (t *NetworkSelector) FromNetworkSelector2(v NetworkSelector2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNetworkSelector2 performs a merge with any union data inside the NetworkSelector, using the provided NetworkSelector2
+func (t *NetworkSelector) MergeNetworkSelector2(v NetworkSelector2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNetworkSelector3 returns the union data inside the NetworkSelector as a NetworkSelector3
+func (t NetworkSelector) AsNetworkSelector3() (NetworkSelector3, error) {
+	var body NetworkSelector3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNetworkSelector3 overwrites any union data inside the NetworkSelector as the provided NetworkSelector3
+func (t *NetworkSelector) FromNetworkSelector3(v NetworkSelector3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNetworkSelector3 performs a merge with any union data inside the NetworkSelector, using the provided NetworkSelector3
+func (t *NetworkSelector) MergeNetworkSelector3(v NetworkSelector3) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t NetworkSelector) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
 }
 
 func (t *NetworkSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsNodeDrainSelector0 returns the union data inside the NodeDrainSelector as a NodeDrainSelector0
+func (t NodeDrainSelector) AsNodeDrainSelector0() (NodeDrainSelector0, error) {
+	var body NodeDrainSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNodeDrainSelector0 overwrites any union data inside the NodeDrainSelector as the provided NodeDrainSelector0
+func (t *NodeDrainSelector) FromNodeDrainSelector0(v NodeDrainSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNodeDrainSelector0 performs a merge with any union data inside the NodeDrainSelector, using the provided NodeDrainSelector0
+func (t *NodeDrainSelector) MergeNodeDrainSelector0(v NodeDrainSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t NodeDrainSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *NodeDrainSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsNodeHealthStatus0 returns the union data inside the NodeHealthStatus as a NodeHealthStatus0
+func (t NodeHealthStatus) AsNodeHealthStatus0() (NodeHealthStatus0, error) {
+	var body NodeHealthStatus0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNodeHealthStatus0 overwrites any union data inside the NodeHealthStatus as the provided NodeHealthStatus0
+func (t *NodeHealthStatus) FromNodeHealthStatus0(v NodeHealthStatus0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNodeHealthStatus0 performs a merge with any union data inside the NodeHealthStatus, using the provided NodeHealthStatus0
+func (t *NodeHealthStatus) MergeNodeHealthStatus0(v NodeHealthStatus0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNodeHealthStatus1 returns the union data inside the NodeHealthStatus as a NodeHealthStatus1
+func (t NodeHealthStatus) AsNodeHealthStatus1() (NodeHealthStatus1, error) {
+	var body NodeHealthStatus1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNodeHealthStatus1 overwrites any union data inside the NodeHealthStatus as the provided NodeHealthStatus1
+func (t *NodeHealthStatus) FromNodeHealthStatus1(v NodeHealthStatus1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNodeHealthStatus1 performs a merge with any union data inside the NodeHealthStatus, using the provided NodeHealthStatus1
+func (t *NodeHealthStatus) MergeNodeHealthStatus1(v NodeHealthStatus1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t NodeHealthStatus) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *NodeHealthStatus) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -2710,6 +4309,68 @@ func (t *NodeSelector) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsProviderSelector0 returns the union data inside the ProviderSelector as a ProviderSelector0
+func (t ProviderSelector) AsProviderSelector0() (ProviderSelector0, error) {
+	var body ProviderSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProviderSelector0 overwrites any union data inside the ProviderSelector as the provided ProviderSelector0
+func (t *ProviderSelector) FromProviderSelector0(v ProviderSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProviderSelector0 performs a merge with any union data inside the ProviderSelector, using the provided ProviderSelector0
+func (t *ProviderSelector) MergeProviderSelector0(v ProviderSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsProviderSelector1 returns the union data inside the ProviderSelector as a ProviderSelector1
+func (t ProviderSelector) AsProviderSelector1() (ProviderSelector1, error) {
+	var body ProviderSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProviderSelector1 overwrites any union data inside the ProviderSelector as the provided ProviderSelector1
+func (t *ProviderSelector) FromProviderSelector1(v ProviderSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProviderSelector1 performs a merge with any union data inside the ProviderSelector, using the provided ProviderSelector1
+func (t *ProviderSelector) MergeProviderSelector1(v ProviderSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ProviderSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ProviderSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsRecipeDetails0 returns the union data inside the RecipeDetails as a RecipeDetails0
 func (t RecipeDetails) AsRecipeDetails0() (RecipeDetails0, error) {
 	var body RecipeDetails0
@@ -2768,6 +4429,94 @@ func (t RecipeDetails) MarshalJSON() ([]byte, error) {
 }
 
 func (t *RecipeDetails) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRecipeSelector0 returns the union data inside the RecipeSelector as a RecipeSelector0
+func (t RecipeSelector) AsRecipeSelector0() (RecipeSelector0, error) {
+	var body RecipeSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecipeSelector0 overwrites any union data inside the RecipeSelector as the provided RecipeSelector0
+func (t *RecipeSelector) FromRecipeSelector0(v RecipeSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecipeSelector0 performs a merge with any union data inside the RecipeSelector, using the provided RecipeSelector0
+func (t *RecipeSelector) MergeRecipeSelector0(v RecipeSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRecipeSelector1 returns the union data inside the RecipeSelector as a RecipeSelector1
+func (t RecipeSelector) AsRecipeSelector1() (RecipeSelector1, error) {
+	var body RecipeSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecipeSelector1 overwrites any union data inside the RecipeSelector as the provided RecipeSelector1
+func (t *RecipeSelector) FromRecipeSelector1(v RecipeSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecipeSelector1 performs a merge with any union data inside the RecipeSelector, using the provided RecipeSelector1
+func (t *RecipeSelector) MergeRecipeSelector1(v RecipeSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRecipeSelector2 returns the union data inside the RecipeSelector as a RecipeSelector2
+func (t RecipeSelector) AsRecipeSelector2() (RecipeSelector2, error) {
+	var body RecipeSelector2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecipeSelector2 overwrites any union data inside the RecipeSelector as the provided RecipeSelector2
+func (t *RecipeSelector) FromRecipeSelector2(v RecipeSelector2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecipeSelector2 performs a merge with any union data inside the RecipeSelector, using the provided RecipeSelector2
+func (t *RecipeSelector) MergeRecipeSelector2(v RecipeSelector2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecipeSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecipeSelector) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -2892,6 +4641,120 @@ func (t ReservationSelector) MarshalJSON() ([]byte, error) {
 }
 
 func (t *ReservationSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSelectorScope0 returns the union data inside the SelectorScope as a SelectorScope0
+func (t SelectorScope) AsSelectorScope0() (SelectorScope0, error) {
+	var body SelectorScope0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSelectorScope0 overwrites any union data inside the SelectorScope as the provided SelectorScope0
+func (t *SelectorScope) FromSelectorScope0(v SelectorScope0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSelectorScope0 performs a merge with any union data inside the SelectorScope, using the provided SelectorScope0
+func (t *SelectorScope) MergeSelectorScope0(v SelectorScope0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSelectorScope1 returns the union data inside the SelectorScope as a SelectorScope1
+func (t SelectorScope) AsSelectorScope1() (SelectorScope1, error) {
+	var body SelectorScope1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSelectorScope1 overwrites any union data inside the SelectorScope as the provided SelectorScope1
+func (t *SelectorScope) FromSelectorScope1(v SelectorScope1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSelectorScope1 performs a merge with any union data inside the SelectorScope, using the provided SelectorScope1
+func (t *SelectorScope) MergeSelectorScope1(v SelectorScope1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSelectorScope2 returns the union data inside the SelectorScope as a SelectorScope2
+func (t SelectorScope) AsSelectorScope2() (SelectorScope2, error) {
+	var body SelectorScope2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSelectorScope2 overwrites any union data inside the SelectorScope as the provided SelectorScope2
+func (t *SelectorScope) FromSelectorScope2(v SelectorScope2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSelectorScope2 performs a merge with any union data inside the SelectorScope, using the provided SelectorScope2
+func (t *SelectorScope) MergeSelectorScope2(v SelectorScope2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSelectorScope3 returns the union data inside the SelectorScope as a SelectorScope3
+func (t SelectorScope) AsSelectorScope3() (SelectorScope3, error) {
+	var body SelectorScope3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSelectorScope3 overwrites any union data inside the SelectorScope as the provided SelectorScope3
+func (t *SelectorScope) FromSelectorScope3(v SelectorScope3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSelectorScope3 performs a merge with any union data inside the SelectorScope, using the provided SelectorScope3
+func (t *SelectorScope) MergeSelectorScope3(v SelectorScope3) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t SelectorScope) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *SelectorScope) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -3042,6 +4905,68 @@ func (t StripeTransactionInfo) MarshalJSON() ([]byte, error) {
 }
 
 func (t *StripeTransactionInfo) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTeamAssignment0 returns the union data inside the TeamAssignment as a TeamAssignment0
+func (t TeamAssignment) AsTeamAssignment0() (TeamAssignment0, error) {
+	var body TeamAssignment0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamAssignment0 overwrites any union data inside the TeamAssignment as the provided TeamAssignment0
+func (t *TeamAssignment) FromTeamAssignment0(v TeamAssignment0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamAssignment0 performs a merge with any union data inside the TeamAssignment, using the provided TeamAssignment0
+func (t *TeamAssignment) MergeTeamAssignment0(v TeamAssignment0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTeamAssignment1 returns the union data inside the TeamAssignment as a TeamAssignment1
+func (t TeamAssignment) AsTeamAssignment1() (TeamAssignment1, error) {
+	var body TeamAssignment1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamAssignment1 overwrites any union data inside the TeamAssignment as the provided TeamAssignment1
+func (t *TeamAssignment) FromTeamAssignment1(v TeamAssignment1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamAssignment1 performs a merge with any union data inside the TeamAssignment, using the provided TeamAssignment1
+func (t *TeamAssignment) MergeTeamAssignment1(v TeamAssignment1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TeamAssignment) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TeamAssignment) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -3228,12 +5153,162 @@ func (t *TransactionInfo) MergeTransactionInfo6(v TransactionInfo6) error {
 	return err
 }
 
+// AsTransactionInfo7 returns the union data inside the TransactionInfo as a TransactionInfo7
+func (t TransactionInfo) AsTransactionInfo7() (TransactionInfo7, error) {
+	var body TransactionInfo7
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTransactionInfo7 overwrites any union data inside the TransactionInfo as the provided TransactionInfo7
+func (t *TransactionInfo) FromTransactionInfo7(v TransactionInfo7) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTransactionInfo7 performs a merge with any union data inside the TransactionInfo, using the provided TransactionInfo7
+func (t *TransactionInfo) MergeTransactionInfo7(v TransactionInfo7) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t TransactionInfo) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
 }
 
 func (t *TransactionInfo) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsUpdateNetworkSelector0 returns the union data inside the UpdateNetworkSelector as a UpdateNetworkSelector0
+func (t UpdateNetworkSelector) AsUpdateNetworkSelector0() (UpdateNetworkSelector0, error) {
+	var body UpdateNetworkSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUpdateNetworkSelector0 overwrites any union data inside the UpdateNetworkSelector as the provided UpdateNetworkSelector0
+func (t *UpdateNetworkSelector) FromUpdateNetworkSelector0(v UpdateNetworkSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUpdateNetworkSelector0 performs a merge with any union data inside the UpdateNetworkSelector, using the provided UpdateNetworkSelector0
+func (t *UpdateNetworkSelector) MergeUpdateNetworkSelector0(v UpdateNetworkSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t UpdateNetworkSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *UpdateNetworkSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsVolumeSelector0 returns the union data inside the VolumeSelector as a VolumeSelector0
+func (t VolumeSelector) AsVolumeSelector0() (VolumeSelector0, error) {
+	var body VolumeSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromVolumeSelector0 overwrites any union data inside the VolumeSelector as the provided VolumeSelector0
+func (t *VolumeSelector) FromVolumeSelector0(v VolumeSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeVolumeSelector0 performs a merge with any union data inside the VolumeSelector, using the provided VolumeSelector0
+func (t *VolumeSelector) MergeVolumeSelector0(v VolumeSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsVolumeSelector1 returns the union data inside the VolumeSelector as a VolumeSelector1
+func (t VolumeSelector) AsVolumeSelector1() (VolumeSelector1, error) {
+	var body VolumeSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromVolumeSelector1 overwrites any union data inside the VolumeSelector as the provided VolumeSelector1
+func (t *VolumeSelector) FromVolumeSelector1(v VolumeSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeVolumeSelector1 performs a merge with any union data inside the VolumeSelector, using the provided VolumeSelector1
+func (t *VolumeSelector) MergeVolumeSelector1(v VolumeSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsVolumeSelector2 returns the union data inside the VolumeSelector as a VolumeSelector2
+func (t VolumeSelector) AsVolumeSelector2() (VolumeSelector2, error) {
+	var body VolumeSelector2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromVolumeSelector2 overwrites any union data inside the VolumeSelector as the provided VolumeSelector2
+func (t *VolumeSelector) FromVolumeSelector2(v VolumeSelector2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeVolumeSelector2 performs a merge with any union data inside the VolumeSelector, using the provided VolumeSelector2
+func (t *VolumeSelector) MergeVolumeSelector2(v VolumeSelector2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t VolumeSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *VolumeSelector) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -3355,20 +5430,64 @@ type ClientInterface interface {
 	// Logout request
 	Logout(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// Me request
+	Me(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// RequestPasswordResetWithBody request with any body
 	RequestPasswordResetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	RequestPasswordReset(ctx context.Context, body RequestPasswordResetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResendVerificationWithBody request with any body
+	ResendVerificationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ResendVerification(ctx context.Context, body ResendVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ResetPasswordWithBody request with any body
 	ResetPasswordWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ResetPassword(ctx context.Context, body ResetPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// VerifyEmail request
+	VerifyEmail(ctx context.Context, params *VerifyEmailParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCapabilities request
+	ListCapabilities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AddInstanceTypeWithBody request with any body
+	AddInstanceTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AddInstanceType(ctx context.Context, body AddInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AddInstanceVariantWithBody request with any body
+	AddInstanceVariantWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AddInstanceVariant(ctx context.Context, body AddInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListInstanceTypesWithBody request with any body
 	ListInstanceTypesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ListInstanceTypes(ctx context.Context, body ListInstanceTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RemoveInstanceTypeWithBody request with any body
+	RemoveInstanceTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RemoveInstanceType(ctx context.Context, body RemoveInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RemoveInstanceVariantWithBody request with any body
+	RemoveInstanceVariantWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RemoveInstanceVariant(ctx context.Context, body RemoveInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateInstanceTypeWithBody request with any body
+	UpdateInstanceTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateInstanceType(ctx context.Context, body UpdateInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateInstanceVariantWithBody request with any body
+	UpdateInstanceVariantWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateInstanceVariant(ctx context.Context, body UpdateInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListInstancesWithBody request with any body
 	ListInstancesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3380,6 +5499,21 @@ type ClientInterface interface {
 
 	RentInstance(ctx context.Context, body RentInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ResetVmWithBody request with any body
+	ResetVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ResetVm(ctx context.Context, body ResetVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// StartVmWithBody request with any body
+	StartVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	StartVm(ctx context.Context, body StartVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// StopVmWithBody request with any body
+	StopVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	StopVm(ctx context.Context, body StopVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TerminateInstancesWithBody request with any body
 	TerminateInstancesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3390,28 +5524,73 @@ type ClientInterface interface {
 
 	AddNetwork(ctx context.Context, body AddNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// DeleteNetworkWithBody request with any body
+	DeleteNetworkWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	DeleteNetwork(ctx context.Context, body DeleteNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListNetworksWithBody request with any body
 	ListNetworksWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ListNetworks(ctx context.Context, body ListNetworksJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListIpRangesWithBody request with any body
-	ListIpRangesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateNetworkWithBody request with any body
+	UpdateNetworkWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ListIpRanges(ctx context.Context, body ListIpRangesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateNetwork(ctx context.Context, body UpdateNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CancelDrainWithBody request with any body
+	CancelDrainWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CancelDrain(ctx context.Context, body CancelDrainJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DrainNodeWithBody request with any body
+	DrainNodeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	DrainNode(ctx context.Context, body DrainNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ForceDrainWithBody request with any body
+	ForceDrainWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ForceDrain(ctx context.Context, body ForceDrainJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListNodesWithBody request with any body
+	ListNodesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ListNodes(ctx context.Context, body ListNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResumeNodeWithBody request with any body
+	ResumeNodeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ResumeNode(ctx context.Context, body ResumeNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateProviderNodeInstanceTypeWithBody request with any body
+	UpdateProviderNodeInstanceTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateProviderNodeInstanceType(ctx context.Context, body UpdateProviderNodeInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListProvidersWithBody request with any body
 	ListProvidersWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ListProviders(ctx context.Context, body ListProvidersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListProviderNodesWithBody request with any body
-	ListProviderNodesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// AddRecipeWithBody request with any body
+	AddRecipeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ListProviderNodes(ctx context.Context, body ListProviderNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	AddRecipe(ctx context.Context, body AddRecipeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListRecipes request
 	ListRecipes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RemoveRecipeWithBody request with any body
+	RemoveRecipeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RemoveRecipe(ctx context.Context, body RemoveRecipeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateAndAttachReservationWithBody request with any body
+	CreateAndAttachReservationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateAndAttachReservation(ctx context.Context, body CreateAndAttachReservationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListReservationsWithBody request with any body
 	ListReservationsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3420,6 +5599,11 @@ type ClientInterface interface {
 
 	// ListReservationTypes request
 	ListReservationTypes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateActiveReservationWithBody request with any body
+	UpdateActiveReservationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateActiveReservation(ctx context.Context, body UpdateActiveReservationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// BulkChargeForServiceWithBody request with any body
 	BulkChargeForServiceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3477,6 +5661,21 @@ type ClientInterface interface {
 	RegisterUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	RegisterUser(ctx context.Context, body RegisterUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateVolumeWithBody request with any body
+	CreateVolumeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateVolume(ctx context.Context, body CreateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListVolumesWithBody request with any body
+	ListVolumesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ListVolumes(ctx context.Context, body ListVolumesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateVolumeWithBody request with any body
+	UpdateVolumeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateVolume(ctx context.Context, body UpdateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetAccountInfo(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -3683,6 +5882,18 @@ func (c *Client) Logout(ctx context.Context, reqEditors ...RequestEditorFn) (*ht
 	return c.Client.Do(req)
 }
 
+func (c *Client) Me(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewMeRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) RequestPasswordResetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRequestPasswordResetRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -3697,6 +5908,30 @@ func (c *Client) RequestPasswordResetWithBody(ctx context.Context, contentType s
 
 func (c *Client) RequestPasswordReset(ctx context.Context, body RequestPasswordResetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRequestPasswordResetRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResendVerificationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResendVerificationRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResendVerification(ctx context.Context, body ResendVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResendVerificationRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3731,6 +5966,78 @@ func (c *Client) ResetPassword(ctx context.Context, body ResetPasswordJSONReques
 	return c.Client.Do(req)
 }
 
+func (c *Client) VerifyEmail(ctx context.Context, params *VerifyEmailParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewVerifyEmailRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListCapabilities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCapabilitiesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AddInstanceTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddInstanceTypeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AddInstanceType(ctx context.Context, body AddInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddInstanceTypeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AddInstanceVariantWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddInstanceVariantRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AddInstanceVariant(ctx context.Context, body AddInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddInstanceVariantRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListInstanceTypesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListInstanceTypesRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -3745,6 +6052,102 @@ func (c *Client) ListInstanceTypesWithBody(ctx context.Context, contentType stri
 
 func (c *Client) ListInstanceTypes(ctx context.Context, body ListInstanceTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListInstanceTypesRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RemoveInstanceTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRemoveInstanceTypeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RemoveInstanceType(ctx context.Context, body RemoveInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRemoveInstanceTypeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RemoveInstanceVariantWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRemoveInstanceVariantRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RemoveInstanceVariant(ctx context.Context, body RemoveInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRemoveInstanceVariantRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateInstanceTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateInstanceTypeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateInstanceType(ctx context.Context, body UpdateInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateInstanceTypeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateInstanceVariantWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateInstanceVariantRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateInstanceVariant(ctx context.Context, body UpdateInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateInstanceVariantRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3803,6 +6206,78 @@ func (c *Client) RentInstance(ctx context.Context, body RentInstanceJSONRequestB
 	return c.Client.Do(req)
 }
 
+func (c *Client) ResetVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResetVmRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResetVm(ctx context.Context, body ResetVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResetVmRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) StartVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStartVmRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) StartVm(ctx context.Context, body StartVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStartVmRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) StopVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStopVmRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) StopVm(ctx context.Context, body StopVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStopVmRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TerminateInstancesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTerminateInstancesRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -3851,6 +6326,30 @@ func (c *Client) AddNetwork(ctx context.Context, body AddNetworkJSONRequestBody,
 	return c.Client.Do(req)
 }
 
+func (c *Client) DeleteNetworkWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteNetworkRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteNetwork(ctx context.Context, body DeleteNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteNetworkRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListNetworksWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListNetworksRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -3875,8 +6374,8 @@ func (c *Client) ListNetworks(ctx context.Context, body ListNetworksJSONRequestB
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListIpRangesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListIpRangesRequestWithBody(c.Server, contentType, body)
+func (c *Client) UpdateNetworkWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateNetworkRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3887,8 +6386,152 @@ func (c *Client) ListIpRangesWithBody(ctx context.Context, contentType string, b
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListIpRanges(ctx context.Context, body ListIpRangesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListIpRangesRequest(c.Server, body)
+func (c *Client) UpdateNetwork(ctx context.Context, body UpdateNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateNetworkRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CancelDrainWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCancelDrainRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CancelDrain(ctx context.Context, body CancelDrainJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCancelDrainRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DrainNodeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDrainNodeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DrainNode(ctx context.Context, body DrainNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDrainNodeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ForceDrainWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewForceDrainRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ForceDrain(ctx context.Context, body ForceDrainJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewForceDrainRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListNodesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListNodesRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListNodes(ctx context.Context, body ListNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListNodesRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResumeNodeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResumeNodeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResumeNode(ctx context.Context, body ResumeNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResumeNodeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateProviderNodeInstanceTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateProviderNodeInstanceTypeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateProviderNodeInstanceType(ctx context.Context, body UpdateProviderNodeInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateProviderNodeInstanceTypeRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3923,8 +6566,8 @@ func (c *Client) ListProviders(ctx context.Context, body ListProvidersJSONReques
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListProviderNodesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListProviderNodesRequestWithBody(c.Server, contentType, body)
+func (c *Client) AddRecipeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddRecipeRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3935,8 +6578,8 @@ func (c *Client) ListProviderNodesWithBody(ctx context.Context, contentType stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListProviderNodes(ctx context.Context, body ListProviderNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListProviderNodesRequest(c.Server, body)
+func (c *Client) AddRecipe(ctx context.Context, body AddRecipeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddRecipeRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3949,6 +6592,54 @@ func (c *Client) ListProviderNodes(ctx context.Context, body ListProviderNodesJS
 
 func (c *Client) ListRecipes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListRecipesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RemoveRecipeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRemoveRecipeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RemoveRecipe(ctx context.Context, body RemoveRecipeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRemoveRecipeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAndAttachReservationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAndAttachReservationRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAndAttachReservation(ctx context.Context, body CreateAndAttachReservationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAndAttachReservationRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3985,6 +6676,30 @@ func (c *Client) ListReservations(ctx context.Context, body ListReservationsJSON
 
 func (c *Client) ListReservationTypes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListReservationTypesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateActiveReservationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateActiveReservationRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateActiveReservation(ctx context.Context, body UpdateActiveReservationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateActiveReservationRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4249,6 +6964,78 @@ func (c *Client) RegisterUserWithBody(ctx context.Context, contentType string, b
 
 func (c *Client) RegisterUser(ctx context.Context, body RegisterUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRegisterUserRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateVolumeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateVolumeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateVolume(ctx context.Context, body CreateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateVolumeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListVolumesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListVolumesRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListVolumes(ctx context.Context, body ListVolumesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListVolumesRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateVolumeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateVolumeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateVolume(ctx context.Context, body UpdateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateVolumeRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4620,6 +7407,33 @@ func NewLogoutRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewMeRequest generates requests for Me
+func NewMeRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/auth/me")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewRequestPasswordResetRequest calls the generic RequestPasswordReset builder with application/json body
 func NewRequestPasswordResetRequest(server string, body RequestPasswordResetJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -4641,6 +7455,46 @@ func NewRequestPasswordResetRequestWithBody(server string, contentType string, b
 	}
 
 	operationPath := fmt.Sprintf("/api/v1/auth/request-password-reset")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewResendVerificationRequest calls the generic ResendVerification builder with application/json body
+func NewResendVerificationRequest(server string, body ResendVerificationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewResendVerificationRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewResendVerificationRequestWithBody generates requests for ResendVerification with any type of body
+func NewResendVerificationRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/auth/resend-verification")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -4700,6 +7554,158 @@ func NewResetPasswordRequestWithBody(server string, contentType string, body io.
 	return req, nil
 }
 
+// NewVerifyEmailRequest generates requests for VerifyEmail
+func NewVerifyEmailRequest(server string, params *VerifyEmailParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/auth/verify-email")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "token", runtime.ParamLocationQuery, params.Token); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListCapabilitiesRequest generates requests for ListCapabilities
+func NewListCapabilitiesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/capabilities/list")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewAddInstanceTypeRequest calls the generic AddInstanceType builder with application/json body
+func NewAddInstanceTypeRequest(server string, body AddInstanceTypeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAddInstanceTypeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewAddInstanceTypeRequestWithBody generates requests for AddInstanceType with any type of body
+func NewAddInstanceTypeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instance-types/add")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewAddInstanceVariantRequest calls the generic AddInstanceVariant builder with application/json body
+func NewAddInstanceVariantRequest(server string, body AddInstanceVariantJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAddInstanceVariantRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewAddInstanceVariantRequestWithBody generates requests for AddInstanceVariant with any type of body
+func NewAddInstanceVariantRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instance-types/add_variant")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListInstanceTypesRequest calls the generic ListInstanceTypes builder with application/json body
 func NewListInstanceTypesRequest(server string, body ListInstanceTypesJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -4721,6 +7727,166 @@ func NewListInstanceTypesRequestWithBody(server string, contentType string, body
 	}
 
 	operationPath := fmt.Sprintf("/api/v1/instance-types/list")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRemoveInstanceTypeRequest calls the generic RemoveInstanceType builder with application/json body
+func NewRemoveInstanceTypeRequest(server string, body RemoveInstanceTypeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRemoveInstanceTypeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRemoveInstanceTypeRequestWithBody generates requests for RemoveInstanceType with any type of body
+func NewRemoveInstanceTypeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instance-types/remove")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRemoveInstanceVariantRequest calls the generic RemoveInstanceVariant builder with application/json body
+func NewRemoveInstanceVariantRequest(server string, body RemoveInstanceVariantJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRemoveInstanceVariantRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRemoveInstanceVariantRequestWithBody generates requests for RemoveInstanceVariant with any type of body
+func NewRemoveInstanceVariantRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instance-types/remove_variant")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewUpdateInstanceTypeRequest calls the generic UpdateInstanceType builder with application/json body
+func NewUpdateInstanceTypeRequest(server string, body UpdateInstanceTypeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateInstanceTypeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewUpdateInstanceTypeRequestWithBody generates requests for UpdateInstanceType with any type of body
+func NewUpdateInstanceTypeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instance-types/update")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewUpdateInstanceVariantRequest calls the generic UpdateInstanceVariant builder with application/json body
+func NewUpdateInstanceVariantRequest(server string, body UpdateInstanceVariantJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateInstanceVariantRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewUpdateInstanceVariantRequestWithBody generates requests for UpdateInstanceVariant with any type of body
+func NewUpdateInstanceVariantRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instance-types/update_variant")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -4820,6 +7986,126 @@ func NewRentInstanceRequestWithBody(server string, contentType string, body io.R
 	return req, nil
 }
 
+// NewResetVmRequest calls the generic ResetVm builder with application/json body
+func NewResetVmRequest(server string, body ResetVmJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewResetVmRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewResetVmRequestWithBody generates requests for ResetVm with any type of body
+func NewResetVmRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instances/reset")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewStartVmRequest calls the generic StartVm builder with application/json body
+func NewStartVmRequest(server string, body StartVmJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewStartVmRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewStartVmRequestWithBody generates requests for StartVm with any type of body
+func NewStartVmRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instances/start")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewStopVmRequest calls the generic StopVm builder with application/json body
+func NewStopVmRequest(server string, body StopVmJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewStopVmRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewStopVmRequestWithBody generates requests for StopVm with any type of body
+func NewStopVmRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instances/stop")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewTerminateInstancesRequest calls the generic TerminateInstances builder with application/json body
 func NewTerminateInstancesRequest(server string, body TerminateInstancesJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -4900,6 +8186,46 @@ func NewAddNetworkRequestWithBody(server string, contentType string, body io.Rea
 	return req, nil
 }
 
+// NewDeleteNetworkRequest calls the generic DeleteNetwork builder with application/json body
+func NewDeleteNetworkRequest(server string, body DeleteNetworkJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDeleteNetworkRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewDeleteNetworkRequestWithBody generates requests for DeleteNetwork with any type of body
+func NewDeleteNetworkRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/network/delete")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListNetworksRequest calls the generic ListNetworks builder with application/json body
 func NewListNetworksRequest(server string, body ListNetworksJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -4940,19 +8266,19 @@ func NewListNetworksRequestWithBody(server string, contentType string, body io.R
 	return req, nil
 }
 
-// NewListIpRangesRequest calls the generic ListIpRanges builder with application/json body
-func NewListIpRangesRequest(server string, body ListIpRangesJSONRequestBody) (*http.Request, error) {
+// NewUpdateNetworkRequest calls the generic UpdateNetwork builder with application/json body
+func NewUpdateNetworkRequest(server string, body UpdateNetworkJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewListIpRangesRequestWithBody(server, "application/json", bodyReader)
+	return NewUpdateNetworkRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewListIpRangesRequestWithBody generates requests for ListIpRanges with any type of body
-func NewListIpRangesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdateNetworkRequestWithBody generates requests for UpdateNetwork with any type of body
+func NewUpdateNetworkRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -4960,7 +8286,247 @@ func NewListIpRangesRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/v1/network/list-ranges")
+	operationPath := fmt.Sprintf("/api/v1/network/update")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCancelDrainRequest calls the generic CancelDrain builder with application/json body
+func NewCancelDrainRequest(server string, body CancelDrainJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCancelDrainRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCancelDrainRequestWithBody generates requests for CancelDrain with any type of body
+func NewCancelDrainRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/nodes/cancel_drain")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDrainNodeRequest calls the generic DrainNode builder with application/json body
+func NewDrainNodeRequest(server string, body DrainNodeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDrainNodeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewDrainNodeRequestWithBody generates requests for DrainNode with any type of body
+func NewDrainNodeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/nodes/drain")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewForceDrainRequest calls the generic ForceDrain builder with application/json body
+func NewForceDrainRequest(server string, body ForceDrainJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewForceDrainRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewForceDrainRequestWithBody generates requests for ForceDrain with any type of body
+func NewForceDrainRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/nodes/force_drain")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListNodesRequest calls the generic ListNodes builder with application/json body
+func NewListNodesRequest(server string, body ListNodesJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewListNodesRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewListNodesRequestWithBody generates requests for ListNodes with any type of body
+func NewListNodesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/nodes/list")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewResumeNodeRequest calls the generic ResumeNode builder with application/json body
+func NewResumeNodeRequest(server string, body ResumeNodeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewResumeNodeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewResumeNodeRequestWithBody generates requests for ResumeNode with any type of body
+func NewResumeNodeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/nodes/resume")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewUpdateProviderNodeInstanceTypeRequest calls the generic UpdateProviderNodeInstanceType builder with application/json body
+func NewUpdateProviderNodeInstanceTypeRequest(server string, body UpdateProviderNodeInstanceTypeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateProviderNodeInstanceTypeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewUpdateProviderNodeInstanceTypeRequestWithBody generates requests for UpdateProviderNodeInstanceType with any type of body
+func NewUpdateProviderNodeInstanceTypeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/nodes/update_instance_type")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -5020,19 +8586,19 @@ func NewListProvidersRequestWithBody(server string, contentType string, body io.
 	return req, nil
 }
 
-// NewListProviderNodesRequest calls the generic ListProviderNodes builder with application/json body
-func NewListProviderNodesRequest(server string, body ListProviderNodesJSONRequestBody) (*http.Request, error) {
+// NewAddRecipeRequest calls the generic AddRecipe builder with application/json body
+func NewAddRecipeRequest(server string, body AddRecipeJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewListProviderNodesRequestWithBody(server, "application/json", bodyReader)
+	return NewAddRecipeRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewListProviderNodesRequestWithBody generates requests for ListProviderNodes with any type of body
-func NewListProviderNodesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewAddRecipeRequestWithBody generates requests for AddRecipe with any type of body
+func NewAddRecipeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -5040,7 +8606,7 @@ func NewListProviderNodesRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/v1/providers/nodes/list")
+	operationPath := fmt.Sprintf("/api/v1/recipes/add")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -5083,6 +8649,86 @@ func NewListRecipesRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewRemoveRecipeRequest calls the generic RemoveRecipe builder with application/json body
+func NewRemoveRecipeRequest(server string, body RemoveRecipeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRemoveRecipeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRemoveRecipeRequestWithBody generates requests for RemoveRecipe with any type of body
+func NewRemoveRecipeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/recipes/remove")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCreateAndAttachReservationRequest calls the generic CreateAndAttachReservation builder with application/json body
+func NewCreateAndAttachReservationRequest(server string, body CreateAndAttachReservationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateAndAttachReservationRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateAndAttachReservationRequestWithBody generates requests for CreateAndAttachReservation with any type of body
+func NewCreateAndAttachReservationRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/reservations/create")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -5150,6 +8796,46 @@ func NewListReservationTypesRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewUpdateActiveReservationRequest calls the generic UpdateActiveReservation builder with application/json body
+func NewUpdateActiveReservationRequest(server string, body UpdateActiveReservationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateActiveReservationRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewUpdateActiveReservationRequestWithBody generates requests for UpdateActiveReservation with any type of body
+func NewUpdateActiveReservationRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/reservations/update")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -5657,6 +9343,126 @@ func NewRegisterUserRequestWithBody(server string, contentType string, body io.R
 	return req, nil
 }
 
+// NewCreateVolumeRequest calls the generic CreateVolume builder with application/json body
+func NewCreateVolumeRequest(server string, body CreateVolumeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateVolumeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateVolumeRequestWithBody generates requests for CreateVolume with any type of body
+func NewCreateVolumeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/volumes/create")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListVolumesRequest calls the generic ListVolumes builder with application/json body
+func NewListVolumesRequest(server string, body ListVolumesJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewListVolumesRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewListVolumesRequestWithBody generates requests for ListVolumes with any type of body
+func NewListVolumesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/volumes/list")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewUpdateVolumeRequest calls the generic UpdateVolume builder with application/json body
+func NewUpdateVolumeRequest(server string, body UpdateVolumeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateVolumeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewUpdateVolumeRequestWithBody generates requests for UpdateVolume with any type of body
+func NewUpdateVolumeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/volumes/update")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -5744,20 +9550,64 @@ type ClientWithResponsesInterface interface {
 	// LogoutWithResponse request
 	LogoutWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*LogoutResponse, error)
 
+	// MeWithResponse request
+	MeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*MeResponse, error)
+
 	// RequestPasswordResetWithBodyWithResponse request with any body
 	RequestPasswordResetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestPasswordResetResponse, error)
 
 	RequestPasswordResetWithResponse(ctx context.Context, body RequestPasswordResetJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestPasswordResetResponse, error)
+
+	// ResendVerificationWithBodyWithResponse request with any body
+	ResendVerificationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResendVerificationResponse, error)
+
+	ResendVerificationWithResponse(ctx context.Context, body ResendVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*ResendVerificationResponse, error)
 
 	// ResetPasswordWithBodyWithResponse request with any body
 	ResetPasswordWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResetPasswordResponse, error)
 
 	ResetPasswordWithResponse(ctx context.Context, body ResetPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetPasswordResponse, error)
 
+	// VerifyEmailWithResponse request
+	VerifyEmailWithResponse(ctx context.Context, params *VerifyEmailParams, reqEditors ...RequestEditorFn) (*VerifyEmailResponse, error)
+
+	// ListCapabilitiesWithResponse request
+	ListCapabilitiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCapabilitiesResponse, error)
+
+	// AddInstanceTypeWithBodyWithResponse request with any body
+	AddInstanceTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddInstanceTypeResponse, error)
+
+	AddInstanceTypeWithResponse(ctx context.Context, body AddInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*AddInstanceTypeResponse, error)
+
+	// AddInstanceVariantWithBodyWithResponse request with any body
+	AddInstanceVariantWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddInstanceVariantResponse, error)
+
+	AddInstanceVariantWithResponse(ctx context.Context, body AddInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*AddInstanceVariantResponse, error)
+
 	// ListInstanceTypesWithBodyWithResponse request with any body
 	ListInstanceTypesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListInstanceTypesResponse, error)
 
 	ListInstanceTypesWithResponse(ctx context.Context, body ListInstanceTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListInstanceTypesResponse, error)
+
+	// RemoveInstanceTypeWithBodyWithResponse request with any body
+	RemoveInstanceTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RemoveInstanceTypeResponse, error)
+
+	RemoveInstanceTypeWithResponse(ctx context.Context, body RemoveInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*RemoveInstanceTypeResponse, error)
+
+	// RemoveInstanceVariantWithBodyWithResponse request with any body
+	RemoveInstanceVariantWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RemoveInstanceVariantResponse, error)
+
+	RemoveInstanceVariantWithResponse(ctx context.Context, body RemoveInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*RemoveInstanceVariantResponse, error)
+
+	// UpdateInstanceTypeWithBodyWithResponse request with any body
+	UpdateInstanceTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInstanceTypeResponse, error)
+
+	UpdateInstanceTypeWithResponse(ctx context.Context, body UpdateInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateInstanceTypeResponse, error)
+
+	// UpdateInstanceVariantWithBodyWithResponse request with any body
+	UpdateInstanceVariantWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInstanceVariantResponse, error)
+
+	UpdateInstanceVariantWithResponse(ctx context.Context, body UpdateInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateInstanceVariantResponse, error)
 
 	// ListInstancesWithBodyWithResponse request with any body
 	ListInstancesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListInstancesResponse, error)
@@ -5769,6 +9619,21 @@ type ClientWithResponsesInterface interface {
 
 	RentInstanceWithResponse(ctx context.Context, body RentInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*RentInstanceResponse, error)
 
+	// ResetVmWithBodyWithResponse request with any body
+	ResetVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResetVmResponse, error)
+
+	ResetVmWithResponse(ctx context.Context, body ResetVmJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetVmResponse, error)
+
+	// StartVmWithBodyWithResponse request with any body
+	StartVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*StartVmResponse, error)
+
+	StartVmWithResponse(ctx context.Context, body StartVmJSONRequestBody, reqEditors ...RequestEditorFn) (*StartVmResponse, error)
+
+	// StopVmWithBodyWithResponse request with any body
+	StopVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*StopVmResponse, error)
+
+	StopVmWithResponse(ctx context.Context, body StopVmJSONRequestBody, reqEditors ...RequestEditorFn) (*StopVmResponse, error)
+
 	// TerminateInstancesWithBodyWithResponse request with any body
 	TerminateInstancesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TerminateInstancesResponse, error)
 
@@ -5779,28 +9644,73 @@ type ClientWithResponsesInterface interface {
 
 	AddNetworkWithResponse(ctx context.Context, body AddNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*AddNetworkResponse, error)
 
+	// DeleteNetworkWithBodyWithResponse request with any body
+	DeleteNetworkWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteNetworkResponse, error)
+
+	DeleteNetworkWithResponse(ctx context.Context, body DeleteNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteNetworkResponse, error)
+
 	// ListNetworksWithBodyWithResponse request with any body
 	ListNetworksWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListNetworksResponse, error)
 
 	ListNetworksWithResponse(ctx context.Context, body ListNetworksJSONRequestBody, reqEditors ...RequestEditorFn) (*ListNetworksResponse, error)
 
-	// ListIpRangesWithBodyWithResponse request with any body
-	ListIpRangesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListIpRangesResponse, error)
+	// UpdateNetworkWithBodyWithResponse request with any body
+	UpdateNetworkWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateNetworkResponse, error)
 
-	ListIpRangesWithResponse(ctx context.Context, body ListIpRangesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListIpRangesResponse, error)
+	UpdateNetworkWithResponse(ctx context.Context, body UpdateNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateNetworkResponse, error)
+
+	// CancelDrainWithBodyWithResponse request with any body
+	CancelDrainWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CancelDrainResponse, error)
+
+	CancelDrainWithResponse(ctx context.Context, body CancelDrainJSONRequestBody, reqEditors ...RequestEditorFn) (*CancelDrainResponse, error)
+
+	// DrainNodeWithBodyWithResponse request with any body
+	DrainNodeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DrainNodeResponse, error)
+
+	DrainNodeWithResponse(ctx context.Context, body DrainNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*DrainNodeResponse, error)
+
+	// ForceDrainWithBodyWithResponse request with any body
+	ForceDrainWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ForceDrainResponse, error)
+
+	ForceDrainWithResponse(ctx context.Context, body ForceDrainJSONRequestBody, reqEditors ...RequestEditorFn) (*ForceDrainResponse, error)
+
+	// ListNodesWithBodyWithResponse request with any body
+	ListNodesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListNodesResponse, error)
+
+	ListNodesWithResponse(ctx context.Context, body ListNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListNodesResponse, error)
+
+	// ResumeNodeWithBodyWithResponse request with any body
+	ResumeNodeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResumeNodeResponse, error)
+
+	ResumeNodeWithResponse(ctx context.Context, body ResumeNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*ResumeNodeResponse, error)
+
+	// UpdateProviderNodeInstanceTypeWithBodyWithResponse request with any body
+	UpdateProviderNodeInstanceTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateProviderNodeInstanceTypeResponse, error)
+
+	UpdateProviderNodeInstanceTypeWithResponse(ctx context.Context, body UpdateProviderNodeInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateProviderNodeInstanceTypeResponse, error)
 
 	// ListProvidersWithBodyWithResponse request with any body
 	ListProvidersWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListProvidersResponse, error)
 
 	ListProvidersWithResponse(ctx context.Context, body ListProvidersJSONRequestBody, reqEditors ...RequestEditorFn) (*ListProvidersResponse, error)
 
-	// ListProviderNodesWithBodyWithResponse request with any body
-	ListProviderNodesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListProviderNodesResponse, error)
+	// AddRecipeWithBodyWithResponse request with any body
+	AddRecipeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddRecipeResponse, error)
 
-	ListProviderNodesWithResponse(ctx context.Context, body ListProviderNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListProviderNodesResponse, error)
+	AddRecipeWithResponse(ctx context.Context, body AddRecipeJSONRequestBody, reqEditors ...RequestEditorFn) (*AddRecipeResponse, error)
 
 	// ListRecipesWithResponse request
 	ListRecipesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListRecipesResponse, error)
+
+	// RemoveRecipeWithBodyWithResponse request with any body
+	RemoveRecipeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RemoveRecipeResponse, error)
+
+	RemoveRecipeWithResponse(ctx context.Context, body RemoveRecipeJSONRequestBody, reqEditors ...RequestEditorFn) (*RemoveRecipeResponse, error)
+
+	// CreateAndAttachReservationWithBodyWithResponse request with any body
+	CreateAndAttachReservationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAndAttachReservationResponse, error)
+
+	CreateAndAttachReservationWithResponse(ctx context.Context, body CreateAndAttachReservationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAndAttachReservationResponse, error)
 
 	// ListReservationsWithBodyWithResponse request with any body
 	ListReservationsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListReservationsResponse, error)
@@ -5809,6 +9719,11 @@ type ClientWithResponsesInterface interface {
 
 	// ListReservationTypesWithResponse request
 	ListReservationTypesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListReservationTypesResponse, error)
+
+	// UpdateActiveReservationWithBodyWithResponse request with any body
+	UpdateActiveReservationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateActiveReservationResponse, error)
+
+	UpdateActiveReservationWithResponse(ctx context.Context, body UpdateActiveReservationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateActiveReservationResponse, error)
 
 	// BulkChargeForServiceWithBodyWithResponse request with any body
 	BulkChargeForServiceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BulkChargeForServiceResponse, error)
@@ -5866,6 +9781,21 @@ type ClientWithResponsesInterface interface {
 	RegisterUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RegisterUserResponse, error)
 
 	RegisterUserWithResponse(ctx context.Context, body RegisterUserJSONRequestBody, reqEditors ...RequestEditorFn) (*RegisterUserResponse, error)
+
+	// CreateVolumeWithBodyWithResponse request with any body
+	CreateVolumeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateVolumeResponse, error)
+
+	CreateVolumeWithResponse(ctx context.Context, body CreateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateVolumeResponse, error)
+
+	// ListVolumesWithBodyWithResponse request with any body
+	ListVolumesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListVolumesResponse, error)
+
+	ListVolumesWithResponse(ctx context.Context, body ListVolumesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListVolumesResponse, error)
+
+	// UpdateVolumeWithBodyWithResponse request with any body
+	UpdateVolumeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateVolumeResponse, error)
+
+	UpdateVolumeWithResponse(ctx context.Context, body UpdateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateVolumeResponse, error)
 }
 
 type GetAccountInfoResponse struct {
@@ -5957,7 +9887,7 @@ func (r ListTransactionsResponse) StatusCode() int {
 type AddApiKeyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *AddApiKeyResponseProto
+	JSON200      *AddApiKeyResponseProto
 }
 
 // Status returns HTTPResponse.Status
@@ -6085,6 +10015,28 @@ func (r LogoutResponse) StatusCode() int {
 	return 0
 }
 
+type MeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *MeResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r MeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r MeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type RequestPasswordResetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -6100,6 +10052,27 @@ func (r RequestPasswordResetResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r RequestPasswordResetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ResendVerificationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r ResendVerificationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResendVerificationResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -6127,6 +10100,93 @@ func (r ResetPasswordResponse) StatusCode() int {
 	return 0
 }
 
+type VerifyEmailResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r VerifyEmailResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r VerifyEmailResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListCapabilitiesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CapabilitiesResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCapabilitiesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCapabilitiesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AddInstanceTypeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InstanceTypeResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r AddInstanceTypeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AddInstanceTypeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AddInstanceVariantResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InstanceVariantResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r AddInstanceVariantResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AddInstanceVariantResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListInstanceTypesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -6143,6 +10203,94 @@ func (r ListInstanceTypesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListInstanceTypesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RemoveInstanceTypeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InstanceTypeResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r RemoveInstanceTypeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RemoveInstanceTypeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RemoveInstanceVariantResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InstanceVariantResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r RemoveInstanceVariantResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RemoveInstanceVariantResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateInstanceTypeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InstanceTypeResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateInstanceTypeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateInstanceTypeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateInstanceVariantResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InstanceVariantResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateInstanceVariantResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateInstanceVariantResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -6193,6 +10341,69 @@ func (r RentInstanceResponse) StatusCode() int {
 	return 0
 }
 
+type ResetVmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r ResetVmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResetVmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type StartVmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r StartVmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r StartVmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type StopVmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r StopVmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r StopVmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TerminateInstancesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -6217,7 +10428,7 @@ func (r TerminateInstancesResponse) StatusCode() int {
 type AddNetworkResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *AddNetworkResponseProto
+	JSON200      *AddNetworkResponseProto
 }
 
 // Status returns HTTPResponse.Status
@@ -6230,6 +10441,28 @@ func (r AddNetworkResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r AddNetworkResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteNetworkResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteNetworkResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteNetworkResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteNetworkResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -6258,14 +10491,14 @@ func (r ListNetworksResponse) StatusCode() int {
 	return 0
 }
 
-type ListIpRangesResponse struct {
+type UpdateNetworkResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ListIpRangesResponseProto
+	JSON200      *UpdateNetworkResponseProto
 }
 
 // Status returns HTTPResponse.Status
-func (r ListIpRangesResponse) Status() string {
+func (r UpdateNetworkResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -6273,7 +10506,138 @@ func (r ListIpRangesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListIpRangesResponse) StatusCode() int {
+func (r UpdateNetworkResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CancelDrainResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CancelDrainResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r CancelDrainResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CancelDrainResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DrainNodeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DrainNodeResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r DrainNodeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DrainNodeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ForceDrainResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ForceDrainResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r ForceDrainResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ForceDrainResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListNodesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListProviderNodesResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r ListNodesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListNodesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ResumeNodeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResumeNodeResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r ResumeNodeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResumeNodeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateProviderNodeInstanceTypeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateProviderNodeInstanceTypeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateProviderNodeInstanceTypeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -6283,7 +10647,7 @@ func (r ListIpRangesResponse) StatusCode() int {
 type ListProvidersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *ListProvidersResponseProto
+	JSON200      *ListProvidersResponseProto
 }
 
 // Status returns HTTPResponse.Status
@@ -6302,14 +10666,13 @@ func (r ListProvidersResponse) StatusCode() int {
 	return 0
 }
 
-type ListProviderNodesResponse struct {
+type AddRecipeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *ListProviderNodesResponseProto
 }
 
 // Status returns HTTPResponse.Status
-func (r ListProviderNodesResponse) Status() string {
+func (r AddRecipeResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -6317,7 +10680,7 @@ func (r ListProviderNodesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListProviderNodesResponse) StatusCode() int {
+func (r AddRecipeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -6346,10 +10709,53 @@ func (r ListRecipesResponse) StatusCode() int {
 	return 0
 }
 
+type RemoveRecipeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r RemoveRecipeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RemoveRecipeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateAndAttachReservationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CreateReservationResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateAndAttachReservationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateAndAttachReservationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListReservationsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *ListReservationsResponseProto
+	JSON200      *ListReservationsResponseProto
 }
 
 // Status returns HTTPResponse.Status
@@ -6390,10 +10796,32 @@ func (r ListReservationTypesResponse) StatusCode() int {
 	return 0
 }
 
+type UpdateActiveReservationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UpdateReservationResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateActiveReservationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateActiveReservationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type BulkChargeForServiceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *BulkServiceChargeResponseProto
+	JSON200      *BulkServiceChargeResponseProto
 }
 
 // Status returns HTTPResponse.Status
@@ -6415,7 +10843,7 @@ func (r BulkChargeForServiceResponse) StatusCode() int {
 type ChargeForServiceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *ServiceChargeResponseProto
+	JSON200      *ServiceChargeResponseProto
 }
 
 // Status returns HTTPResponse.Status
@@ -6523,7 +10951,7 @@ func (r DeleteSshKeyResponse) StatusCode() int {
 type CreateTeamResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *CreateTeamResponseProto
+	JSON200      *CreateTeamResponseProto
 }
 
 // Status returns HTTPResponse.Status
@@ -6666,6 +11094,72 @@ func (r RegisterUserResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r RegisterUserResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateVolumeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CreateVolumeResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateVolumeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateVolumeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListVolumesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListVolumesResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r ListVolumesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListVolumesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateVolumeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UpdateVolumeResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateVolumeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateVolumeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -6818,6 +11312,15 @@ func (c *ClientWithResponses) LogoutWithResponse(ctx context.Context, reqEditors
 	return ParseLogoutResponse(rsp)
 }
 
+// MeWithResponse request returning *MeResponse
+func (c *ClientWithResponses) MeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*MeResponse, error) {
+	rsp, err := c.Me(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseMeResponse(rsp)
+}
+
 // RequestPasswordResetWithBodyWithResponse request with arbitrary body returning *RequestPasswordResetResponse
 func (c *ClientWithResponses) RequestPasswordResetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestPasswordResetResponse, error) {
 	rsp, err := c.RequestPasswordResetWithBody(ctx, contentType, body, reqEditors...)
@@ -6833,6 +11336,23 @@ func (c *ClientWithResponses) RequestPasswordResetWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParseRequestPasswordResetResponse(rsp)
+}
+
+// ResendVerificationWithBodyWithResponse request with arbitrary body returning *ResendVerificationResponse
+func (c *ClientWithResponses) ResendVerificationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResendVerificationResponse, error) {
+	rsp, err := c.ResendVerificationWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResendVerificationResponse(rsp)
+}
+
+func (c *ClientWithResponses) ResendVerificationWithResponse(ctx context.Context, body ResendVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*ResendVerificationResponse, error) {
+	rsp, err := c.ResendVerification(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResendVerificationResponse(rsp)
 }
 
 // ResetPasswordWithBodyWithResponse request with arbitrary body returning *ResetPasswordResponse
@@ -6852,6 +11372,58 @@ func (c *ClientWithResponses) ResetPasswordWithResponse(ctx context.Context, bod
 	return ParseResetPasswordResponse(rsp)
 }
 
+// VerifyEmailWithResponse request returning *VerifyEmailResponse
+func (c *ClientWithResponses) VerifyEmailWithResponse(ctx context.Context, params *VerifyEmailParams, reqEditors ...RequestEditorFn) (*VerifyEmailResponse, error) {
+	rsp, err := c.VerifyEmail(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseVerifyEmailResponse(rsp)
+}
+
+// ListCapabilitiesWithResponse request returning *ListCapabilitiesResponse
+func (c *ClientWithResponses) ListCapabilitiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCapabilitiesResponse, error) {
+	rsp, err := c.ListCapabilities(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCapabilitiesResponse(rsp)
+}
+
+// AddInstanceTypeWithBodyWithResponse request with arbitrary body returning *AddInstanceTypeResponse
+func (c *ClientWithResponses) AddInstanceTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddInstanceTypeResponse, error) {
+	rsp, err := c.AddInstanceTypeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddInstanceTypeResponse(rsp)
+}
+
+func (c *ClientWithResponses) AddInstanceTypeWithResponse(ctx context.Context, body AddInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*AddInstanceTypeResponse, error) {
+	rsp, err := c.AddInstanceType(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddInstanceTypeResponse(rsp)
+}
+
+// AddInstanceVariantWithBodyWithResponse request with arbitrary body returning *AddInstanceVariantResponse
+func (c *ClientWithResponses) AddInstanceVariantWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddInstanceVariantResponse, error) {
+	rsp, err := c.AddInstanceVariantWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddInstanceVariantResponse(rsp)
+}
+
+func (c *ClientWithResponses) AddInstanceVariantWithResponse(ctx context.Context, body AddInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*AddInstanceVariantResponse, error) {
+	rsp, err := c.AddInstanceVariant(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddInstanceVariantResponse(rsp)
+}
+
 // ListInstanceTypesWithBodyWithResponse request with arbitrary body returning *ListInstanceTypesResponse
 func (c *ClientWithResponses) ListInstanceTypesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListInstanceTypesResponse, error) {
 	rsp, err := c.ListInstanceTypesWithBody(ctx, contentType, body, reqEditors...)
@@ -6867,6 +11439,74 @@ func (c *ClientWithResponses) ListInstanceTypesWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseListInstanceTypesResponse(rsp)
+}
+
+// RemoveInstanceTypeWithBodyWithResponse request with arbitrary body returning *RemoveInstanceTypeResponse
+func (c *ClientWithResponses) RemoveInstanceTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RemoveInstanceTypeResponse, error) {
+	rsp, err := c.RemoveInstanceTypeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRemoveInstanceTypeResponse(rsp)
+}
+
+func (c *ClientWithResponses) RemoveInstanceTypeWithResponse(ctx context.Context, body RemoveInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*RemoveInstanceTypeResponse, error) {
+	rsp, err := c.RemoveInstanceType(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRemoveInstanceTypeResponse(rsp)
+}
+
+// RemoveInstanceVariantWithBodyWithResponse request with arbitrary body returning *RemoveInstanceVariantResponse
+func (c *ClientWithResponses) RemoveInstanceVariantWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RemoveInstanceVariantResponse, error) {
+	rsp, err := c.RemoveInstanceVariantWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRemoveInstanceVariantResponse(rsp)
+}
+
+func (c *ClientWithResponses) RemoveInstanceVariantWithResponse(ctx context.Context, body RemoveInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*RemoveInstanceVariantResponse, error) {
+	rsp, err := c.RemoveInstanceVariant(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRemoveInstanceVariantResponse(rsp)
+}
+
+// UpdateInstanceTypeWithBodyWithResponse request with arbitrary body returning *UpdateInstanceTypeResponse
+func (c *ClientWithResponses) UpdateInstanceTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInstanceTypeResponse, error) {
+	rsp, err := c.UpdateInstanceTypeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateInstanceTypeResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateInstanceTypeWithResponse(ctx context.Context, body UpdateInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateInstanceTypeResponse, error) {
+	rsp, err := c.UpdateInstanceType(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateInstanceTypeResponse(rsp)
+}
+
+// UpdateInstanceVariantWithBodyWithResponse request with arbitrary body returning *UpdateInstanceVariantResponse
+func (c *ClientWithResponses) UpdateInstanceVariantWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateInstanceVariantResponse, error) {
+	rsp, err := c.UpdateInstanceVariantWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateInstanceVariantResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateInstanceVariantWithResponse(ctx context.Context, body UpdateInstanceVariantJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateInstanceVariantResponse, error) {
+	rsp, err := c.UpdateInstanceVariant(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateInstanceVariantResponse(rsp)
 }
 
 // ListInstancesWithBodyWithResponse request with arbitrary body returning *ListInstancesResponse
@@ -6903,6 +11543,57 @@ func (c *ClientWithResponses) RentInstanceWithResponse(ctx context.Context, body
 	return ParseRentInstanceResponse(rsp)
 }
 
+// ResetVmWithBodyWithResponse request with arbitrary body returning *ResetVmResponse
+func (c *ClientWithResponses) ResetVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResetVmResponse, error) {
+	rsp, err := c.ResetVmWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResetVmResponse(rsp)
+}
+
+func (c *ClientWithResponses) ResetVmWithResponse(ctx context.Context, body ResetVmJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetVmResponse, error) {
+	rsp, err := c.ResetVm(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResetVmResponse(rsp)
+}
+
+// StartVmWithBodyWithResponse request with arbitrary body returning *StartVmResponse
+func (c *ClientWithResponses) StartVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*StartVmResponse, error) {
+	rsp, err := c.StartVmWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStartVmResponse(rsp)
+}
+
+func (c *ClientWithResponses) StartVmWithResponse(ctx context.Context, body StartVmJSONRequestBody, reqEditors ...RequestEditorFn) (*StartVmResponse, error) {
+	rsp, err := c.StartVm(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStartVmResponse(rsp)
+}
+
+// StopVmWithBodyWithResponse request with arbitrary body returning *StopVmResponse
+func (c *ClientWithResponses) StopVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*StopVmResponse, error) {
+	rsp, err := c.StopVmWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStopVmResponse(rsp)
+}
+
+func (c *ClientWithResponses) StopVmWithResponse(ctx context.Context, body StopVmJSONRequestBody, reqEditors ...RequestEditorFn) (*StopVmResponse, error) {
+	rsp, err := c.StopVm(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStopVmResponse(rsp)
+}
+
 // TerminateInstancesWithBodyWithResponse request with arbitrary body returning *TerminateInstancesResponse
 func (c *ClientWithResponses) TerminateInstancesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TerminateInstancesResponse, error) {
 	rsp, err := c.TerminateInstancesWithBody(ctx, contentType, body, reqEditors...)
@@ -6937,6 +11628,23 @@ func (c *ClientWithResponses) AddNetworkWithResponse(ctx context.Context, body A
 	return ParseAddNetworkResponse(rsp)
 }
 
+// DeleteNetworkWithBodyWithResponse request with arbitrary body returning *DeleteNetworkResponse
+func (c *ClientWithResponses) DeleteNetworkWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteNetworkResponse, error) {
+	rsp, err := c.DeleteNetworkWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteNetworkResponse(rsp)
+}
+
+func (c *ClientWithResponses) DeleteNetworkWithResponse(ctx context.Context, body DeleteNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteNetworkResponse, error) {
+	rsp, err := c.DeleteNetwork(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteNetworkResponse(rsp)
+}
+
 // ListNetworksWithBodyWithResponse request with arbitrary body returning *ListNetworksResponse
 func (c *ClientWithResponses) ListNetworksWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListNetworksResponse, error) {
 	rsp, err := c.ListNetworksWithBody(ctx, contentType, body, reqEditors...)
@@ -6954,21 +11662,123 @@ func (c *ClientWithResponses) ListNetworksWithResponse(ctx context.Context, body
 	return ParseListNetworksResponse(rsp)
 }
 
-// ListIpRangesWithBodyWithResponse request with arbitrary body returning *ListIpRangesResponse
-func (c *ClientWithResponses) ListIpRangesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListIpRangesResponse, error) {
-	rsp, err := c.ListIpRangesWithBody(ctx, contentType, body, reqEditors...)
+// UpdateNetworkWithBodyWithResponse request with arbitrary body returning *UpdateNetworkResponse
+func (c *ClientWithResponses) UpdateNetworkWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateNetworkResponse, error) {
+	rsp, err := c.UpdateNetworkWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListIpRangesResponse(rsp)
+	return ParseUpdateNetworkResponse(rsp)
 }
 
-func (c *ClientWithResponses) ListIpRangesWithResponse(ctx context.Context, body ListIpRangesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListIpRangesResponse, error) {
-	rsp, err := c.ListIpRanges(ctx, body, reqEditors...)
+func (c *ClientWithResponses) UpdateNetworkWithResponse(ctx context.Context, body UpdateNetworkJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateNetworkResponse, error) {
+	rsp, err := c.UpdateNetwork(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListIpRangesResponse(rsp)
+	return ParseUpdateNetworkResponse(rsp)
+}
+
+// CancelDrainWithBodyWithResponse request with arbitrary body returning *CancelDrainResponse
+func (c *ClientWithResponses) CancelDrainWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CancelDrainResponse, error) {
+	rsp, err := c.CancelDrainWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCancelDrainResponse(rsp)
+}
+
+func (c *ClientWithResponses) CancelDrainWithResponse(ctx context.Context, body CancelDrainJSONRequestBody, reqEditors ...RequestEditorFn) (*CancelDrainResponse, error) {
+	rsp, err := c.CancelDrain(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCancelDrainResponse(rsp)
+}
+
+// DrainNodeWithBodyWithResponse request with arbitrary body returning *DrainNodeResponse
+func (c *ClientWithResponses) DrainNodeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DrainNodeResponse, error) {
+	rsp, err := c.DrainNodeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDrainNodeResponse(rsp)
+}
+
+func (c *ClientWithResponses) DrainNodeWithResponse(ctx context.Context, body DrainNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*DrainNodeResponse, error) {
+	rsp, err := c.DrainNode(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDrainNodeResponse(rsp)
+}
+
+// ForceDrainWithBodyWithResponse request with arbitrary body returning *ForceDrainResponse
+func (c *ClientWithResponses) ForceDrainWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ForceDrainResponse, error) {
+	rsp, err := c.ForceDrainWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseForceDrainResponse(rsp)
+}
+
+func (c *ClientWithResponses) ForceDrainWithResponse(ctx context.Context, body ForceDrainJSONRequestBody, reqEditors ...RequestEditorFn) (*ForceDrainResponse, error) {
+	rsp, err := c.ForceDrain(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseForceDrainResponse(rsp)
+}
+
+// ListNodesWithBodyWithResponse request with arbitrary body returning *ListNodesResponse
+func (c *ClientWithResponses) ListNodesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListNodesResponse, error) {
+	rsp, err := c.ListNodesWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListNodesResponse(rsp)
+}
+
+func (c *ClientWithResponses) ListNodesWithResponse(ctx context.Context, body ListNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListNodesResponse, error) {
+	rsp, err := c.ListNodes(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListNodesResponse(rsp)
+}
+
+// ResumeNodeWithBodyWithResponse request with arbitrary body returning *ResumeNodeResponse
+func (c *ClientWithResponses) ResumeNodeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResumeNodeResponse, error) {
+	rsp, err := c.ResumeNodeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResumeNodeResponse(rsp)
+}
+
+func (c *ClientWithResponses) ResumeNodeWithResponse(ctx context.Context, body ResumeNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*ResumeNodeResponse, error) {
+	rsp, err := c.ResumeNode(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResumeNodeResponse(rsp)
+}
+
+// UpdateProviderNodeInstanceTypeWithBodyWithResponse request with arbitrary body returning *UpdateProviderNodeInstanceTypeResponse
+func (c *ClientWithResponses) UpdateProviderNodeInstanceTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateProviderNodeInstanceTypeResponse, error) {
+	rsp, err := c.UpdateProviderNodeInstanceTypeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateProviderNodeInstanceTypeResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateProviderNodeInstanceTypeWithResponse(ctx context.Context, body UpdateProviderNodeInstanceTypeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateProviderNodeInstanceTypeResponse, error) {
+	rsp, err := c.UpdateProviderNodeInstanceType(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateProviderNodeInstanceTypeResponse(rsp)
 }
 
 // ListProvidersWithBodyWithResponse request with arbitrary body returning *ListProvidersResponse
@@ -6988,21 +11798,21 @@ func (c *ClientWithResponses) ListProvidersWithResponse(ctx context.Context, bod
 	return ParseListProvidersResponse(rsp)
 }
 
-// ListProviderNodesWithBodyWithResponse request with arbitrary body returning *ListProviderNodesResponse
-func (c *ClientWithResponses) ListProviderNodesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListProviderNodesResponse, error) {
-	rsp, err := c.ListProviderNodesWithBody(ctx, contentType, body, reqEditors...)
+// AddRecipeWithBodyWithResponse request with arbitrary body returning *AddRecipeResponse
+func (c *ClientWithResponses) AddRecipeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddRecipeResponse, error) {
+	rsp, err := c.AddRecipeWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListProviderNodesResponse(rsp)
+	return ParseAddRecipeResponse(rsp)
 }
 
-func (c *ClientWithResponses) ListProviderNodesWithResponse(ctx context.Context, body ListProviderNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListProviderNodesResponse, error) {
-	rsp, err := c.ListProviderNodes(ctx, body, reqEditors...)
+func (c *ClientWithResponses) AddRecipeWithResponse(ctx context.Context, body AddRecipeJSONRequestBody, reqEditors ...RequestEditorFn) (*AddRecipeResponse, error) {
+	rsp, err := c.AddRecipe(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListProviderNodesResponse(rsp)
+	return ParseAddRecipeResponse(rsp)
 }
 
 // ListRecipesWithResponse request returning *ListRecipesResponse
@@ -7012,6 +11822,40 @@ func (c *ClientWithResponses) ListRecipesWithResponse(ctx context.Context, reqEd
 		return nil, err
 	}
 	return ParseListRecipesResponse(rsp)
+}
+
+// RemoveRecipeWithBodyWithResponse request with arbitrary body returning *RemoveRecipeResponse
+func (c *ClientWithResponses) RemoveRecipeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RemoveRecipeResponse, error) {
+	rsp, err := c.RemoveRecipeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRemoveRecipeResponse(rsp)
+}
+
+func (c *ClientWithResponses) RemoveRecipeWithResponse(ctx context.Context, body RemoveRecipeJSONRequestBody, reqEditors ...RequestEditorFn) (*RemoveRecipeResponse, error) {
+	rsp, err := c.RemoveRecipe(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRemoveRecipeResponse(rsp)
+}
+
+// CreateAndAttachReservationWithBodyWithResponse request with arbitrary body returning *CreateAndAttachReservationResponse
+func (c *ClientWithResponses) CreateAndAttachReservationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAndAttachReservationResponse, error) {
+	rsp, err := c.CreateAndAttachReservationWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAndAttachReservationResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateAndAttachReservationWithResponse(ctx context.Context, body CreateAndAttachReservationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAndAttachReservationResponse, error) {
+	rsp, err := c.CreateAndAttachReservation(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAndAttachReservationResponse(rsp)
 }
 
 // ListReservationsWithBodyWithResponse request with arbitrary body returning *ListReservationsResponse
@@ -7038,6 +11882,23 @@ func (c *ClientWithResponses) ListReservationTypesWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParseListReservationTypesResponse(rsp)
+}
+
+// UpdateActiveReservationWithBodyWithResponse request with arbitrary body returning *UpdateActiveReservationResponse
+func (c *ClientWithResponses) UpdateActiveReservationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateActiveReservationResponse, error) {
+	rsp, err := c.UpdateActiveReservationWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateActiveReservationResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateActiveReservationWithResponse(ctx context.Context, body UpdateActiveReservationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateActiveReservationResponse, error) {
+	rsp, err := c.UpdateActiveReservation(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateActiveReservationResponse(rsp)
 }
 
 // BulkChargeForServiceWithBodyWithResponse request with arbitrary body returning *BulkChargeForServiceResponse
@@ -7229,6 +12090,57 @@ func (c *ClientWithResponses) RegisterUserWithResponse(ctx context.Context, body
 	return ParseRegisterUserResponse(rsp)
 }
 
+// CreateVolumeWithBodyWithResponse request with arbitrary body returning *CreateVolumeResponse
+func (c *ClientWithResponses) CreateVolumeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateVolumeResponse, error) {
+	rsp, err := c.CreateVolumeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateVolumeResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateVolumeWithResponse(ctx context.Context, body CreateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateVolumeResponse, error) {
+	rsp, err := c.CreateVolume(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateVolumeResponse(rsp)
+}
+
+// ListVolumesWithBodyWithResponse request with arbitrary body returning *ListVolumesResponse
+func (c *ClientWithResponses) ListVolumesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListVolumesResponse, error) {
+	rsp, err := c.ListVolumesWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListVolumesResponse(rsp)
+}
+
+func (c *ClientWithResponses) ListVolumesWithResponse(ctx context.Context, body ListVolumesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListVolumesResponse, error) {
+	rsp, err := c.ListVolumes(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListVolumesResponse(rsp)
+}
+
+// UpdateVolumeWithBodyWithResponse request with arbitrary body returning *UpdateVolumeResponse
+func (c *ClientWithResponses) UpdateVolumeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateVolumeResponse, error) {
+	rsp, err := c.UpdateVolumeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateVolumeResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateVolumeWithResponse(ctx context.Context, body UpdateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateVolumeResponse, error) {
+	rsp, err := c.UpdateVolume(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateVolumeResponse(rsp)
+}
+
 // ParseGetAccountInfoResponse parses an HTTP response from a GetAccountInfoWithResponse call
 func ParseGetAccountInfoResponse(rsp *http.Response) (*GetAccountInfoResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7327,12 +12239,12 @@ func ParseAddApiKeyResponse(rsp *http.Response) (*AddApiKeyResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest AddApiKeyResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	}
 
@@ -7459,6 +12371,32 @@ func ParseLogoutResponse(rsp *http.Response) (*LogoutResponse, error) {
 	return response, nil
 }
 
+// ParseMeResponse parses an HTTP response from a MeWithResponse call
+func ParseMeResponse(rsp *http.Response) (*MeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &MeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MeResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseRequestPasswordResetResponse parses an HTTP response from a RequestPasswordResetWithResponse call
 func ParseRequestPasswordResetResponse(rsp *http.Response) (*RequestPasswordResetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7468,6 +12406,22 @@ func ParseRequestPasswordResetResponse(rsp *http.Response) (*RequestPasswordRese
 	}
 
 	response := &RequestPasswordResetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseResendVerificationResponse parses an HTTP response from a ResendVerificationWithResponse call
+func ParseResendVerificationResponse(rsp *http.Response) (*ResendVerificationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResendVerificationResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -7491,6 +12445,100 @@ func ParseResetPasswordResponse(rsp *http.Response) (*ResetPasswordResponse, err
 	return response, nil
 }
 
+// ParseVerifyEmailResponse parses an HTTP response from a VerifyEmailWithResponse call
+func ParseVerifyEmailResponse(rsp *http.Response) (*VerifyEmailResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &VerifyEmailResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseListCapabilitiesResponse parses an HTTP response from a ListCapabilitiesWithResponse call
+func ParseListCapabilitiesResponse(rsp *http.Response) (*ListCapabilitiesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCapabilitiesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CapabilitiesResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAddInstanceTypeResponse parses an HTTP response from a AddInstanceTypeWithResponse call
+func ParseAddInstanceTypeResponse(rsp *http.Response) (*AddInstanceTypeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AddInstanceTypeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InstanceTypeResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAddInstanceVariantResponse parses an HTTP response from a AddInstanceVariantWithResponse call
+func ParseAddInstanceVariantResponse(rsp *http.Response) (*AddInstanceVariantResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AddInstanceVariantResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InstanceVariantResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListInstanceTypesResponse parses an HTTP response from a ListInstanceTypesWithResponse call
 func ParseListInstanceTypesResponse(rsp *http.Response) (*ListInstanceTypesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7507,6 +12555,110 @@ func ParseListInstanceTypesResponse(rsp *http.Response) (*ListInstanceTypesRespo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ListInstanceTypesResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRemoveInstanceTypeResponse parses an HTTP response from a RemoveInstanceTypeWithResponse call
+func ParseRemoveInstanceTypeResponse(rsp *http.Response) (*RemoveInstanceTypeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RemoveInstanceTypeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InstanceTypeResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRemoveInstanceVariantResponse parses an HTTP response from a RemoveInstanceVariantWithResponse call
+func ParseRemoveInstanceVariantResponse(rsp *http.Response) (*RemoveInstanceVariantResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RemoveInstanceVariantResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InstanceVariantResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateInstanceTypeResponse parses an HTTP response from a UpdateInstanceTypeWithResponse call
+func ParseUpdateInstanceTypeResponse(rsp *http.Response) (*UpdateInstanceTypeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateInstanceTypeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InstanceTypeResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateInstanceVariantResponse parses an HTTP response from a UpdateInstanceVariantWithResponse call
+func ParseUpdateInstanceVariantResponse(rsp *http.Response) (*UpdateInstanceVariantResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateInstanceVariantResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InstanceVariantResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -7569,6 +12721,54 @@ func ParseRentInstanceResponse(rsp *http.Response) (*RentInstanceResponse, error
 	return response, nil
 }
 
+// ParseResetVmResponse parses an HTTP response from a ResetVmWithResponse call
+func ParseResetVmResponse(rsp *http.Response) (*ResetVmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResetVmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseStartVmResponse parses an HTTP response from a StartVmWithResponse call
+func ParseStartVmResponse(rsp *http.Response) (*StartVmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &StartVmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseStopVmResponse parses an HTTP response from a StopVmWithResponse call
+func ParseStopVmResponse(rsp *http.Response) (*StopVmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &StopVmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseTerminateInstancesResponse parses an HTTP response from a TerminateInstancesWithResponse call
 func ParseTerminateInstancesResponse(rsp *http.Response) (*TerminateInstancesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7599,12 +12799,38 @@ func ParseAddNetworkResponse(rsp *http.Response) (*AddNetworkResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest AddNetworkResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteNetworkResponse parses an HTTP response from a DeleteNetworkWithResponse call
+func ParseDeleteNetworkResponse(rsp *http.Response) (*DeleteNetworkResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteNetworkResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteNetworkResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 
@@ -7637,27 +12863,173 @@ func ParseListNetworksResponse(rsp *http.Response) (*ListNetworksResponse, error
 	return response, nil
 }
 
-// ParseListIpRangesResponse parses an HTTP response from a ListIpRangesWithResponse call
-func ParseListIpRangesResponse(rsp *http.Response) (*ListIpRangesResponse, error) {
+// ParseUpdateNetworkResponse parses an HTTP response from a UpdateNetworkWithResponse call
+func ParseUpdateNetworkResponse(rsp *http.Response) (*UpdateNetworkResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListIpRangesResponse{
+	response := &UpdateNetworkResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListIpRangesResponseProto
+		var dest UpdateNetworkResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseCancelDrainResponse parses an HTTP response from a CancelDrainWithResponse call
+func ParseCancelDrainResponse(rsp *http.Response) (*CancelDrainResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CancelDrainResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CancelDrainResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDrainNodeResponse parses an HTTP response from a DrainNodeWithResponse call
+func ParseDrainNodeResponse(rsp *http.Response) (*DrainNodeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DrainNodeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DrainNodeResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseForceDrainResponse parses an HTTP response from a ForceDrainWithResponse call
+func ParseForceDrainResponse(rsp *http.Response) (*ForceDrainResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ForceDrainResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ForceDrainResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListNodesResponse parses an HTTP response from a ListNodesWithResponse call
+func ParseListNodesResponse(rsp *http.Response) (*ListNodesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListNodesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListProviderNodesResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseResumeNodeResponse parses an HTTP response from a ResumeNodeWithResponse call
+func ParseResumeNodeResponse(rsp *http.Response) (*ResumeNodeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResumeNodeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResumeNodeResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateProviderNodeInstanceTypeResponse parses an HTTP response from a UpdateProviderNodeInstanceTypeWithResponse call
+func ParseUpdateProviderNodeInstanceTypeResponse(rsp *http.Response) (*UpdateProviderNodeInstanceTypeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateProviderNodeInstanceTypeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil
@@ -7677,39 +13049,29 @@ func ParseListProvidersResponse(rsp *http.Response) (*ListProvidersResponse, err
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ListProvidersResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	}
 
 	return response, nil
 }
 
-// ParseListProviderNodesResponse parses an HTTP response from a ListProviderNodesWithResponse call
-func ParseListProviderNodesResponse(rsp *http.Response) (*ListProviderNodesResponse, error) {
+// ParseAddRecipeResponse parses an HTTP response from a AddRecipeWithResponse call
+func ParseAddRecipeResponse(rsp *http.Response) (*AddRecipeResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListProviderNodesResponse{
+	response := &AddRecipeResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest ListProviderNodesResponseProto
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
 	}
 
 	return response, nil
@@ -7741,6 +13103,48 @@ func ParseListRecipesResponse(rsp *http.Response) (*ListRecipesResponse, error) 
 	return response, nil
 }
 
+// ParseRemoveRecipeResponse parses an HTTP response from a RemoveRecipeWithResponse call
+func ParseRemoveRecipeResponse(rsp *http.Response) (*RemoveRecipeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RemoveRecipeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseCreateAndAttachReservationResponse parses an HTTP response from a CreateAndAttachReservationWithResponse call
+func ParseCreateAndAttachReservationResponse(rsp *http.Response) (*CreateAndAttachReservationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateAndAttachReservationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CreateReservationResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListReservationsResponse parses an HTTP response from a ListReservationsWithResponse call
 func ParseListReservationsResponse(rsp *http.Response) (*ListReservationsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7755,12 +13159,12 @@ func ParseListReservationsResponse(rsp *http.Response) (*ListReservationsRespons
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ListReservationsResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	}
 
@@ -7793,6 +13197,32 @@ func ParseListReservationTypesResponse(rsp *http.Response) (*ListReservationType
 	return response, nil
 }
 
+// ParseUpdateActiveReservationResponse parses an HTTP response from a UpdateActiveReservationWithResponse call
+func ParseUpdateActiveReservationResponse(rsp *http.Response) (*UpdateActiveReservationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateActiveReservationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UpdateReservationResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseBulkChargeForServiceResponse parses an HTTP response from a BulkChargeForServiceWithResponse call
 func ParseBulkChargeForServiceResponse(rsp *http.Response) (*BulkChargeForServiceResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7807,12 +13237,12 @@ func ParseBulkChargeForServiceResponse(rsp *http.Response) (*BulkChargeForServic
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BulkServiceChargeResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	}
 
@@ -7833,12 +13263,12 @@ func ParseChargeForServiceResponse(rsp *http.Response) (*ChargeForServiceRespons
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ServiceChargeResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	}
 
@@ -7943,12 +13373,12 @@ func ParseCreateTeamResponse(rsp *http.Response) (*CreateTeamResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest CreateTeamResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	}
 
@@ -8086,6 +13516,84 @@ func ParseRegisterUserResponse(rsp *http.Response) (*RegisterUserResponse, error
 	response := &RegisterUserResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseCreateVolumeResponse parses an HTTP response from a CreateVolumeWithResponse call
+func ParseCreateVolumeResponse(rsp *http.Response) (*CreateVolumeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateVolumeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CreateVolumeResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListVolumesResponse parses an HTTP response from a ListVolumesWithResponse call
+func ParseListVolumesResponse(rsp *http.Response) (*ListVolumesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListVolumesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListVolumesResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateVolumeResponse parses an HTTP response from a UpdateVolumeWithResponse call
+func ParseUpdateVolumeResponse(rsp *http.Response) (*UpdateVolumeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateVolumeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UpdateVolumeResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	}
 
 	return response, nil
