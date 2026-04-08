@@ -293,10 +293,10 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	}
 
-	// The provisioning timeout is generous here, as usually the VM is provisioned
-	// within 2 - 6 mins. The timeout here is in case of failure so that we eventually
-	// exit and don't wait for the VM infinitely.
-	provisioningTimeout := time.After(28 * time.Minute)
+	// The provisioning timeout covers the case where the VM never reaches a
+	// terminal state (e.g. stuck Initializing due to capacity issues).
+	// Typical provisioning completes in 2-6 minutes.
+	provisioningTimeout := time.After(5 * time.Minute)
 
 	// We have successfully rented out the VM. Poll until finished creating, or timeout is reached.
 	for {
@@ -333,6 +333,30 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			}
 
 			last = current
+
+			// Fail fast if the instance entered a terminal non-success state.
+			// This avoids waiting for the full timeout when the VM cannot be provisioned.
+			// Note: Inactive is not checked here because GetInstance already
+			// converts it to ErrNotFound, which is handled above.
+			if last.Status == cloudriftapi.Deactivating {
+				savePartialState()
+				resp.Diagnostics.AddError(
+					"Virtual Machine provisioning failed",
+					fmt.Sprintf("Instance %s reached terminal status %q instead of becoming active", id, last.Status),
+				)
+				return
+			}
+
+			// Fail fast if the underlying node is unhealthy.
+			switch last.NodeStatus {
+			case cloudriftapi.Offline, cloudriftapi.NotResponding, cloudriftapi.Hibernated:
+				savePartialState()
+				resp.Diagnostics.AddError(
+					"Virtual Machine provisioning failed",
+					fmt.Sprintf("Instance %s node is %q — VM cannot be provisioned on an unhealthy node", id, last.NodeStatus),
+				)
+				return
+			}
 
 			// Currently it is only one VM per instance, while the [Status] field
 			// tells us that the Instance is spawned successfully, it does not tell us
@@ -415,8 +439,17 @@ func (r *virtualMachineResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
+	destructionTimeout := time.After(5 * time.Minute)
+
 	for {
 		select {
+		case <-destructionTimeout:
+			resp.Diagnostics.AddError(
+				"Destruction timeout reached",
+				"Destruction timeout reached before finished waiting on instance deletion for ID: "+state.ID.ValueString(),
+			)
+			return
+
 		case <-ctx.Done():
 			// Context cancelled.
 			//
@@ -430,10 +463,11 @@ func (r *virtualMachineResource) Delete(ctx context.Context, req resource.Delete
 			}
 			return
 		case <-time.After(InstancePollingInterval):
-			// wait until the Instance is no longer returned by the CloudRift API.
+			// Wait until the Instance is gone.
+			// GetInstance returns ErrNotFound once the instance reaches Inactive.
 			if _, err := r.client.GetInstance(state.ID.ValueString()); err != nil {
 				if errors.Is(err, cloudriftapi.ErrNotFound) {
-					// successfully destroyed.
+					// Successfully destroyed.
 					return
 				}
 				resp.Diagnostics.AddError(
