@@ -344,7 +344,12 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 		case <-time.After(InstancePollingInterval):
 			current, err := r.client.GetInstance(id)
 			if err != nil {
-				if !errors.Is(err, cloudriftapi.ErrNotFound) {
+				if errors.Is(err, cloudriftapi.ErrNotFound) {
+					// Hard failure: the instance is gone (Inactive or not
+					// listed). Best-effort terminate to stay consistent with
+					// the other hard-failure branches, and leave no state.
+					abandonRentedInstance("instance not found during provisioning (Inactive or removed)")
+				} else {
 					// Transient polling error: the VM may still be healthy,
 					// persist state so a retry can reconcile.
 					savePartialState()

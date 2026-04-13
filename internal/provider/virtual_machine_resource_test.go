@@ -101,7 +101,7 @@ func Test_VirtualMachineResource_FailsOnInactiveStatus(t *testing.T) {
 	// Simulate a VM that goes Inactive after rent (e.g. no capacity).
 	// Note: GetInstance converts Inactive to ErrNotFound at the client level,
 	// so the provider sees a "resource not found" error rather than the status.
-	server, _ := newVMTestServerWithStatus(keyName, publicKey, "Inactive", false)
+	server, terminateCalls := newVMTestServerWithStatus(keyName, publicKey, "Inactive", false)
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
@@ -124,6 +124,14 @@ func Test_VirtualMachineResource_FailsOnInactiveStatus(t *testing.T) {
 			},
 		},
 	})
+
+	// Same contract as the Deactivating path: on any hard failure during
+	// provisioning, Create must best-effort terminate the rented instance to
+	// keep behavior symmetric and avoid relying on the backend to always
+	// deactivate on its own.
+	if got := atomic.LoadInt32(terminateCalls); got < 1 {
+		t.Fatalf("expected Create to call /instances/terminate at least once on Inactive failure, got %d calls", got)
+	}
 }
 
 func Test_VirtualMachineResource_FailsOnDeactivatingStatus(t *testing.T) {
