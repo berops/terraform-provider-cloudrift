@@ -281,16 +281,35 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 	}
 
 	id := ids.Data.InstanceIds[0]
-	plan.ID = types.StringValue(id) // always assign at least the ID to the state file.
+	plan.ID = types.StringValue(id)
 
 	var last *cloudriftapi.InstanceAndUsageInfo
 
 	// savePartialState persists whatever we know about the instance so far.
+	// Use only on paths where the VM may still become Active on a retry
+	// (transient polling errors, user cancel). Do NOT use on hard-failure
+	// paths where the VM will never come up — those must leave state empty
+	// so Terraform treats the resource as never created and retries a fresh
+	// Create instead of planning a Destroy on a zombie ID.
 	savePartialState := func() {
 		if last != nil {
 			resp.Diagnostics.Append(populateModelFromInstanceResponse(&plan, last)...)
 		}
 		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	}
+
+	// abandonRentedInstance releases the backend-side VM on hard-failure paths
+	// and intentionally leaves Terraform state empty (no resp.State.Set). The
+	// terminate call is best-effort — if it fails the backend's own state
+	// machine will still deactivate the instance; we log via a warning
+	// diagnostic so operators can see it in terraform output.
+	abandonRentedInstance := func(reason string) {
+		if err := r.client.TerminateInstance(id); err != nil && !errors.Is(err, cloudriftapi.ErrNotFound) {
+			resp.Diagnostics.AddWarning(
+				"Best-effort termination of failed VM did not succeed",
+				fmt.Sprintf("After %s, attempted to terminate instance %s to avoid leaking a rented VM, but the call failed: %s. The backend may still deactivate the instance on its own.", reason, id, err.Error()),
+			)
+		}
 	}
 
 	// The provisioning timeout covers the case where the VM never reaches a
@@ -302,7 +321,8 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 	for {
 		select {
 		case <-provisioningTimeout:
-			savePartialState()
+			// Hard failure: give up on this VM, release it, and leave no state.
+			abandonRentedInstance("provisioning timeout")
 			resp.Diagnostics.AddError(
 				"Provisioning timeout reached",
 				"Provisioning timeout reached before finished waiting on instance creation",
@@ -310,6 +330,8 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			return
 
 		case <-ctx.Done():
+			// User cancel: keep partial state so the user can decide whether
+			// to `terraform apply` to resume or `terraform state rm` to drop.
 			savePartialState()
 			if err := ctx.Err(); err != nil {
 				resp.Diagnostics.AddError(
@@ -323,6 +345,8 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			current, err := r.client.GetInstance(id)
 			if err != nil {
 				if !errors.Is(err, cloudriftapi.ErrNotFound) {
+					// Transient polling error: the VM may still be healthy,
+					// persist state so a retry can reconcile.
 					savePartialState()
 				}
 				resp.Diagnostics.AddError(
@@ -339,7 +363,10 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			// Note: Inactive is not checked here because GetInstance already
 			// converts it to ErrNotFound, which is handled above.
 			if last.Status == cloudriftapi.Deactivating {
-				savePartialState()
+				// Hard failure: release the VM and leave no Terraform state,
+				// so the next apply produces a fresh create rather than
+				// attempting to destroy a stuck-Deactivating zombie.
+				abandonRentedInstance(fmt.Sprintf("instance reached terminal status %q", last.Status))
 				resp.Diagnostics.AddError(
 					"Virtual Machine provisioning failed",
 					fmt.Sprintf("Instance %s reached terminal status %q instead of becoming active", id, last.Status),
@@ -350,7 +377,8 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			// Fail fast if the underlying node is unhealthy.
 			switch last.NodeStatus {
 			case cloudriftapi.Offline, cloudriftapi.NotResponding, cloudriftapi.Hibernated:
-				savePartialState()
+				// Hard failure: same reasoning as the terminal-status path.
+				abandonRentedInstance(fmt.Sprintf("node is %q", last.NodeStatus))
 				resp.Diagnostics.AddError(
 					"Virtual Machine provisioning failed",
 					fmt.Sprintf("Instance %s node is %q — VM cannot be provisioned on an unhealthy node", id, last.NodeStatus),
@@ -427,14 +455,16 @@ func (r *virtualMachineResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	if err := r.client.TerminateInstance(state.ID.ValueString()); err != nil {
+	id := state.ID.ValueString()
+
+	if err := r.client.TerminateInstance(id); err != nil {
 		if errors.Is(err, cloudriftapi.ErrNotFound) {
 			// resource already deleted from outside the terraform state.
 			return
 		}
 		resp.Diagnostics.AddError(
 			"Error Delete Virtual Machine",
-			"Could not delete Virtual Machine with ID "+state.ID.ValueString()+": "+err.Error(),
+			"Could not delete Virtual Machine with ID "+id+": "+err.Error(),
 		)
 		return
 	}
@@ -446,7 +476,7 @@ func (r *virtualMachineResource) Delete(ctx context.Context, req resource.Delete
 		case <-destructionTimeout:
 			resp.Diagnostics.AddError(
 				"Destruction timeout reached",
-				"Destruction timeout reached before finished waiting on instance deletion for ID: "+state.ID.ValueString(),
+				"Destruction timeout reached before finished waiting on instance deletion for ID: "+id,
 			)
 			return
 
@@ -463,17 +493,24 @@ func (r *virtualMachineResource) Delete(ctx context.Context, req resource.Delete
 			}
 			return
 		case <-time.After(InstancePollingInterval):
-			// Wait until the Instance is gone.
-			// GetInstance returns ErrNotFound once the instance reaches Inactive.
-			if _, err := r.client.GetInstance(state.ID.ValueString()); err != nil {
+			// The instance is considered gone from Terraform's perspective as
+			// soon as the backend acknowledges deactivation — either by
+			// returning ErrNotFound (Inactive) or by reporting Deactivating
+			// status. We don't need to wait for the backend's own
+			// Deactivating→Inactive transition, which can stall indefinitely
+			// on capacity-failure cases.
+			current, err := r.client.GetInstance(id)
+			if err != nil {
 				if errors.Is(err, cloudriftapi.ErrNotFound) {
-					// Successfully destroyed.
 					return
 				}
 				resp.Diagnostics.AddError(
 					"Client Error",
 					"Polling Instance while marked for deletion: "+err.Error(),
 				)
+				return
+			}
+			if current.Status == cloudriftapi.Deactivating {
 				return
 			}
 		}
