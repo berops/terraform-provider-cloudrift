@@ -479,7 +479,22 @@ func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
 		// on ProtoVersion 2025-06-10. The newer ~upcoming + ByStatus+scope
 		// form is accepted by the server but returns host_address=null,
 		// which breaks the provisioning poll. See listInstancesByTeam.
-		return c.listInstancesByTeam()
+		// ByTeamId has no server-side status filter, so apply the same
+		// Active/Initializing/Deactivating allowlist client-side to keep
+		// ListInstances() semantics consistent across account types.
+		resp, err := c.listInstancesByTeam()
+		if err != nil {
+			return nil, err
+		}
+		resp.Data.Instances = slices.DeleteFunc(resp.Data.Instances, func(i InstanceAndUsageInfo) bool {
+			switch i.Status {
+			case Active, Initializing, Deactivating:
+				return false
+			default:
+				return true
+			}
+		})
+		return resp, nil
 	}
 	var selector InstancesSelector
 	statuses := StatusSelector{
