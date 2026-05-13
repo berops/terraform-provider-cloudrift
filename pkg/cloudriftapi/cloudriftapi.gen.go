@@ -105,6 +105,12 @@ const (
 	ReservationSelector0All ReservationSelector0 = "All"
 )
 
+// Defines values for ResourceType.
+const (
+	Compute ResourceType = "Compute"
+	Volume  ResourceType = "Volume"
+)
+
 // Defines values for ResponseStatus.
 const (
 	ResponseStatusError          ResponseStatus = "error"
@@ -127,11 +133,26 @@ const (
 	SshKeySelector1All SshKeySelector1 = "All"
 )
 
+// Defines values for TeamListSelector0.
+const (
+	Mine TeamListSelector0 = "Mine"
+)
+
+// Defines values for TeamListSelector4.
+const (
+	TeamListSelector4ByActiveExecutors TeamListSelector4 = "ByActiveExecutors"
+)
+
 // Defines values for TeamRole.
 const (
 	Admin  TeamRole = "Admin"
 	Member TeamRole = "Member"
 	Owner  TeamRole = "Owner"
+)
+
+// Defines values for UserSelector3.
+const (
+	UserSelector3ByActiveExecutors UserSelector3 = "ByActiveExecutors"
 )
 
 // Defines values for VirtDomainState.
@@ -169,6 +190,23 @@ type AccountInfoProto struct {
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
 	Version string `json:"version"`
+}
+
+// AccountTargetSelector Selector for financial operations targeting specific user or team accounts by ID.
+type AccountTargetSelector struct {
+	union json.RawMessage
+}
+
+// AccountTargetSelector0 Target user accounts by ID
+type AccountTargetSelector0 struct {
+	// ByUserIds Target user accounts by ID
+	ByUserIds []string `json:"ByUserIds"`
+}
+
+// AccountTargetSelector1 Target team accounts by ID
+type AccountTargetSelector1 struct {
+	// ByTeamIds Target team accounts by ID
+	ByTeamIds []string `json:"ByTeamIds"`
 }
 
 // AddApiKeyRequestProto defines model for AddApiKeyRequestProto.
@@ -239,8 +277,8 @@ type AddNetworkRequestProto struct {
 		// Datacenter Datacenter for the network
 		Datacenter string `json:"datacenter"`
 
-		// Gateway Gateway IP address
-		Gateway string `json:"gateway"`
+		// Gateway Optional gateway IP address
+		Gateway *string `json:"gateway"`
 
 		// Iface Optional network interface name
 		Iface *string `json:"iface"`
@@ -364,9 +402,48 @@ type AddSshKeyRequestProto struct {
 
 // AddTeamMemberRequestProto defines model for AddTeamMemberRequestProto.
 type AddTeamMemberRequestProto struct {
+	// Data Request to add a team member or create an invite for a non-existent user.
 	Data struct {
+		// Email Email of the user to add or invite.
 		Email string    `json:"email"`
 		Role  *TeamRole `json:"role,omitempty"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// AddUserFinancialInfo Financial settings to apply when creating a new user account.
+type AddUserFinancialInfo struct {
+	// CreditLimit Credit limit in currency units (cents). Ignored when `unlimited` is true.
+	CreditLimit *int64 `json:"credit_limit"`
+
+	// InitialBalance Initial balance in currency units (cents).
+	InitialBalance *int64 `json:"initial_balance"`
+
+	// Unlimited Use unlimited credit limit.
+	Unlimited *bool `json:"unlimited,omitempty"`
+}
+
+// AddUserRequestProto defines model for AddUserRequestProto.
+type AddUserRequestProto struct {
+	Data struct {
+		Email string `json:"email"`
+
+		// Financial Financial settings to apply when creating a new user account.
+		Financial *AddUserFinancialInfo `json:"financial,omitempty"`
+		Name      string                `json:"name"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// AddUserResponseProto defines model for AddUserResponseProto.
+type AddUserResponseProto struct {
+	Data struct {
+		Email  string `json:"email"`
+		UserId string `json:"user_id"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -452,8 +529,8 @@ type BulkServiceChargeResponseProto struct {
 type CancelDrainRequestProto struct {
 	// Data Request to cancel an active drain
 	Data struct {
-		// Selector Selector for node drain operations
-		Selector NodeDrainSelector `json:"selector"`
+		// Selector Selector for node admin operations (drain, delete, marketplace listing toggle, etc.)
+		Selector NodeAdminSelector `json:"selector"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -603,6 +680,9 @@ type CreateTeamResponseProto struct {
 // CreateVolumeRequestProto defines model for CreateVolumeRequestProto.
 type CreateVolumeRequestProto struct {
 	Data struct {
+		// BillingExempt Admin-only: if true, no billing or provider payout for this volume
+		BillingExempt *bool `json:"billing_exempt,omitempty"`
+
 		// Datacenter Datacenter name where the volume should be created
 		Datacenter string `json:"datacenter"`
 
@@ -725,6 +805,33 @@ type DeleteSshKeyRequestProto struct {
 	Version string `json:"version"`
 }
 
+// DeleteUserRequestProto defines model for DeleteUserRequestProto.
+type DeleteUserRequestProto struct {
+	// Data Admin-only request to erase a user. See `docs/SOC2_USER_DELETION.md`.
+	Data struct {
+		// DryRun If true, run pre-flight only; no mutation.
+		DryRun *bool `json:"dry_run,omitempty"`
+
+		// Reason Recorded in the audit log.
+		Reason string `json:"reason"`
+		UserId string `json:"user_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// DeleteUserResponseProto defines model for DeleteUserResponseProto.
+type DeleteUserResponseProto struct {
+	Data struct {
+		DryRun bool               `json:"dry_run"`
+		Report UserDeletionReport `json:"report"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // DiskInfo defines model for DiskInfo.
 type DiskInfo struct {
 	// FsType File system type like ext4, xfs
@@ -771,8 +878,8 @@ type DrainNodeRequestProto struct {
 		// NotifyUsers Whether to send notification emails to users with active instances
 		NotifyUsers *bool `json:"notify_users,omitempty"`
 
-		// Selector Selector for node drain operations
-		Selector NodeDrainSelector `json:"selector"`
+		// Selector Selector for node admin operations (drain, delete, marketplace listing toggle, etc.)
+		Selector NodeAdminSelector `json:"selector"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -822,6 +929,18 @@ type ExternalTransactionAccountSelector1 struct {
 	} `json:"TeamByName"`
 }
 
+// ExternalTransactionAccountSelector2 Target user accounts by ID
+type ExternalTransactionAccountSelector2 struct {
+	// ByUserIds Target user accounts by ID
+	ByUserIds []string `json:"ByUserIds"`
+}
+
+// ExternalTransactionAccountSelector3 Target team accounts by ID
+type ExternalTransactionAccountSelector3 struct {
+	// ByTeamIds Target team accounts by ID
+	ByTeamIds []string `json:"ByTeamIds"`
+}
+
 // ExternalTransactionRequestProto defines model for ExternalTransactionRequestProto.
 type ExternalTransactionRequestProto struct {
 	Data struct {
@@ -846,8 +965,8 @@ type ForceDrainRequestProto struct {
 		// Reason Optional reason for force draining (shown to users in termination notice)
 		Reason *string `json:"reason"`
 
-		// Selector Selector for node drain operations
-		Selector NodeDrainSelector `json:"selector"`
+		// Selector Selector for node admin operations (drain, delete, marketplace listing toggle, etc.)
+		Selector NodeAdminSelector `json:"selector"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -916,9 +1035,30 @@ type GpuInfo struct {
 	Vram int64 `json:"vram"`
 }
 
+// GpuMetrics Metrics for a single GPU
+type GpuMetrics struct {
+	FbFreeMib             *float64 `json:"fb_free_mib"`
+	FbUsedMib             *float64 `json:"fb_used_mib"`
+	GpuIndex              string   `json:"gpu_index"`
+	GpuUtilizationPercent *float64 `json:"gpu_utilization_percent"`
+	GpuUuid               *string  `json:"gpu_uuid"`
+
+	// GrActivity Graphics/compute engine active ratio (0.0–1.0)
+	GrActivity         *float64 `json:"gr_activity"`
+	PciBdf             *string  `json:"pci_bdf"`
+	PowerUsageWatts    *float64 `json:"power_usage_watts"`
+	TemperatureCelsius *float64 `json:"temperature_celsius"`
+
+	// TensorActivity Tensor core active ratio (0.0–1.0)
+	TensorActivity *float64 `json:"tensor_activity"`
+}
+
 // InstanceAndUsageInfo defines model for InstanceAndUsageInfo.
 type InstanceAndUsageInfo struct {
 	BareMetal *InstanceBareMetalInfo `json:"bare_metal,omitempty"`
+
+	// BillingExempt Whether this instance is exempt from billing (admins only)
+	BillingExempt *bool `json:"billing_exempt,omitempty"`
 
 	// Containers Containers running on this instance
 	Containers []InstanceContainerInfo `json:"containers"`
@@ -929,6 +1069,9 @@ type InstanceAndUsageInfo struct {
 
 	// CpuMask CPUs available to instance as a hex number making a bitmask
 	CpuMask *string `json:"cpu_mask"`
+
+	// CreatedAt When the instance was created
+	CreatedAt string `json:"created_at"`
 
 	// DiskLimit GPU information on the instance node
 	// maximum amount of disk space
@@ -953,7 +1096,10 @@ type InstanceAndUsageInfo struct {
 	HostAddress *string `json:"host_address"`
 
 	// Id ID of the instance to be used in API calls
-	Id           string                    `json:"id"`
+	Id string `json:"id"`
+
+	// InstanceName Human-readable instance name (e.g. "bright-falcon")
+	InstanceName *string                   `json:"instance_name"`
 	Instructions *InstanceUserInstructions `json:"instructions,omitempty"`
 
 	// InternalHostAddress instance internal IP address (for implementation details)
@@ -969,8 +1115,11 @@ type InstanceAndUsageInfo struct {
 	PortMappings    *[][]interface{}      `json:"port_mappings"`
 	ReservationData *ReservationDates     `json:"reservation_data,omitempty"`
 	ResourceInfo    *InstanceResourceInfo `json:"resource_info,omitempty"`
-	Status          InstanceStatus        `json:"status"`
-	UsageInfo       *InstanceUsageInfo    `json:"usage_info,omitempty"`
+
+	// SshKeyAuth Whether this instance uses SSH key authentication (true) or password authentication (false)
+	SshKeyAuth bool               `json:"ssh_key_auth"`
+	Status     InstanceStatus     `json:"status"`
+	UsageInfo  *InstanceUsageInfo `json:"usage_info,omitempty"`
 
 	// VirtualMachines Virtual machines running on this instance
 	VirtualMachines []InstanceVirtualMachineInfo `json:"virtual_machines"`
@@ -1056,6 +1205,19 @@ type InstanceInfo struct {
 	Name string `json:"name"`
 }
 
+// InstanceInfoFlags Controls which optional data fields the server fetches for each instance.
+// All fields default to `false` — set a flag to `true` to include that data.
+type InstanceInfoFlags struct {
+	// WithConnectionInfo Include connection fields: host_address, internal_host_address, instructions, reservation_data, volume_mounts.
+	WithConnectionInfo *bool `json:"with_connection_info,omitempty"`
+
+	// WithHardwareInfo Include detailed hardware fields: cpu, cpu_mask, dram, disk_limit, gpu_mask, mig_profile.
+	WithHardwareInfo *bool `json:"with_hardware_info,omitempty"`
+
+	// WithUsageInfo Include billing/usage info: resource_info (provider, cost) and usage_info (duration, user).
+	WithUsageInfo *bool `json:"with_usage_info,omitempty"`
+}
+
 // InstanceLoginInfo defines model for InstanceLoginInfo.
 type InstanceLoginInfo struct {
 	union json.RawMessage
@@ -1074,6 +1236,52 @@ type InstanceLoginInfo1 struct {
 	Username struct {
 		Username string `json:"username"`
 	} `json:"Username"`
+}
+
+// InstanceMetrics Hardware metrics for a single instance, filtered to GPUs allocated via gpu_mask
+type InstanceMetrics struct {
+	// Gpus GPU metrics filtered to the GPUs assigned to this instance
+	Gpus []GpuMetrics `json:"gpus"`
+
+	// InstanceId Instance (executor) ID
+	InstanceId string `json:"instance_id"`
+
+	// NodeId Node the instance is running on
+	NodeId string `json:"node_id"`
+}
+
+// InstanceMetricsRequestProto defines model for InstanceMetricsRequestProto.
+type InstanceMetricsRequestProto struct {
+	// Data Request to fetch hardware metrics for instances
+	Data struct {
+		// Selector Selector for which instances to query metrics for
+		Selector InstanceMetricsSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// InstanceMetricsResponseProto defines model for InstanceMetricsResponseProto.
+type InstanceMetricsResponseProto struct {
+	// Data Response containing instance-level GPU metrics
+	Data struct {
+		Metrics []InstanceMetrics `json:"metrics"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// InstanceMetricsSelector Selector for which instances to query metrics for
+type InstanceMetricsSelector struct {
+	union json.RawMessage
+}
+
+// InstanceMetricsSelector0 Select instances by ID
+type InstanceMetricsSelector0 struct {
+	// ById Select instances by ID
+	ById []string `json:"ById"`
 }
 
 // InstanceMode defines model for InstanceMode.
@@ -1235,6 +1443,9 @@ type InstanceUsageInfo struct {
 
 	// UserEmail User's email of the instance
 	UserEmail string `json:"user_email"`
+
+	// UserId User ID of the instance renter
+	UserId string `json:"user_id"`
 
 	// UserName User's name of the instance
 	UserName string `json:"user_name"`
@@ -1450,6 +1661,12 @@ type InstancesSelector3 struct {
 	ByNodeId string `json:"ByNodeId"`
 }
 
+// InstancesSelector4 List all instances for a specific user (admin: all instances, provider: only instances on their nodes)
+type InstancesSelector4 struct {
+	// ByUserId List all instances for a specific user (admin: all instances, provider: only instances on their nodes)
+	ByUserId string `json:"ByUserId"`
+}
+
 // IpAvailability defines model for IpAvailability.
 type IpAvailability struct {
 	// PublicIps Whether public IPs are available in this datacenter
@@ -1522,7 +1739,10 @@ type ListInstanceTypesResponseProto struct {
 // ListInstancesRequestProto defines model for ListInstancesRequestProto.
 type ListInstancesRequestProto struct {
 	Data struct {
-		Selector InstancesSelector `json:"selector"`
+		// Mask Controls which optional data fields the server fetches for each instance.
+		// All fields default to `false` — set a flag to `true` to include that data.
+		Mask     *InstanceInfoFlags `json:"mask,omitempty"`
+		Selector InstancesSelector  `json:"selector"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -1657,10 +1877,55 @@ type ListSshKeysResponseProto struct {
 	Version string `json:"version"`
 }
 
+// ListTeamsRequestProto defines model for ListTeamsRequestProto.
+type ListTeamsRequestProto struct {
+	Data struct {
+		// Selector Selector for the unified teams/list endpoint.
+		Selector *TeamListSelector `json:"selector,omitempty"`
+
+		// WithAccountInfo Include account/financial info (admin/provider).
+		WithAccountInfo *bool `json:"with_account_info,omitempty"`
+
+		// WithMembers Include team members in the response.
+		WithMembers *bool `json:"with_members,omitempty"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // ListTeamsResponseProto defines model for ListTeamsResponseProto.
 type ListTeamsResponseProto struct {
 	Data struct {
-		Teams []Team `json:"teams"`
+		Teams []TeamInfo `json:"teams"`
+
+		// Total Total number of teams matching the selector.
+		Total int32 `json:"total"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// ListUsersRequestProto defines model for ListUsersRequestProto.
+type ListUsersRequestProto struct {
+	Data struct {
+		Selector UserSelector `json:"selector"`
+
+		// WithAccountInfo Include account/financial info (admin/provider).
+		WithAccountInfo *bool `json:"with_account_info,omitempty"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// ListUsersResponseProto defines model for ListUsersResponseProto.
+type ListUsersResponseProto struct {
+	Data struct {
+		// Total Total number of users matching the selector.
+		Total int32      `json:"total"`
+		Users []UserInfo `json:"users"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -1708,8 +1973,6 @@ type LoginUserRequestProto struct {
 // LoginUserResponseProto defines model for LoginUserResponseProto.
 type LoginUserResponseProto struct {
 	Data struct {
-		Pat string `json:"pat"`
-
 		// Token Token for authentication to be used in the Authorization header
 		Token string `json:"token"`
 	} `json:"data"`
@@ -1724,8 +1987,17 @@ type MeResponseProto struct {
 		// Email user email
 		Email string `json:"email"`
 
+		// Id user ID
+		Id string `json:"id"`
+
 		// Name user name
 		Name *string `json:"name"`
+
+		// Provider authentication provider: "CloudRift", "Google", or "GitHub"
+		Provider string `json:"provider"`
+
+		// TotpEnabled whether TOTP 2FA is enabled
+		TotpEnabled bool `json:"totp_enabled"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -1752,6 +2024,7 @@ type NetworkInfo struct {
 	Netmask       *int32                 `json:"netmask"`
 	ServerAddress *string                `json:"server_address"`
 	TeamId        *string                `json:"team_id"`
+	TeamName      *string                `json:"team_name"`
 }
 
 // NetworkIpRange defines model for NetworkIpRange.
@@ -1795,6 +2068,17 @@ type NetworkSelector3 struct {
 	ByProvider string `json:"ByProvider"`
 }
 
+// NodeAdminSelector Selector for node admin operations (drain, delete, marketplace listing toggle, etc.)
+type NodeAdminSelector struct {
+	union json.RawMessage
+}
+
+// NodeAdminSelector0 Select nodes by ID
+type NodeAdminSelector0 struct {
+	// ById Select nodes by ID
+	ById []string `json:"ById"`
+}
+
 // NodeDrainInfo Information about the drain state of a node
 type NodeDrainInfo struct {
 	// GracePeriodSecs Grace period in seconds
@@ -1829,17 +2113,6 @@ type NodeDrainResult struct {
 	UsersNotified int32 `json:"users_notified"`
 }
 
-// NodeDrainSelector Selector for node drain operations
-type NodeDrainSelector struct {
-	union json.RawMessage
-}
-
-// NodeDrainSelector0 Select nodes by ID
-type NodeDrainSelector0 struct {
-	// ById Select nodes by ID
-	ById []string `json:"ById"`
-}
-
 // NodeDrainState State of node draining process
 type NodeDrainState string
 
@@ -1865,6 +2138,46 @@ type NodeHealthStatus1 struct {
 		ErrorMessage  string `json:"error_message"`
 		LastHealthyAt string `json:"last_healthy_at"`
 	} `json:"Unhealthy"`
+}
+
+// NodeMetrics Hardware metrics for a single node
+type NodeMetrics struct {
+	Gpus   []GpuMetrics `json:"gpus"`
+	NodeId string       `json:"node_id"`
+}
+
+// NodeMetricsRequestProto defines model for NodeMetricsRequestProto.
+type NodeMetricsRequestProto struct {
+	// Data Request to fetch hardware metrics for nodes
+	Data struct {
+		// Selector Selector for which nodes to query metrics for
+		Selector NodeMetricsSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// NodeMetricsResponseProto defines model for NodeMetricsResponseProto.
+type NodeMetricsResponseProto struct {
+	// Data Response containing node metrics
+	Data struct {
+		Metrics []NodeMetrics `json:"metrics"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// NodeMetricsSelector Selector for which nodes to query metrics for
+type NodeMetricsSelector struct {
+	union json.RawMessage
+}
+
+// NodeMetricsSelector0 Select nodes by ID
+type NodeMetricsSelector0 struct {
+	// ById Select nodes by ID
+	ById []string `json:"ById"`
 }
 
 // NodeSelector defines model for NodeSelector.
@@ -1922,6 +2235,16 @@ type PasswordResetVerifyRequestProto struct {
 	Version string `json:"version"`
 }
 
+// PauseInstancesRequestProto defines model for PauseInstancesRequestProto.
+type PauseInstancesRequestProto struct {
+	Data struct {
+		Selector InstancesSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // PromoCodeRequestProto defines model for PromoCodeRequestProto.
 type PromoCodeRequestProto struct {
 	Data struct {
@@ -1968,9 +2291,17 @@ type ProviderNodeInfo struct {
 	IpAddress *string       `json:"ip_address"`
 
 	// ListOnMarketplace Whether the node is listed on the marketplace for new rentals
-	ListOnMarketplace *bool                       `json:"list_on_marketplace,omitempty"`
-	Status            NodeStatus                  `json:"status"`
-	Utilization       ProviderNodeUtilizationInfo `json:"utilization"`
+	ListOnMarketplace *bool   `json:"list_on_marketplace,omitempty"`
+	ProxyJump         *string `json:"proxy_jump"`
+	ProxyPort         *int32  `json:"proxy_port"`
+	ProxyUser         *string `json:"proxy_user"`
+
+	// SshHost SSH connection details for reaching the node
+	SshHost     *string                     `json:"ssh_host"`
+	SshPort     *int32                      `json:"ssh_port"`
+	SshUser     *string                     `json:"ssh_user"`
+	Status      NodeStatus                  `json:"status"`
+	Utilization ProviderNodeUtilizationInfo `json:"utilization"`
 }
 
 // ProviderNodeUtilizationInfo defines model for ProviderNodeUtilizationInfo.
@@ -1989,6 +2320,9 @@ type ProviderNodeUtilizationInfo struct {
 
 	// GpusAvailableMask Available GPUs as a hex number making a bitmask
 	GpusAvailableMask string `json:"gpus_available_mask"`
+
+	// MigGpuMask Bitmask of GPUs hosting MIG instances
+	MigGpuMask *string `json:"mig_gpu_mask,omitempty"`
 }
 
 // ProviderSelector defines model for ProviderSelector.
@@ -2150,8 +2484,10 @@ type RemoveRecipeOrGroupRequestProto struct {
 
 // RemoveTeamMemberRequestProto defines model for RemoveTeamMemberRequestProto.
 type RemoveTeamMemberRequestProto struct {
+	// Data Request to remove a team member or cancel a pending invite.
 	Data struct {
-		UserId string `json:"user_id"`
+		// Selector Selector for identifying a team member or pending invite.
+		Selector TeamMemberSelector `json:"selector"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -2161,6 +2497,9 @@ type RemoveTeamMemberRequestProto struct {
 // RentInstanceRequestProto defines model for RentInstanceRequestProto.
 type RentInstanceRequestProto struct {
 	Data struct {
+		// BillingExempt Admin-only: if true, no billing or provider payout for this rental
+		BillingExempt *bool `json:"billing_exempt,omitempty"`
+
 		// ClusterName Optional cluster name
 		ClusterName *string               `json:"cluster_name"`
 		Config      InstanceConfiguration `json:"config"`
@@ -2207,7 +2546,6 @@ type Reservation struct {
 	Id              string          `json:"id"`
 	InstanceType    InstanceType    `json:"instance_type"`
 	InstanceVariant InstanceVariant `json:"instance_variant"`
-	NodeMode        InstanceMode    `json:"node_mode"`
 	ValidTill       string          `json:"valid_till"`
 }
 
@@ -2264,15 +2602,28 @@ type ResetInstancesRequestProto struct {
 	Version string `json:"version"`
 }
 
+// ResourceType defines model for ResourceType.
+type ResourceType string
+
 // ResponseStatus defines model for ResponseStatus.
 type ResponseStatus string
+
+// ResumeInstancesRequestProto defines model for ResumeInstancesRequestProto.
+type ResumeInstancesRequestProto struct {
+	Data struct {
+		Selector InstancesSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
 
 // ResumeNodeRequestProto defines model for ResumeNodeRequestProto.
 type ResumeNodeRequestProto struct {
 	// Data Request to resume nodes (bring them back online after being drained)
 	Data struct {
-		// Selector Selector for node drain operations
-		Selector NodeDrainSelector `json:"selector"`
+		// Selector Selector for node admin operations (drain, delete, marketplace listing toggle, etc.)
+		Selector NodeAdminSelector `json:"selector"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -2283,6 +2634,61 @@ type ResumeNodeRequestProto struct {
 type ResumeNodeResponseProto struct {
 	Data struct {
 		NodeIds []string `json:"node_ids"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// SearchResultEntry A single search result entry.
+type SearchResultEntry struct {
+	Email *string `json:"email"`
+	Id    string  `json:"id"`
+	Name  *string `json:"name"`
+}
+
+// SearchTeamsRequestProto defines model for SearchTeamsRequestProto.
+type SearchTeamsRequestProto struct {
+	Data struct {
+		// Limit Maximum number of results to return.
+		Limit *int32 `json:"limit,omitempty"`
+
+		// Query Name substring to search for (case-insensitive).
+		Query string `json:"query"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// SearchTeamsResponseProto defines model for SearchTeamsResponseProto.
+type SearchTeamsResponseProto struct {
+	Data struct {
+		Results []TeamSearchResultEntry `json:"results"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// SearchUsersRequestProto defines model for SearchUsersRequestProto.
+type SearchUsersRequestProto struct {
+	Data struct {
+		// Limit Maximum number of results to return.
+		Limit *int32 `json:"limit,omitempty"`
+
+		// Query Name or email substring to search for (case-insensitive).
+		Query string `json:"query"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// SearchUsersResponseProto defines model for SearchUsersResponseProto.
+type SearchUsersResponseProto struct {
+	Data struct {
+		Results []SearchResultEntry `json:"results"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -2311,6 +2717,28 @@ type SelectorScope2 struct {
 
 // SelectorScope3 Personal cluster plus all teams the user is a member of
 type SelectorScope3 string
+
+// SendUsersMessageRequestProto defines model for SendUsersMessageRequestProto.
+type SendUsersMessageRequestProto struct {
+	Data struct {
+		Message  string       `json:"message"`
+		Selector UserSelector `json:"selector"`
+		Subject  string       `json:"subject"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// SendUsersMessageResponseProto defines model for SendUsersMessageResponseProto.
+type SendUsersMessageResponseProto struct {
+	Data struct {
+		SentUserIds []string `json:"sent_user_ids"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
 
 // ServiceCharge defines model for ServiceCharge.
 type ServiceCharge struct {
@@ -2358,6 +2786,31 @@ type ServiceChargeResponseProto struct {
 	Version string `json:"version"`
 }
 
+// SetNodeMarketplaceListingRequestProto defines model for SetNodeMarketplaceListingRequestProto.
+type SetNodeMarketplaceListingRequestProto struct {
+	// Data Toggle marketplace visibility on non-draining nodes. Draining/drained nodes are rejected.
+	Data struct {
+		// ListOnMarketplace Whether the node appears on the marketplace for new rentals (true = visible, false = hidden)
+		ListOnMarketplace bool `json:"list_on_marketplace"`
+
+		// Selector Selector for node admin operations (drain, delete, marketplace listing toggle, etc.)
+		Selector NodeAdminSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// SetNodeMarketplaceListingResponseProto defines model for SetNodeMarketplaceListingResponseProto.
+type SetNodeMarketplaceListingResponseProto struct {
+	Data struct {
+		NodeIds []string `json:"node_ids"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // SshKey defines model for SshKey.
 type SshKey struct {
 	// Id SSH key ID
@@ -2366,8 +2819,14 @@ type SshKey struct {
 	// Name SSH key name
 	Name string `json:"name"`
 
+	// Owner Whether the key is owned by the user
+	Owner bool `json:"owner"`
+
 	// PublicKey SSH key public part
 	PublicKey string `json:"public_key"`
+
+	// UserName SSH User name
+	UserName string `json:"user_name"`
 }
 
 // SshKeySelector defines model for SshKeySelector.
@@ -2474,6 +2933,24 @@ type Team struct {
 	UserRole    string  `json:"user_role"`
 }
 
+// TeamAccountInfo Financial/account information for a team (admin/provider).
+type TeamAccountInfo struct {
+	// Balance Account balance in currency units (cents).
+	Balance int64 `json:"balance"`
+
+	// CreditLimit Account credit limit in currency units (cents).
+	CreditLimit int64 `json:"credit_limit"`
+
+	// InstanceCount Number of active instances owned by this team.
+	InstanceCount int32 `json:"instance_count"`
+
+	// IsUnlimited Whether the credit limit is unlimited.
+	IsUnlimited bool `json:"is_unlimited"`
+
+	// TotalSpent Total amount spent in currency units (cents).
+	TotalSpent int64 `json:"total_spent"`
+}
+
 // TeamAssignment Selector for team assignment
 type TeamAssignment struct {
 	union json.RawMessage
@@ -2491,6 +2968,52 @@ type TeamAssignment1 struct {
 	ByName string `json:"ByName"`
 }
 
+// TeamInfo Unified team response returned from /teams/list.
+type TeamInfo struct {
+	AccountId *string `json:"account_id"`
+
+	// AccountInfo Financial/account information for a team (admin/provider).
+	AccountInfo *TeamAccountInfo `json:"account_info,omitempty"`
+	CreatedAt   string           `json:"created_at"`
+	Description *string          `json:"description"`
+	Id          string           `json:"id"`
+
+	// Members Present when with_members=true.
+	Members   *[]TeamMember `json:"members"`
+	Name      string        `json:"name"`
+	UpdatedAt *string       `json:"updated_at"`
+	UserRole  *TeamRole     `json:"user_role,omitempty"`
+}
+
+// TeamListSelector Selector for the unified teams/list endpoint.
+type TeamListSelector struct {
+	union json.RawMessage
+}
+
+// TeamListSelector0 Return teams the authenticated user belongs to (default).
+type TeamListSelector0 string
+
+// TeamListSelector1 Return teams by specific IDs (admin or provider root user only).
+type TeamListSelector1 struct {
+	// ById Return teams by specific IDs (admin or provider root user only).
+	ById []string `json:"ById"`
+}
+
+// TeamListSelector2 Return teams with active instances on the given provider's nodes (admin or provider root user only).
+type TeamListSelector2 struct {
+	// ByProvider Return teams with active instances on the given provider's nodes (admin or provider root user only).
+	ByProvider string `json:"ByProvider"`
+}
+
+// TeamListSelector3 Filter to teams whose total spend is at least this value (cents).
+type TeamListSelector3 struct {
+	// ByMinSpend Filter to teams whose total spend is at least this value (cents).
+	ByMinSpend int64 `json:"ByMinSpend"`
+}
+
+// TeamListSelector4 Filter to teams that currently have running executors (instances).
+type TeamListSelector4 string
+
 // TeamMember defines model for TeamMember.
 type TeamMember struct {
 	Email    string `json:"email"`
@@ -2500,25 +3023,62 @@ type TeamMember struct {
 	UserId   string `json:"user_id"`
 }
 
-// TeamMemberResponseProto defines model for TeamMemberResponseProto.
-type TeamMemberResponseProto struct {
-	Data struct {
-		Email    string `json:"email"`
-		JoinedAt string `json:"joined_at"`
-		Name     string `json:"name"`
-		Role     string `json:"role"`
-		UserId   string `json:"user_id"`
-	} `json:"data"`
+// TeamMemberInvite defines model for TeamMemberInvite.
+type TeamMemberInvite struct {
+	Email       string `json:"email"`
+	InvitedAt   string `json:"invited_at"`
+	InvitedById string `json:"invited_by_id"`
+	Role        string `json:"role"`
+	TeamId      string `json:"team_id"`
+	TeamName    string `json:"team_name"`
+}
+
+// TeamMemberOrInviteResponseProto defines model for TeamMemberOrInviteResponseProto.
+type TeamMemberOrInviteResponseProto struct {
+	Data TeamMemberOrInviteResponseProto_Data `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
 	Version string `json:"version"`
 }
 
+// TeamMemberOrInviteResponseProtoData0 defines model for .
+type TeamMemberOrInviteResponseProtoData0 struct {
+	Member TeamMember `json:"Member"`
+}
+
+// TeamMemberOrInviteResponseProtoData1 defines model for .
+type TeamMemberOrInviteResponseProtoData1 struct {
+	Invite TeamMemberInvite `json:"Invite"`
+}
+
+// TeamMemberOrInviteResponseProto_Data defines model for TeamMemberOrInviteResponseProto.Data.
+type TeamMemberOrInviteResponseProto_Data struct {
+	union json.RawMessage
+}
+
+// TeamMemberSelector Selector for identifying a team member or pending invite.
+type TeamMemberSelector struct {
+	union json.RawMessage
+}
+
+// TeamMemberSelector0 Select an existing team member by their user ID.
+type TeamMemberSelector0 struct {
+	// ById Select an existing team member by their user ID.
+	ById string `json:"ById"`
+}
+
+// TeamMemberSelector1 Select a pending team invite by email.
+type TeamMemberSelector1 struct {
+	// ByEmail Select a pending team invite by email.
+	ByEmail string `json:"ByEmail"`
+}
+
 // TeamResponseProto defines model for TeamResponseProto.
 type TeamResponseProto struct {
 	Data struct {
-		Members []TeamMember `json:"members"`
-		Team    Team         `json:"team"`
+		Invites []TeamMemberInvite `json:"invites"`
+		Members []TeamMember       `json:"members"`
+		Team    Team               `json:"team"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -2527,6 +3087,12 @@ type TeamResponseProto struct {
 
 // TeamRole defines model for TeamRole.
 type TeamRole string
+
+// TeamSearchResultEntry defines model for TeamSearchResultEntry.
+type TeamSearchResultEntry struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
 
 // TerminateInstancesRequestProto defines model for TerminateInstancesRequestProto.
 type TerminateInstancesRequestProto struct {
@@ -2578,6 +3144,10 @@ type TransactionInfo1 struct {
 
 		// ResourceId ID of the resource providing the service
 		ResourceId string `json:"resource_id"`
+
+		// ResourceName Human-readable resource name (e.g. "bright-falcon-042" for instances, volume name for volumes)
+		ResourceName *string      `json:"resource_name"`
+		ResourceType ResourceType `json:"resource_type"`
 
 		// Rounding Additional charge due to rounding included in the transaction
 		Rounding []interface{} `json:"rounding"`
@@ -2806,9 +3376,39 @@ type UpdateReservationResponseProto struct {
 
 // UpdateTeamMembershipRequestProto defines model for UpdateTeamMembershipRequestProto.
 type UpdateTeamMembershipRequestProto struct {
+	// Data Request to update the role of a team member or pending invite.
 	Data struct {
-		Role   TeamRole `json:"role"`
-		UserId string   `json:"user_id"`
+		Role TeamRole `json:"role"`
+
+		// Selector Selector for identifying a team member or pending invite.
+		Selector TeamMemberSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// UpdateUsersCreditLimitRequestProto defines model for UpdateUsersCreditLimitRequestProto.
+type UpdateUsersCreditLimitRequestProto struct {
+	Data struct {
+		// CreditLimit Credit limit in currency units (cents). Ignored when `unlimited` is true.
+		CreditLimit *int64 `json:"credit_limit"`
+
+		// Selector Selector for financial operations targeting specific user or team accounts by ID.
+		Selector AccountTargetSelector `json:"selector"`
+
+		// Unlimited Use unlimited credit limit.
+		Unlimited *bool `json:"unlimited,omitempty"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// UpdateUsersCreditLimitResponseProto defines model for UpdateUsersCreditLimitResponseProto.
+type UpdateUsersCreditLimitResponseProto struct {
+	Data struct {
+		UpdatedIds []string `json:"updated_ids"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -2842,6 +3442,92 @@ type UpdateVolumeResponseProto struct {
 	Version string `json:"version"`
 }
 
+// UserAccountInfo Financial/account information for a user (admin/provider).
+type UserAccountInfo struct {
+	// Balance Account balance in currency units (cents).
+	Balance int64 `json:"balance"`
+
+	// CreditLimit Account credit limit in currency units (cents).
+	CreditLimit int64 `json:"credit_limit"`
+
+	// InstanceCount Number of active instances owned by this user.
+	InstanceCount int32 `json:"instance_count"`
+
+	// IsUnlimited Whether the credit limit is unlimited.
+	IsUnlimited bool `json:"is_unlimited"`
+
+	// TotalSpent Total amount spent in currency units (cents).
+	TotalSpent int64 `json:"total_spent"`
+}
+
+// UserDeletionAnonymizedCounts defines model for UserDeletionAnonymizedCounts.
+type UserDeletionAnonymizedCounts struct {
+	FraudActivities            int64 `json:"fraud_activities"`
+	ServiceUsagePayoutTxNulled int64 `json:"service_usage_payout_tx_nulled"`
+	TeamApiKeysCreatorNulled   int64 `json:"team_api_keys_creator_nulled"`
+	TeamMemberships            int64 `json:"team_memberships"`
+	UsagePayoutTxNulled        int64 `json:"usage_payout_tx_nulled"`
+}
+
+// UserDeletionHardCounts defines model for UserDeletionHardCounts.
+type UserDeletionHardCounts struct {
+	ApiKeys int64 `json:"api_keys"`
+	Recipes int64 `json:"recipes"`
+	SshKeys int64 `json:"ssh_keys"`
+	Volumes int64 `json:"volumes"`
+}
+
+// UserDeletionReport defines model for UserDeletionReport.
+type UserDeletionReport struct {
+	Anonymized UserDeletionAnonymizedCounts `json:"anonymized"`
+
+	// CephCleanupFailures Volumes whose Ceph RBD image delete failed; DB row was still removed.
+	CephCleanupFailures []string               `json:"ceph_cleanup_failures"`
+	FinishedAt          string                 `json:"finished_at"`
+	HardDeleted         UserDeletionHardCounts `json:"hard_deleted"`
+	Reason              string                 `json:"reason"`
+	RequesterAdminId    string                 `json:"requester_admin_id"`
+	RetainedAccountId   *string                `json:"retained_account_id"`
+	StartedAt           string                 `json:"started_at"`
+	UserId              string                 `json:"user_id"`
+}
+
+// UserInfo Unified user response returned from /users/list.
+type UserInfo struct {
+	// AccountInfo Financial/account information for a user (admin/provider).
+	AccountInfo  *UserAccountInfo `json:"account_info,omitempty"`
+	Email        string           `json:"email"`
+	Id           string           `json:"id"`
+	LastLoginAt  *string          `json:"last_login_at"`
+	Name         *string          `json:"name"`
+	RegisteredAt string           `json:"registered_at"`
+}
+
+// UserSelector defines model for UserSelector.
+type UserSelector struct {
+	union json.RawMessage
+}
+
+// UserSelector0 defines model for .
+type UserSelector0 struct {
+	ById []string `json:"ById"`
+}
+
+// UserSelector1 Filter to users active on the given provider's nodes.
+type UserSelector1 struct {
+	// ByProvider Filter to users active on the given provider's nodes.
+	ByProvider string `json:"ByProvider"`
+}
+
+// UserSelector2 Filter to users whose total spend is at least this value (cents).
+type UserSelector2 struct {
+	// ByMinSpend Filter to users whose total spend is at least this value (cents).
+	ByMinSpend int64 `json:"ByMinSpend"`
+}
+
+// UserSelector3 Filter to users that currently have running executors (instances).
+type UserSelector3 string
+
 // VirtDomainState defines model for VirtDomainState.
 type VirtDomainState string
 
@@ -2849,6 +3535,9 @@ type VirtDomainState string
 type VolumeInfo struct {
 	// AttachedExecutorId Executor ID if the volume is mounted to one
 	AttachedExecutorId string `json:"attached_executor_id"`
+
+	// BillingExempt Whether this volume is exempt from billing (admin-created)
+	BillingExempt *bool `json:"billing_exempt,omitempty"`
 
 	// CephImage Ceph image name
 	CephImage string `json:"ceph_image"`
@@ -2942,6 +3631,9 @@ type CreateExternalTransactionJSONRequestBody = ExternalTransactionRequestProto
 // CreatePromoTransactionJSONRequestBody defines body for CreatePromoTransaction for application/json ContentType.
 type CreatePromoTransactionJSONRequestBody = PromoCodeRequestProto
 
+// UpdateCreditLimitJSONRequestBody defines body for UpdateCreditLimit for application/json ContentType.
+type UpdateCreditLimitJSONRequestBody = UpdateUsersCreditLimitRequestProto
+
 // AddApiKeyJSONRequestBody defines body for AddApiKey for application/json ContentType.
 type AddApiKeyJSONRequestBody = AddApiKeyRequestProto
 
@@ -2990,11 +3682,20 @@ type UpdateInstanceVariantJSONRequestBody = UpdateInstanceVariantRequestProto
 // ListInstancesJSONRequestBody defines body for ListInstances for application/json ContentType.
 type ListInstancesJSONRequestBody = ListInstancesRequestProto
 
+// InstanceMetricsJSONRequestBody defines body for InstanceMetrics for application/json ContentType.
+type InstanceMetricsJSONRequestBody = InstanceMetricsRequestProto
+
+// PauseVmJSONRequestBody defines body for PauseVm for application/json ContentType.
+type PauseVmJSONRequestBody = PauseInstancesRequestProto
+
 // RentInstanceJSONRequestBody defines body for RentInstance for application/json ContentType.
 type RentInstanceJSONRequestBody = RentInstanceRequestProto
 
 // ResetVmJSONRequestBody defines body for ResetVm for application/json ContentType.
 type ResetVmJSONRequestBody = ResetInstancesRequestProto
+
+// ResumeVmJSONRequestBody defines body for ResumeVm for application/json ContentType.
+type ResumeVmJSONRequestBody = ResumeInstancesRequestProto
 
 // StartVmJSONRequestBody defines body for StartVm for application/json ContentType.
 type StartVmJSONRequestBody = StartInstancesRequestProto
@@ -3029,8 +3730,14 @@ type ForceDrainJSONRequestBody = ForceDrainRequestProto
 // ListNodesJSONRequestBody defines body for ListNodes for application/json ContentType.
 type ListNodesJSONRequestBody = ListProviderNodesRequestProto
 
+// NodeMetricsJSONRequestBody defines body for NodeMetrics for application/json ContentType.
+type NodeMetricsJSONRequestBody = NodeMetricsRequestProto
+
 // ResumeNodeJSONRequestBody defines body for ResumeNode for application/json ContentType.
 type ResumeNodeJSONRequestBody = ResumeNodeRequestProto
+
+// SetMarketplaceListingJSONRequestBody defines body for SetMarketplaceListing for application/json ContentType.
+type SetMarketplaceListingJSONRequestBody = SetNodeMarketplaceListingRequestProto
 
 // UpdateProviderNodeInstanceTypeJSONRequestBody defines body for UpdateProviderNodeInstanceType for application/json ContentType.
 type UpdateProviderNodeInstanceTypeJSONRequestBody = UpdateProviderNodeInstanceTypeRequestProto
@@ -3068,6 +3775,12 @@ type SelectAndDeleteSshKeyJSONRequestBody = DeleteSshKeyRequestProto
 // CreateTeamJSONRequestBody defines body for CreateTeam for application/json ContentType.
 type CreateTeamJSONRequestBody = CreateTeamRequestProto
 
+// ListTeamsJSONRequestBody defines body for ListTeams for application/json ContentType.
+type ListTeamsJSONRequestBody = ListTeamsRequestProto
+
+// SearchTeamsJSONRequestBody defines body for SearchTeams for application/json ContentType.
+type SearchTeamsJSONRequestBody = SearchTeamsRequestProto
+
 // AddTeamMemberJSONRequestBody defines body for AddTeamMember for application/json ContentType.
 type AddTeamMemberJSONRequestBody = AddTeamMemberRequestProto
 
@@ -3077,8 +3790,23 @@ type RemoveTeamMemberJSONRequestBody = RemoveTeamMemberRequestProto
 // UpdateTeamMembershipJSONRequestBody defines body for UpdateTeamMembership for application/json ContentType.
 type UpdateTeamMembershipJSONRequestBody = UpdateTeamMembershipRequestProto
 
+// AddUserJSONRequestBody defines body for AddUser for application/json ContentType.
+type AddUserJSONRequestBody = AddUserRequestProto
+
+// DeleteUserJSONRequestBody defines body for DeleteUser for application/json ContentType.
+type DeleteUserJSONRequestBody = DeleteUserRequestProto
+
+// ListUsersJSONRequestBody defines body for ListUsers for application/json ContentType.
+type ListUsersJSONRequestBody = ListUsersRequestProto
+
 // RegisterUserJSONRequestBody defines body for RegisterUser for application/json ContentType.
 type RegisterUserJSONRequestBody = RegisterUserRequestProto
+
+// SearchUsersJSONRequestBody defines body for SearchUsers for application/json ContentType.
+type SearchUsersJSONRequestBody = SearchUsersRequestProto
+
+// SendUsersMessageJSONRequestBody defines body for SendUsersMessage for application/json ContentType.
+type SendUsersMessageJSONRequestBody = SendUsersMessageRequestProto
 
 // CreateVolumeJSONRequestBody defines body for CreateVolume for application/json ContentType.
 type CreateVolumeJSONRequestBody = CreateVolumeRequestProto
@@ -3088,6 +3816,68 @@ type ListVolumesJSONRequestBody = ListVolumesRequestProto
 
 // UpdateVolumeJSONRequestBody defines body for UpdateVolume for application/json ContentType.
 type UpdateVolumeJSONRequestBody = UpdateVolumeRequestProto
+
+// AsAccountTargetSelector0 returns the union data inside the AccountTargetSelector as a AccountTargetSelector0
+func (t AccountTargetSelector) AsAccountTargetSelector0() (AccountTargetSelector0, error) {
+	var body AccountTargetSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAccountTargetSelector0 overwrites any union data inside the AccountTargetSelector as the provided AccountTargetSelector0
+func (t *AccountTargetSelector) FromAccountTargetSelector0(v AccountTargetSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAccountTargetSelector0 performs a merge with any union data inside the AccountTargetSelector, using the provided AccountTargetSelector0
+func (t *AccountTargetSelector) MergeAccountTargetSelector0(v AccountTargetSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAccountTargetSelector1 returns the union data inside the AccountTargetSelector as a AccountTargetSelector1
+func (t AccountTargetSelector) AsAccountTargetSelector1() (AccountTargetSelector1, error) {
+	var body AccountTargetSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAccountTargetSelector1 overwrites any union data inside the AccountTargetSelector as the provided AccountTargetSelector1
+func (t *AccountTargetSelector) FromAccountTargetSelector1(v AccountTargetSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAccountTargetSelector1 performs a merge with any union data inside the AccountTargetSelector, using the provided AccountTargetSelector1
+func (t *AccountTargetSelector) MergeAccountTargetSelector1(v AccountTargetSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t AccountTargetSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *AccountTargetSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // AsAddRecipeDetails0 returns the union data inside the AddRecipeDetails as a AddRecipeDetails0
 func (t AddRecipeDetails) AsAddRecipeDetails0() (AddRecipeDetails0, error) {
@@ -3425,6 +4215,58 @@ func (t *ExternalTransactionAccountSelector) MergeExternalTransactionAccountSele
 	return err
 }
 
+// AsExternalTransactionAccountSelector2 returns the union data inside the ExternalTransactionAccountSelector as a ExternalTransactionAccountSelector2
+func (t ExternalTransactionAccountSelector) AsExternalTransactionAccountSelector2() (ExternalTransactionAccountSelector2, error) {
+	var body ExternalTransactionAccountSelector2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExternalTransactionAccountSelector2 overwrites any union data inside the ExternalTransactionAccountSelector as the provided ExternalTransactionAccountSelector2
+func (t *ExternalTransactionAccountSelector) FromExternalTransactionAccountSelector2(v ExternalTransactionAccountSelector2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeExternalTransactionAccountSelector2 performs a merge with any union data inside the ExternalTransactionAccountSelector, using the provided ExternalTransactionAccountSelector2
+func (t *ExternalTransactionAccountSelector) MergeExternalTransactionAccountSelector2(v ExternalTransactionAccountSelector2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsExternalTransactionAccountSelector3 returns the union data inside the ExternalTransactionAccountSelector as a ExternalTransactionAccountSelector3
+func (t ExternalTransactionAccountSelector) AsExternalTransactionAccountSelector3() (ExternalTransactionAccountSelector3, error) {
+	var body ExternalTransactionAccountSelector3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExternalTransactionAccountSelector3 overwrites any union data inside the ExternalTransactionAccountSelector as the provided ExternalTransactionAccountSelector3
+func (t *ExternalTransactionAccountSelector) FromExternalTransactionAccountSelector3(v ExternalTransactionAccountSelector3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeExternalTransactionAccountSelector3 performs a merge with any union data inside the ExternalTransactionAccountSelector, using the provided ExternalTransactionAccountSelector3
+func (t *ExternalTransactionAccountSelector) MergeExternalTransactionAccountSelector3(v ExternalTransactionAccountSelector3) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t ExternalTransactionAccountSelector) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
@@ -3617,6 +4459,42 @@ func (t InstanceLoginInfo) MarshalJSON() ([]byte, error) {
 }
 
 func (t *InstanceLoginInfo) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsInstanceMetricsSelector0 returns the union data inside the InstanceMetricsSelector as a InstanceMetricsSelector0
+func (t InstanceMetricsSelector) AsInstanceMetricsSelector0() (InstanceMetricsSelector0, error) {
+	var body InstanceMetricsSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromInstanceMetricsSelector0 overwrites any union data inside the InstanceMetricsSelector as the provided InstanceMetricsSelector0
+func (t *InstanceMetricsSelector) FromInstanceMetricsSelector0(v InstanceMetricsSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeInstanceMetricsSelector0 performs a merge with any union data inside the InstanceMetricsSelector, using the provided InstanceMetricsSelector0
+func (t *InstanceMetricsSelector) MergeInstanceMetricsSelector0(v InstanceMetricsSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t InstanceMetricsSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *InstanceMetricsSelector) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -4025,6 +4903,32 @@ func (t *InstancesSelector) MergeInstancesSelector3(v InstancesSelector3) error 
 	return err
 }
 
+// AsInstancesSelector4 returns the union data inside the InstancesSelector as a InstancesSelector4
+func (t InstancesSelector) AsInstancesSelector4() (InstancesSelector4, error) {
+	var body InstancesSelector4
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromInstancesSelector4 overwrites any union data inside the InstancesSelector as the provided InstancesSelector4
+func (t *InstancesSelector) FromInstancesSelector4(v InstancesSelector4) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeInstancesSelector4 performs a merge with any union data inside the InstancesSelector, using the provided InstancesSelector4
+func (t *InstancesSelector) MergeInstancesSelector4(v InstancesSelector4) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t InstancesSelector) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
@@ -4149,22 +5053,22 @@ func (t *NetworkSelector) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// AsNodeDrainSelector0 returns the union data inside the NodeDrainSelector as a NodeDrainSelector0
-func (t NodeDrainSelector) AsNodeDrainSelector0() (NodeDrainSelector0, error) {
-	var body NodeDrainSelector0
+// AsNodeAdminSelector0 returns the union data inside the NodeAdminSelector as a NodeAdminSelector0
+func (t NodeAdminSelector) AsNodeAdminSelector0() (NodeAdminSelector0, error) {
+	var body NodeAdminSelector0
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromNodeDrainSelector0 overwrites any union data inside the NodeDrainSelector as the provided NodeDrainSelector0
-func (t *NodeDrainSelector) FromNodeDrainSelector0(v NodeDrainSelector0) error {
+// FromNodeAdminSelector0 overwrites any union data inside the NodeAdminSelector as the provided NodeAdminSelector0
+func (t *NodeAdminSelector) FromNodeAdminSelector0(v NodeAdminSelector0) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeNodeDrainSelector0 performs a merge with any union data inside the NodeDrainSelector, using the provided NodeDrainSelector0
-func (t *NodeDrainSelector) MergeNodeDrainSelector0(v NodeDrainSelector0) error {
+// MergeNodeAdminSelector0 performs a merge with any union data inside the NodeAdminSelector, using the provided NodeAdminSelector0
+func (t *NodeAdminSelector) MergeNodeAdminSelector0(v NodeAdminSelector0) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -4175,12 +5079,12 @@ func (t *NodeDrainSelector) MergeNodeDrainSelector0(v NodeDrainSelector0) error 
 	return err
 }
 
-func (t NodeDrainSelector) MarshalJSON() ([]byte, error) {
+func (t NodeAdminSelector) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
 }
 
-func (t *NodeDrainSelector) UnmarshalJSON(b []byte) error {
+func (t *NodeAdminSelector) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -4243,6 +5147,42 @@ func (t NodeHealthStatus) MarshalJSON() ([]byte, error) {
 }
 
 func (t *NodeHealthStatus) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsNodeMetricsSelector0 returns the union data inside the NodeMetricsSelector as a NodeMetricsSelector0
+func (t NodeMetricsSelector) AsNodeMetricsSelector0() (NodeMetricsSelector0, error) {
+	var body NodeMetricsSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNodeMetricsSelector0 overwrites any union data inside the NodeMetricsSelector as the provided NodeMetricsSelector0
+func (t *NodeMetricsSelector) FromNodeMetricsSelector0(v NodeMetricsSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNodeMetricsSelector0 performs a merge with any union data inside the NodeMetricsSelector, using the provided NodeMetricsSelector0
+func (t *NodeMetricsSelector) MergeNodeMetricsSelector0(v NodeMetricsSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t NodeMetricsSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *NodeMetricsSelector) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -4971,6 +5911,270 @@ func (t *TeamAssignment) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsTeamListSelector0 returns the union data inside the TeamListSelector as a TeamListSelector0
+func (t TeamListSelector) AsTeamListSelector0() (TeamListSelector0, error) {
+	var body TeamListSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamListSelector0 overwrites any union data inside the TeamListSelector as the provided TeamListSelector0
+func (t *TeamListSelector) FromTeamListSelector0(v TeamListSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamListSelector0 performs a merge with any union data inside the TeamListSelector, using the provided TeamListSelector0
+func (t *TeamListSelector) MergeTeamListSelector0(v TeamListSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTeamListSelector1 returns the union data inside the TeamListSelector as a TeamListSelector1
+func (t TeamListSelector) AsTeamListSelector1() (TeamListSelector1, error) {
+	var body TeamListSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamListSelector1 overwrites any union data inside the TeamListSelector as the provided TeamListSelector1
+func (t *TeamListSelector) FromTeamListSelector1(v TeamListSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamListSelector1 performs a merge with any union data inside the TeamListSelector, using the provided TeamListSelector1
+func (t *TeamListSelector) MergeTeamListSelector1(v TeamListSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTeamListSelector2 returns the union data inside the TeamListSelector as a TeamListSelector2
+func (t TeamListSelector) AsTeamListSelector2() (TeamListSelector2, error) {
+	var body TeamListSelector2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamListSelector2 overwrites any union data inside the TeamListSelector as the provided TeamListSelector2
+func (t *TeamListSelector) FromTeamListSelector2(v TeamListSelector2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamListSelector2 performs a merge with any union data inside the TeamListSelector, using the provided TeamListSelector2
+func (t *TeamListSelector) MergeTeamListSelector2(v TeamListSelector2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTeamListSelector3 returns the union data inside the TeamListSelector as a TeamListSelector3
+func (t TeamListSelector) AsTeamListSelector3() (TeamListSelector3, error) {
+	var body TeamListSelector3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamListSelector3 overwrites any union data inside the TeamListSelector as the provided TeamListSelector3
+func (t *TeamListSelector) FromTeamListSelector3(v TeamListSelector3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamListSelector3 performs a merge with any union data inside the TeamListSelector, using the provided TeamListSelector3
+func (t *TeamListSelector) MergeTeamListSelector3(v TeamListSelector3) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTeamListSelector4 returns the union data inside the TeamListSelector as a TeamListSelector4
+func (t TeamListSelector) AsTeamListSelector4() (TeamListSelector4, error) {
+	var body TeamListSelector4
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamListSelector4 overwrites any union data inside the TeamListSelector as the provided TeamListSelector4
+func (t *TeamListSelector) FromTeamListSelector4(v TeamListSelector4) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamListSelector4 performs a merge with any union data inside the TeamListSelector, using the provided TeamListSelector4
+func (t *TeamListSelector) MergeTeamListSelector4(v TeamListSelector4) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TeamListSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TeamListSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTeamMemberOrInviteResponseProtoData0 returns the union data inside the TeamMemberOrInviteResponseProto_Data as a TeamMemberOrInviteResponseProtoData0
+func (t TeamMemberOrInviteResponseProto_Data) AsTeamMemberOrInviteResponseProtoData0() (TeamMemberOrInviteResponseProtoData0, error) {
+	var body TeamMemberOrInviteResponseProtoData0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamMemberOrInviteResponseProtoData0 overwrites any union data inside the TeamMemberOrInviteResponseProto_Data as the provided TeamMemberOrInviteResponseProtoData0
+func (t *TeamMemberOrInviteResponseProto_Data) FromTeamMemberOrInviteResponseProtoData0(v TeamMemberOrInviteResponseProtoData0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamMemberOrInviteResponseProtoData0 performs a merge with any union data inside the TeamMemberOrInviteResponseProto_Data, using the provided TeamMemberOrInviteResponseProtoData0
+func (t *TeamMemberOrInviteResponseProto_Data) MergeTeamMemberOrInviteResponseProtoData0(v TeamMemberOrInviteResponseProtoData0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTeamMemberOrInviteResponseProtoData1 returns the union data inside the TeamMemberOrInviteResponseProto_Data as a TeamMemberOrInviteResponseProtoData1
+func (t TeamMemberOrInviteResponseProto_Data) AsTeamMemberOrInviteResponseProtoData1() (TeamMemberOrInviteResponseProtoData1, error) {
+	var body TeamMemberOrInviteResponseProtoData1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamMemberOrInviteResponseProtoData1 overwrites any union data inside the TeamMemberOrInviteResponseProto_Data as the provided TeamMemberOrInviteResponseProtoData1
+func (t *TeamMemberOrInviteResponseProto_Data) FromTeamMemberOrInviteResponseProtoData1(v TeamMemberOrInviteResponseProtoData1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamMemberOrInviteResponseProtoData1 performs a merge with any union data inside the TeamMemberOrInviteResponseProto_Data, using the provided TeamMemberOrInviteResponseProtoData1
+func (t *TeamMemberOrInviteResponseProto_Data) MergeTeamMemberOrInviteResponseProtoData1(v TeamMemberOrInviteResponseProtoData1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TeamMemberOrInviteResponseProto_Data) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TeamMemberOrInviteResponseProto_Data) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTeamMemberSelector0 returns the union data inside the TeamMemberSelector as a TeamMemberSelector0
+func (t TeamMemberSelector) AsTeamMemberSelector0() (TeamMemberSelector0, error) {
+	var body TeamMemberSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamMemberSelector0 overwrites any union data inside the TeamMemberSelector as the provided TeamMemberSelector0
+func (t *TeamMemberSelector) FromTeamMemberSelector0(v TeamMemberSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamMemberSelector0 performs a merge with any union data inside the TeamMemberSelector, using the provided TeamMemberSelector0
+func (t *TeamMemberSelector) MergeTeamMemberSelector0(v TeamMemberSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTeamMemberSelector1 returns the union data inside the TeamMemberSelector as a TeamMemberSelector1
+func (t TeamMemberSelector) AsTeamMemberSelector1() (TeamMemberSelector1, error) {
+	var body TeamMemberSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTeamMemberSelector1 overwrites any union data inside the TeamMemberSelector as the provided TeamMemberSelector1
+func (t *TeamMemberSelector) FromTeamMemberSelector1(v TeamMemberSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTeamMemberSelector1 performs a merge with any union data inside the TeamMemberSelector, using the provided TeamMemberSelector1
+func (t *TeamMemberSelector) MergeTeamMemberSelector1(v TeamMemberSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TeamMemberSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TeamMemberSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsTransactionInfo0 returns the union data inside the TransactionInfo as a TransactionInfo0
 func (t TransactionInfo) AsTransactionInfo0() (TransactionInfo0, error) {
 	var body TransactionInfo0
@@ -5225,6 +6429,120 @@ func (t *UpdateNetworkSelector) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsUserSelector0 returns the union data inside the UserSelector as a UserSelector0
+func (t UserSelector) AsUserSelector0() (UserSelector0, error) {
+	var body UserSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUserSelector0 overwrites any union data inside the UserSelector as the provided UserSelector0
+func (t *UserSelector) FromUserSelector0(v UserSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUserSelector0 performs a merge with any union data inside the UserSelector, using the provided UserSelector0
+func (t *UserSelector) MergeUserSelector0(v UserSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsUserSelector1 returns the union data inside the UserSelector as a UserSelector1
+func (t UserSelector) AsUserSelector1() (UserSelector1, error) {
+	var body UserSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUserSelector1 overwrites any union data inside the UserSelector as the provided UserSelector1
+func (t *UserSelector) FromUserSelector1(v UserSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUserSelector1 performs a merge with any union data inside the UserSelector, using the provided UserSelector1
+func (t *UserSelector) MergeUserSelector1(v UserSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsUserSelector2 returns the union data inside the UserSelector as a UserSelector2
+func (t UserSelector) AsUserSelector2() (UserSelector2, error) {
+	var body UserSelector2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUserSelector2 overwrites any union data inside the UserSelector as the provided UserSelector2
+func (t *UserSelector) FromUserSelector2(v UserSelector2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUserSelector2 performs a merge with any union data inside the UserSelector, using the provided UserSelector2
+func (t *UserSelector) MergeUserSelector2(v UserSelector2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsUserSelector3 returns the union data inside the UserSelector as a UserSelector3
+func (t UserSelector) AsUserSelector3() (UserSelector3, error) {
+	var body UserSelector3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUserSelector3 overwrites any union data inside the UserSelector as the provided UserSelector3
+func (t *UserSelector) FromUserSelector3(v UserSelector3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUserSelector3 performs a merge with any union data inside the UserSelector, using the provided UserSelector3
+func (t *UserSelector) MergeUserSelector3(v UserSelector3) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t UserSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *UserSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsVolumeSelector0 returns the union data inside the VolumeSelector as a VolumeSelector0
 func (t VolumeSelector) AsVolumeSelector0() (VolumeSelector0, error) {
 	var body VolumeSelector0
@@ -5402,6 +6720,11 @@ type ClientInterface interface {
 	// ListTransactions request
 	ListTransactions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// UpdateCreditLimitWithBody request with any body
+	UpdateCreditLimitWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateCreditLimit(ctx context.Context, body UpdateCreditLimitJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// AddApiKeyWithBody request with any body
 	AddApiKeyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5494,6 +6817,16 @@ type ClientInterface interface {
 
 	ListInstances(ctx context.Context, body ListInstancesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// InstanceMetricsWithBody request with any body
+	InstanceMetricsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	InstanceMetrics(ctx context.Context, body InstanceMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PauseVmWithBody request with any body
+	PauseVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PauseVm(ctx context.Context, body PauseVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// RentInstanceWithBody request with any body
 	RentInstanceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5503,6 +6836,11 @@ type ClientInterface interface {
 	ResetVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ResetVm(ctx context.Context, body ResetVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResumeVmWithBody request with any body
+	ResumeVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ResumeVm(ctx context.Context, body ResumeVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// StartVmWithBody request with any body
 	StartVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5559,10 +6897,23 @@ type ClientInterface interface {
 
 	ListNodes(ctx context.Context, body ListNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// NodeMetricsWithBody request with any body
+	NodeMetricsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	NodeMetrics(ctx context.Context, body NodeMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// NodeMetricsById request
+	NodeMetricsById(ctx context.Context, nodeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ResumeNodeWithBody request with any body
 	ResumeNodeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ResumeNode(ctx context.Context, body ResumeNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetMarketplaceListingWithBody request with any body
+	SetMarketplaceListingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SetMarketplaceListing(ctx context.Context, body SetMarketplaceListingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateProviderNodeInstanceTypeWithBody request with any body
 	UpdateProviderNodeInstanceTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5636,8 +6987,15 @@ type ClientInterface interface {
 
 	CreateTeam(ctx context.Context, body CreateTeamJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListTeams request
-	ListTeams(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListTeamsWithBody request with any body
+	ListTeamsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ListTeams(ctx context.Context, body ListTeamsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SearchTeamsWithBody request with any body
+	SearchTeamsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SearchTeams(ctx context.Context, body SearchTeamsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetTeam request
 	GetTeam(ctx context.Context, teamId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5657,10 +7015,35 @@ type ClientInterface interface {
 
 	UpdateTeamMembership(ctx context.Context, teamId string, body UpdateTeamMembershipJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// AddUserWithBody request with any body
+	AddUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AddUser(ctx context.Context, body AddUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteUserWithBody request with any body
+	DeleteUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	DeleteUser(ctx context.Context, body DeleteUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListUsersWithBody request with any body
+	ListUsersWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ListUsers(ctx context.Context, body ListUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// RegisterUserWithBody request with any body
 	RegisterUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	RegisterUser(ctx context.Context, body RegisterUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SearchUsersWithBody request with any body
+	SearchUsersWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SearchUsers(ctx context.Context, body SearchUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SendUsersMessageWithBody request with any body
+	SendUsersMessageWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SendUsersMessage(ctx context.Context, body SendUsersMessageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateVolumeWithBody request with any body
 	CreateVolumeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5740,6 +7123,30 @@ func (c *Client) CreatePromoTransaction(ctx context.Context, body CreatePromoTra
 
 func (c *Client) ListTransactions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListTransactionsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateCreditLimitWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCreditLimitRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateCreditLimit(ctx context.Context, body UpdateCreditLimitJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCreditLimitRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6182,6 +7589,54 @@ func (c *Client) ListInstances(ctx context.Context, body ListInstancesJSONReques
 	return c.Client.Do(req)
 }
 
+func (c *Client) InstanceMetricsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInstanceMetricsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) InstanceMetrics(ctx context.Context, body InstanceMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInstanceMetricsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PauseVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPauseVmRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PauseVm(ctx context.Context, body PauseVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPauseVmRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) RentInstanceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRentInstanceRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -6220,6 +7675,30 @@ func (c *Client) ResetVmWithBody(ctx context.Context, contentType string, body i
 
 func (c *Client) ResetVm(ctx context.Context, body ResetVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewResetVmRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResumeVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResumeVmRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResumeVm(ctx context.Context, body ResumeVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResumeVmRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6494,6 +7973,42 @@ func (c *Client) ListNodes(ctx context.Context, body ListNodesJSONRequestBody, r
 	return c.Client.Do(req)
 }
 
+func (c *Client) NodeMetricsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewNodeMetricsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) NodeMetrics(ctx context.Context, body NodeMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewNodeMetricsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) NodeMetricsById(ctx context.Context, nodeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewNodeMetricsByIdRequest(c.Server, nodeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ResumeNodeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewResumeNodeRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -6508,6 +8023,30 @@ func (c *Client) ResumeNodeWithBody(ctx context.Context, contentType string, bod
 
 func (c *Client) ResumeNode(ctx context.Context, body ResumeNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewResumeNodeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetMarketplaceListingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetMarketplaceListingRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetMarketplaceListing(ctx context.Context, body SetMarketplaceListingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetMarketplaceListingRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6854,8 +8393,44 @@ func (c *Client) CreateTeam(ctx context.Context, body CreateTeamJSONRequestBody,
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListTeams(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListTeamsRequest(c.Server)
+func (c *Client) ListTeamsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListTeamsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListTeams(ctx context.Context, body ListTeamsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListTeamsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchTeamsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchTeamsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchTeams(ctx context.Context, body SearchTeamsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchTeamsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6950,6 +8525,78 @@ func (c *Client) UpdateTeamMembership(ctx context.Context, teamId string, body U
 	return c.Client.Do(req)
 }
 
+func (c *Client) AddUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddUserRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AddUser(ctx context.Context, body AddUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddUserRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteUserRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteUser(ctx context.Context, body DeleteUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteUserRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListUsersWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUsersRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListUsers(ctx context.Context, body ListUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUsersRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) RegisterUserWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRegisterUserRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -6964,6 +8611,54 @@ func (c *Client) RegisterUserWithBody(ctx context.Context, contentType string, b
 
 func (c *Client) RegisterUser(ctx context.Context, body RegisterUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRegisterUserRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchUsersWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchUsersRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchUsers(ctx context.Context, body SearchUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchUsersRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SendUsersMessageWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSendUsersMessageRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SendUsersMessage(ctx context.Context, body SendUsersMessageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSendUsersMessageRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7176,6 +8871,46 @@ func NewListTransactionsRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewUpdateCreditLimitRequest calls the generic UpdateCreditLimit builder with application/json body
+func NewUpdateCreditLimitRequest(server string, body UpdateCreditLimitJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateCreditLimitRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewUpdateCreditLimitRequestWithBody generates requests for UpdateCreditLimit with any type of body
+func NewUpdateCreditLimitRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/account/update_credit_limit")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -7946,6 +9681,86 @@ func NewListInstancesRequestWithBody(server string, contentType string, body io.
 	return req, nil
 }
 
+// NewInstanceMetricsRequest calls the generic InstanceMetrics builder with application/json body
+func NewInstanceMetricsRequest(server string, body InstanceMetricsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewInstanceMetricsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewInstanceMetricsRequestWithBody generates requests for InstanceMetrics with any type of body
+func NewInstanceMetricsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instances/metrics")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPauseVmRequest calls the generic PauseVm builder with application/json body
+func NewPauseVmRequest(server string, body PauseVmJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPauseVmRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPauseVmRequestWithBody generates requests for PauseVm with any type of body
+func NewPauseVmRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instances/pause")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewRentInstanceRequest calls the generic RentInstance builder with application/json body
 func NewRentInstanceRequest(server string, body RentInstanceJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -8007,6 +9822,46 @@ func NewResetVmRequestWithBody(server string, contentType string, body io.Reader
 	}
 
 	operationPath := fmt.Sprintf("/api/v1/instances/reset")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewResumeVmRequest calls the generic ResumeVm builder with application/json body
+func NewResumeVmRequest(server string, body ResumeVmJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewResumeVmRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewResumeVmRequestWithBody generates requests for ResumeVm with any type of body
+func NewResumeVmRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instances/resume")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -8466,6 +10321,80 @@ func NewListNodesRequestWithBody(server string, contentType string, body io.Read
 	return req, nil
 }
 
+// NewNodeMetricsRequest calls the generic NodeMetrics builder with application/json body
+func NewNodeMetricsRequest(server string, body NodeMetricsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewNodeMetricsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewNodeMetricsRequestWithBody generates requests for NodeMetrics with any type of body
+func NewNodeMetricsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/nodes/metrics/list")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewNodeMetricsByIdRequest generates requests for NodeMetricsById
+func NewNodeMetricsByIdRequest(server string, nodeId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "node_id", runtime.ParamLocationPath, nodeId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/nodes/metrics/list/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewResumeNodeRequest calls the generic ResumeNode builder with application/json body
 func NewResumeNodeRequest(server string, body ResumeNodeJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -8487,6 +10416,46 @@ func NewResumeNodeRequestWithBody(server string, contentType string, body io.Rea
 	}
 
 	operationPath := fmt.Sprintf("/api/v1/nodes/resume")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSetMarketplaceListingRequest calls the generic SetMarketplaceListing builder with application/json body
+func NewSetMarketplaceListingRequest(server string, body SetMarketplaceListingJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetMarketplaceListingRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSetMarketplaceListingRequestWithBody generates requests for SetMarketplaceListing with any type of body
+func NewSetMarketplaceListingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/nodes/set_marketplace_listing")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -9101,8 +11070,19 @@ func NewCreateTeamRequestWithBody(server string, contentType string, body io.Rea
 	return req, nil
 }
 
-// NewListTeamsRequest generates requests for ListTeams
-func NewListTeamsRequest(server string) (*http.Request, error) {
+// NewListTeamsRequest calls the generic ListTeams builder with application/json body
+func NewListTeamsRequest(server string, body ListTeamsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewListTeamsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewListTeamsRequestWithBody generates requests for ListTeams with any type of body
+func NewListTeamsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -9120,10 +11100,52 @@ func NewListTeamsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSearchTeamsRequest calls the generic SearchTeams builder with application/json body
+func NewSearchTeamsRequest(server string, body SearchTeamsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSearchTeamsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSearchTeamsRequestWithBody generates requests for SearchTeams with any type of body
+func NewSearchTeamsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/teams/search")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -9303,6 +11325,126 @@ func NewUpdateTeamMembershipRequestWithBody(server string, teamId string, conten
 	return req, nil
 }
 
+// NewAddUserRequest calls the generic AddUser builder with application/json body
+func NewAddUserRequest(server string, body AddUserJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAddUserRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewAddUserRequestWithBody generates requests for AddUser with any type of body
+func NewAddUserRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/users/add")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteUserRequest calls the generic DeleteUser builder with application/json body
+func NewDeleteUserRequest(server string, body DeleteUserJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDeleteUserRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewDeleteUserRequestWithBody generates requests for DeleteUser with any type of body
+func NewDeleteUserRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/users/delete")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListUsersRequest calls the generic ListUsers builder with application/json body
+func NewListUsersRequest(server string, body ListUsersJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewListUsersRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewListUsersRequestWithBody generates requests for ListUsers with any type of body
+func NewListUsersRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/users/list")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewRegisterUserRequest calls the generic RegisterUser builder with application/json body
 func NewRegisterUserRequest(server string, body RegisterUserJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -9324,6 +11466,86 @@ func NewRegisterUserRequestWithBody(server string, contentType string, body io.R
 	}
 
 	operationPath := fmt.Sprintf("/api/v1/users/register")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSearchUsersRequest calls the generic SearchUsers builder with application/json body
+func NewSearchUsersRequest(server string, body SearchUsersJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSearchUsersRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSearchUsersRequestWithBody generates requests for SearchUsers with any type of body
+func NewSearchUsersRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/users/search")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSendUsersMessageRequest calls the generic SendUsersMessage builder with application/json body
+func NewSendUsersMessageRequest(server string, body SendUsersMessageJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSendUsersMessageRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSendUsersMessageRequestWithBody generates requests for SendUsersMessage with any type of body
+func NewSendUsersMessageRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/users/send_message")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -9522,6 +11744,11 @@ type ClientWithResponsesInterface interface {
 	// ListTransactionsWithResponse request
 	ListTransactionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTransactionsResponse, error)
 
+	// UpdateCreditLimitWithBodyWithResponse request with any body
+	UpdateCreditLimitWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCreditLimitResponse, error)
+
+	UpdateCreditLimitWithResponse(ctx context.Context, body UpdateCreditLimitJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCreditLimitResponse, error)
+
 	// AddApiKeyWithBodyWithResponse request with any body
 	AddApiKeyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddApiKeyResponse, error)
 
@@ -9614,6 +11841,16 @@ type ClientWithResponsesInterface interface {
 
 	ListInstancesWithResponse(ctx context.Context, body ListInstancesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListInstancesResponse, error)
 
+	// InstanceMetricsWithBodyWithResponse request with any body
+	InstanceMetricsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InstanceMetricsResponse, error)
+
+	InstanceMetricsWithResponse(ctx context.Context, body InstanceMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*InstanceMetricsResponse, error)
+
+	// PauseVmWithBodyWithResponse request with any body
+	PauseVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PauseVmResponse, error)
+
+	PauseVmWithResponse(ctx context.Context, body PauseVmJSONRequestBody, reqEditors ...RequestEditorFn) (*PauseVmResponse, error)
+
 	// RentInstanceWithBodyWithResponse request with any body
 	RentInstanceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RentInstanceResponse, error)
 
@@ -9623,6 +11860,11 @@ type ClientWithResponsesInterface interface {
 	ResetVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResetVmResponse, error)
 
 	ResetVmWithResponse(ctx context.Context, body ResetVmJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetVmResponse, error)
+
+	// ResumeVmWithBodyWithResponse request with any body
+	ResumeVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResumeVmResponse, error)
+
+	ResumeVmWithResponse(ctx context.Context, body ResumeVmJSONRequestBody, reqEditors ...RequestEditorFn) (*ResumeVmResponse, error)
 
 	// StartVmWithBodyWithResponse request with any body
 	StartVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*StartVmResponse, error)
@@ -9679,10 +11921,23 @@ type ClientWithResponsesInterface interface {
 
 	ListNodesWithResponse(ctx context.Context, body ListNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*ListNodesResponse, error)
 
+	// NodeMetricsWithBodyWithResponse request with any body
+	NodeMetricsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*NodeMetricsResponse, error)
+
+	NodeMetricsWithResponse(ctx context.Context, body NodeMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*NodeMetricsResponse, error)
+
+	// NodeMetricsByIdWithResponse request
+	NodeMetricsByIdWithResponse(ctx context.Context, nodeId string, reqEditors ...RequestEditorFn) (*NodeMetricsByIdResponse, error)
+
 	// ResumeNodeWithBodyWithResponse request with any body
 	ResumeNodeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResumeNodeResponse, error)
 
 	ResumeNodeWithResponse(ctx context.Context, body ResumeNodeJSONRequestBody, reqEditors ...RequestEditorFn) (*ResumeNodeResponse, error)
+
+	// SetMarketplaceListingWithBodyWithResponse request with any body
+	SetMarketplaceListingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetMarketplaceListingResponse, error)
+
+	SetMarketplaceListingWithResponse(ctx context.Context, body SetMarketplaceListingJSONRequestBody, reqEditors ...RequestEditorFn) (*SetMarketplaceListingResponse, error)
 
 	// UpdateProviderNodeInstanceTypeWithBodyWithResponse request with any body
 	UpdateProviderNodeInstanceTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateProviderNodeInstanceTypeResponse, error)
@@ -9756,8 +12011,15 @@ type ClientWithResponsesInterface interface {
 
 	CreateTeamWithResponse(ctx context.Context, body CreateTeamJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateTeamResponse, error)
 
-	// ListTeamsWithResponse request
-	ListTeamsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTeamsResponse, error)
+	// ListTeamsWithBodyWithResponse request with any body
+	ListTeamsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListTeamsResponse, error)
+
+	ListTeamsWithResponse(ctx context.Context, body ListTeamsJSONRequestBody, reqEditors ...RequestEditorFn) (*ListTeamsResponse, error)
+
+	// SearchTeamsWithBodyWithResponse request with any body
+	SearchTeamsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchTeamsResponse, error)
+
+	SearchTeamsWithResponse(ctx context.Context, body SearchTeamsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchTeamsResponse, error)
 
 	// GetTeamWithResponse request
 	GetTeamWithResponse(ctx context.Context, teamId string, reqEditors ...RequestEditorFn) (*GetTeamResponse, error)
@@ -9777,10 +12039,35 @@ type ClientWithResponsesInterface interface {
 
 	UpdateTeamMembershipWithResponse(ctx context.Context, teamId string, body UpdateTeamMembershipJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateTeamMembershipResponse, error)
 
+	// AddUserWithBodyWithResponse request with any body
+	AddUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddUserResponse, error)
+
+	AddUserWithResponse(ctx context.Context, body AddUserJSONRequestBody, reqEditors ...RequestEditorFn) (*AddUserResponse, error)
+
+	// DeleteUserWithBodyWithResponse request with any body
+	DeleteUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteUserResponse, error)
+
+	DeleteUserWithResponse(ctx context.Context, body DeleteUserJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteUserResponse, error)
+
+	// ListUsersWithBodyWithResponse request with any body
+	ListUsersWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListUsersResponse, error)
+
+	ListUsersWithResponse(ctx context.Context, body ListUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*ListUsersResponse, error)
+
 	// RegisterUserWithBodyWithResponse request with any body
 	RegisterUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RegisterUserResponse, error)
 
 	RegisterUserWithResponse(ctx context.Context, body RegisterUserJSONRequestBody, reqEditors ...RequestEditorFn) (*RegisterUserResponse, error)
+
+	// SearchUsersWithBodyWithResponse request with any body
+	SearchUsersWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchUsersResponse, error)
+
+	SearchUsersWithResponse(ctx context.Context, body SearchUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchUsersResponse, error)
+
+	// SendUsersMessageWithBodyWithResponse request with any body
+	SendUsersMessageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendUsersMessageResponse, error)
+
+	SendUsersMessageWithResponse(ctx context.Context, body SendUsersMessageJSONRequestBody, reqEditors ...RequestEditorFn) (*SendUsersMessageResponse, error)
 
 	// CreateVolumeWithBodyWithResponse request with any body
 	CreateVolumeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateVolumeResponse, error)
@@ -9878,6 +12165,28 @@ func (r ListTransactionsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListTransactionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateCreditLimitResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *UpdateUsersCreditLimitResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateCreditLimitResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateCreditLimitResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -10319,6 +12628,49 @@ func (r ListInstancesResponse) StatusCode() int {
 	return 0
 }
 
+type InstanceMetricsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InstanceMetricsResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r InstanceMetricsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r InstanceMetricsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PauseVmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PauseVmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PauseVmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type RentInstanceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -10356,6 +12708,27 @@ func (r ResetVmResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ResetVmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ResumeVmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r ResumeVmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResumeVmResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -10601,6 +12974,50 @@ func (r ListNodesResponse) StatusCode() int {
 	return 0
 }
 
+type NodeMetricsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *NodeMetricsResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r NodeMetricsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r NodeMetricsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type NodeMetricsByIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *NodeMetricsResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r NodeMetricsByIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r NodeMetricsByIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ResumeNodeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -10617,6 +13034,28 @@ func (r ResumeNodeResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ResumeNodeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SetMarketplaceListingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SetNodeMarketplaceListingResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r SetMarketplaceListingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SetMarketplaceListingResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -10992,6 +13431,28 @@ func (r ListTeamsResponse) StatusCode() int {
 	return 0
 }
 
+type SearchTeamsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SearchTeamsResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchTeamsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchTeamsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetTeamResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -11017,7 +13478,7 @@ func (r GetTeamResponse) StatusCode() int {
 type AddTeamMemberResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *TeamMemberResponseProto
+	JSON200      *TeamMemberOrInviteResponseProto
 }
 
 // Status returns HTTPResponse.Status
@@ -11039,7 +13500,6 @@ func (r AddTeamMemberResponse) StatusCode() int {
 type RemoveTeamMemberResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *TeamMemberResponseProto
 }
 
 // Status returns HTTPResponse.Status
@@ -11079,6 +13539,72 @@ func (r UpdateTeamMembershipResponse) StatusCode() int {
 	return 0
 }
 
+type AddUserResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AddUserResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r AddUserResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AddUserResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteUserResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteUserResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteUserResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteUserResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListUsersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListUsersResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r ListUsersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListUsersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type RegisterUserResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -11094,6 +13620,50 @@ func (r RegisterUserResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r RegisterUserResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SearchUsersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SearchUsersResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchUsersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchUsersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SendUsersMessageResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SendUsersMessageResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r SendUsersMessageResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SendUsersMessageResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -11216,6 +13786,23 @@ func (c *ClientWithResponses) ListTransactionsWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParseListTransactionsResponse(rsp)
+}
+
+// UpdateCreditLimitWithBodyWithResponse request with arbitrary body returning *UpdateCreditLimitResponse
+func (c *ClientWithResponses) UpdateCreditLimitWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCreditLimitResponse, error) {
+	rsp, err := c.UpdateCreditLimitWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCreditLimitResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateCreditLimitWithResponse(ctx context.Context, body UpdateCreditLimitJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCreditLimitResponse, error) {
+	rsp, err := c.UpdateCreditLimit(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCreditLimitResponse(rsp)
 }
 
 // AddApiKeyWithBodyWithResponse request with arbitrary body returning *AddApiKeyResponse
@@ -11526,6 +14113,40 @@ func (c *ClientWithResponses) ListInstancesWithResponse(ctx context.Context, bod
 	return ParseListInstancesResponse(rsp)
 }
 
+// InstanceMetricsWithBodyWithResponse request with arbitrary body returning *InstanceMetricsResponse
+func (c *ClientWithResponses) InstanceMetricsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InstanceMetricsResponse, error) {
+	rsp, err := c.InstanceMetricsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInstanceMetricsResponse(rsp)
+}
+
+func (c *ClientWithResponses) InstanceMetricsWithResponse(ctx context.Context, body InstanceMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*InstanceMetricsResponse, error) {
+	rsp, err := c.InstanceMetrics(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInstanceMetricsResponse(rsp)
+}
+
+// PauseVmWithBodyWithResponse request with arbitrary body returning *PauseVmResponse
+func (c *ClientWithResponses) PauseVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PauseVmResponse, error) {
+	rsp, err := c.PauseVmWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePauseVmResponse(rsp)
+}
+
+func (c *ClientWithResponses) PauseVmWithResponse(ctx context.Context, body PauseVmJSONRequestBody, reqEditors ...RequestEditorFn) (*PauseVmResponse, error) {
+	rsp, err := c.PauseVm(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePauseVmResponse(rsp)
+}
+
 // RentInstanceWithBodyWithResponse request with arbitrary body returning *RentInstanceResponse
 func (c *ClientWithResponses) RentInstanceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RentInstanceResponse, error) {
 	rsp, err := c.RentInstanceWithBody(ctx, contentType, body, reqEditors...)
@@ -11558,6 +14179,23 @@ func (c *ClientWithResponses) ResetVmWithResponse(ctx context.Context, body Rese
 		return nil, err
 	}
 	return ParseResetVmResponse(rsp)
+}
+
+// ResumeVmWithBodyWithResponse request with arbitrary body returning *ResumeVmResponse
+func (c *ClientWithResponses) ResumeVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResumeVmResponse, error) {
+	rsp, err := c.ResumeVmWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResumeVmResponse(rsp)
+}
+
+func (c *ClientWithResponses) ResumeVmWithResponse(ctx context.Context, body ResumeVmJSONRequestBody, reqEditors ...RequestEditorFn) (*ResumeVmResponse, error) {
+	rsp, err := c.ResumeVm(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResumeVmResponse(rsp)
 }
 
 // StartVmWithBodyWithResponse request with arbitrary body returning *StartVmResponse
@@ -11747,6 +14385,32 @@ func (c *ClientWithResponses) ListNodesWithResponse(ctx context.Context, body Li
 	return ParseListNodesResponse(rsp)
 }
 
+// NodeMetricsWithBodyWithResponse request with arbitrary body returning *NodeMetricsResponse
+func (c *ClientWithResponses) NodeMetricsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*NodeMetricsResponse, error) {
+	rsp, err := c.NodeMetricsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseNodeMetricsResponse(rsp)
+}
+
+func (c *ClientWithResponses) NodeMetricsWithResponse(ctx context.Context, body NodeMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*NodeMetricsResponse, error) {
+	rsp, err := c.NodeMetrics(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseNodeMetricsResponse(rsp)
+}
+
+// NodeMetricsByIdWithResponse request returning *NodeMetricsByIdResponse
+func (c *ClientWithResponses) NodeMetricsByIdWithResponse(ctx context.Context, nodeId string, reqEditors ...RequestEditorFn) (*NodeMetricsByIdResponse, error) {
+	rsp, err := c.NodeMetricsById(ctx, nodeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseNodeMetricsByIdResponse(rsp)
+}
+
 // ResumeNodeWithBodyWithResponse request with arbitrary body returning *ResumeNodeResponse
 func (c *ClientWithResponses) ResumeNodeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResumeNodeResponse, error) {
 	rsp, err := c.ResumeNodeWithBody(ctx, contentType, body, reqEditors...)
@@ -11762,6 +14426,23 @@ func (c *ClientWithResponses) ResumeNodeWithResponse(ctx context.Context, body R
 		return nil, err
 	}
 	return ParseResumeNodeResponse(rsp)
+}
+
+// SetMarketplaceListingWithBodyWithResponse request with arbitrary body returning *SetMarketplaceListingResponse
+func (c *ClientWithResponses) SetMarketplaceListingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetMarketplaceListingResponse, error) {
+	rsp, err := c.SetMarketplaceListingWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetMarketplaceListingResponse(rsp)
+}
+
+func (c *ClientWithResponses) SetMarketplaceListingWithResponse(ctx context.Context, body SetMarketplaceListingJSONRequestBody, reqEditors ...RequestEditorFn) (*SetMarketplaceListingResponse, error) {
+	rsp, err := c.SetMarketplaceListing(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetMarketplaceListingResponse(rsp)
 }
 
 // UpdateProviderNodeInstanceTypeWithBodyWithResponse request with arbitrary body returning *UpdateProviderNodeInstanceTypeResponse
@@ -12004,13 +14685,38 @@ func (c *ClientWithResponses) CreateTeamWithResponse(ctx context.Context, body C
 	return ParseCreateTeamResponse(rsp)
 }
 
-// ListTeamsWithResponse request returning *ListTeamsResponse
-func (c *ClientWithResponses) ListTeamsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTeamsResponse, error) {
-	rsp, err := c.ListTeams(ctx, reqEditors...)
+// ListTeamsWithBodyWithResponse request with arbitrary body returning *ListTeamsResponse
+func (c *ClientWithResponses) ListTeamsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListTeamsResponse, error) {
+	rsp, err := c.ListTeamsWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseListTeamsResponse(rsp)
+}
+
+func (c *ClientWithResponses) ListTeamsWithResponse(ctx context.Context, body ListTeamsJSONRequestBody, reqEditors ...RequestEditorFn) (*ListTeamsResponse, error) {
+	rsp, err := c.ListTeams(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListTeamsResponse(rsp)
+}
+
+// SearchTeamsWithBodyWithResponse request with arbitrary body returning *SearchTeamsResponse
+func (c *ClientWithResponses) SearchTeamsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchTeamsResponse, error) {
+	rsp, err := c.SearchTeamsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchTeamsResponse(rsp)
+}
+
+func (c *ClientWithResponses) SearchTeamsWithResponse(ctx context.Context, body SearchTeamsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchTeamsResponse, error) {
+	rsp, err := c.SearchTeams(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchTeamsResponse(rsp)
 }
 
 // GetTeamWithResponse request returning *GetTeamResponse
@@ -12073,6 +14779,57 @@ func (c *ClientWithResponses) UpdateTeamMembershipWithResponse(ctx context.Conte
 	return ParseUpdateTeamMembershipResponse(rsp)
 }
 
+// AddUserWithBodyWithResponse request with arbitrary body returning *AddUserResponse
+func (c *ClientWithResponses) AddUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddUserResponse, error) {
+	rsp, err := c.AddUserWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddUserResponse(rsp)
+}
+
+func (c *ClientWithResponses) AddUserWithResponse(ctx context.Context, body AddUserJSONRequestBody, reqEditors ...RequestEditorFn) (*AddUserResponse, error) {
+	rsp, err := c.AddUser(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddUserResponse(rsp)
+}
+
+// DeleteUserWithBodyWithResponse request with arbitrary body returning *DeleteUserResponse
+func (c *ClientWithResponses) DeleteUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteUserResponse, error) {
+	rsp, err := c.DeleteUserWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteUserResponse(rsp)
+}
+
+func (c *ClientWithResponses) DeleteUserWithResponse(ctx context.Context, body DeleteUserJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteUserResponse, error) {
+	rsp, err := c.DeleteUser(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteUserResponse(rsp)
+}
+
+// ListUsersWithBodyWithResponse request with arbitrary body returning *ListUsersResponse
+func (c *ClientWithResponses) ListUsersWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListUsersResponse, error) {
+	rsp, err := c.ListUsersWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListUsersResponse(rsp)
+}
+
+func (c *ClientWithResponses) ListUsersWithResponse(ctx context.Context, body ListUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*ListUsersResponse, error) {
+	rsp, err := c.ListUsers(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListUsersResponse(rsp)
+}
+
 // RegisterUserWithBodyWithResponse request with arbitrary body returning *RegisterUserResponse
 func (c *ClientWithResponses) RegisterUserWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RegisterUserResponse, error) {
 	rsp, err := c.RegisterUserWithBody(ctx, contentType, body, reqEditors...)
@@ -12088,6 +14845,40 @@ func (c *ClientWithResponses) RegisterUserWithResponse(ctx context.Context, body
 		return nil, err
 	}
 	return ParseRegisterUserResponse(rsp)
+}
+
+// SearchUsersWithBodyWithResponse request with arbitrary body returning *SearchUsersResponse
+func (c *ClientWithResponses) SearchUsersWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SearchUsersResponse, error) {
+	rsp, err := c.SearchUsersWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchUsersResponse(rsp)
+}
+
+func (c *ClientWithResponses) SearchUsersWithResponse(ctx context.Context, body SearchUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchUsersResponse, error) {
+	rsp, err := c.SearchUsers(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchUsersResponse(rsp)
+}
+
+// SendUsersMessageWithBodyWithResponse request with arbitrary body returning *SendUsersMessageResponse
+func (c *ClientWithResponses) SendUsersMessageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendUsersMessageResponse, error) {
+	rsp, err := c.SendUsersMessageWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSendUsersMessageResponse(rsp)
+}
+
+func (c *ClientWithResponses) SendUsersMessageWithResponse(ctx context.Context, body SendUsersMessageJSONRequestBody, reqEditors ...RequestEditorFn) (*SendUsersMessageResponse, error) {
+	rsp, err := c.SendUsersMessage(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSendUsersMessageResponse(rsp)
 }
 
 // CreateVolumeWithBodyWithResponse request with arbitrary body returning *CreateVolumeResponse
@@ -12215,6 +15006,32 @@ func ParseListTransactionsResponse(rsp *http.Response) (*ListTransactionsRespons
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest TransactionArrayProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateCreditLimitResponse parses an HTTP response from a UpdateCreditLimitWithResponse call
+func ParseUpdateCreditLimitResponse(rsp *http.Response) (*UpdateCreditLimitResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateCreditLimitResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UpdateUsersCreditLimitResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -12695,6 +15512,48 @@ func ParseListInstancesResponse(rsp *http.Response) (*ListInstancesResponse, err
 	return response, nil
 }
 
+// ParseInstanceMetricsResponse parses an HTTP response from a InstanceMetricsWithResponse call
+func ParseInstanceMetricsResponse(rsp *http.Response) (*InstanceMetricsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &InstanceMetricsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InstanceMetricsResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePauseVmResponse parses an HTTP response from a PauseVmWithResponse call
+func ParsePauseVmResponse(rsp *http.Response) (*PauseVmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PauseVmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseRentInstanceResponse parses an HTTP response from a RentInstanceWithResponse call
 func ParseRentInstanceResponse(rsp *http.Response) (*RentInstanceResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -12730,6 +15589,22 @@ func ParseResetVmResponse(rsp *http.Response) (*ResetVmResponse, error) {
 	}
 
 	response := &ResetVmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseResumeVmResponse parses an HTTP response from a ResumeVmWithResponse call
+func ParseResumeVmResponse(rsp *http.Response) (*ResumeVmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResumeVmResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -12993,6 +15868,58 @@ func ParseListNodesResponse(rsp *http.Response) (*ListNodesResponse, error) {
 	return response, nil
 }
 
+// ParseNodeMetricsResponse parses an HTTP response from a NodeMetricsWithResponse call
+func ParseNodeMetricsResponse(rsp *http.Response) (*NodeMetricsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &NodeMetricsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest NodeMetricsResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseNodeMetricsByIdResponse parses an HTTP response from a NodeMetricsByIdWithResponse call
+func ParseNodeMetricsByIdResponse(rsp *http.Response) (*NodeMetricsByIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &NodeMetricsByIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest NodeMetricsResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseResumeNodeResponse parses an HTTP response from a ResumeNodeWithResponse call
 func ParseResumeNodeResponse(rsp *http.Response) (*ResumeNodeResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -13009,6 +15936,32 @@ func ParseResumeNodeResponse(rsp *http.Response) (*ResumeNodeResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ResumeNodeResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSetMarketplaceListingResponse parses an HTTP response from a SetMarketplaceListingWithResponse call
+func ParseSetMarketplaceListingResponse(rsp *http.Response) (*SetMarketplaceListingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SetMarketplaceListingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SetNodeMarketplaceListingResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13411,6 +16364,32 @@ func ParseListTeamsResponse(rsp *http.Response) (*ListTeamsResponse, error) {
 	return response, nil
 }
 
+// ParseSearchTeamsResponse parses an HTTP response from a SearchTeamsWithResponse call
+func ParseSearchTeamsResponse(rsp *http.Response) (*SearchTeamsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchTeamsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SearchTeamsResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetTeamResponse parses an HTTP response from a GetTeamWithResponse call
 func ParseGetTeamResponse(rsp *http.Response) (*GetTeamResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -13452,7 +16431,7 @@ func ParseAddTeamMemberResponse(rsp *http.Response) (*AddTeamMemberResponse, err
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TeamMemberResponseProto
+		var dest TeamMemberOrInviteResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13476,16 +16455,6 @@ func ParseRemoveTeamMemberResponse(rsp *http.Response) (*RemoveTeamMemberRespons
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TeamMemberResponseProto
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
 	return response, nil
 }
 
@@ -13505,6 +16474,84 @@ func ParseUpdateTeamMembershipResponse(rsp *http.Response) (*UpdateTeamMembershi
 	return response, nil
 }
 
+// ParseAddUserResponse parses an HTTP response from a AddUserWithResponse call
+func ParseAddUserResponse(rsp *http.Response) (*AddUserResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AddUserResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AddUserResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteUserResponse parses an HTTP response from a DeleteUserWithResponse call
+func ParseDeleteUserResponse(rsp *http.Response) (*DeleteUserResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteUserResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteUserResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListUsersResponse parses an HTTP response from a ListUsersWithResponse call
+func ParseListUsersResponse(rsp *http.Response) (*ListUsersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListUsersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListUsersResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseRegisterUserResponse parses an HTTP response from a RegisterUserWithResponse call
 func ParseRegisterUserResponse(rsp *http.Response) (*RegisterUserResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -13516,6 +16563,58 @@ func ParseRegisterUserResponse(rsp *http.Response) (*RegisterUserResponse, error
 	response := &RegisterUserResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseSearchUsersResponse parses an HTTP response from a SearchUsersWithResponse call
+func ParseSearchUsersResponse(rsp *http.Response) (*SearchUsersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchUsersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SearchUsersResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSendUsersMessageResponse parses an HTTP response from a SendUsersMessageWithResponse call
+func ParseSendUsersMessageResponse(rsp *http.Response) (*SendUsersMessageResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SendUsersMessageResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SendUsersMessageResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	}
 
 	return response, nil

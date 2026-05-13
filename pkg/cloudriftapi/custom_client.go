@@ -441,7 +441,14 @@ func (c *HttpClient) listInstances(selector InstancesSelector) (*ListInstancesRe
 	if err != nil {
 		return nil, err
 	}
+	return c.doListInstances(body)
+}
 
+// doListInstances sends a pre-marshaled /instances/list request body and
+// returns the parsed response. Shared by listInstances (typed selector,
+// configured ProtoVersion) and listInstancesByTeam (raw selector, pinned
+// ProtoVersion 2025-06-10).
+func (c *HttpClient) doListInstances(body io.Reader) (*ListInstancesResponseProto, error) {
 	req, err := NewListInstancesRequestWithBody(c.HostURL, "application/json", body)
 	if err != nil {
 		return nil, err
@@ -462,6 +469,13 @@ func (c *HttpClient) listInstances(selector InstancesSelector) (*ListInstancesRe
 }
 
 func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
+	if c.TeamID != "" {
+		// Team-scoped listing must go through the legacy ByTeamId selector
+		// on ProtoVersion 2025-06-10. The newer ~upcoming + ByStatus+scope
+		// form is accepted by the server but returns host_address=null,
+		// which breaks the provisioning poll. See listInstancesByTeam.
+		return c.listInstancesByTeam()
+	}
 	var selector InstancesSelector
 	statuses := StatusSelector{
 		Statuses: []InstanceStatus{
@@ -470,13 +484,6 @@ func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
 			Deactivating,
 		},
 	}
-	if c.TeamID != "" {
-		scope, err := teamScope(c.TeamID)
-		if err != nil {
-			return nil, err
-		}
-		statuses.Scope = &scope
-	}
 	if err := selector.FromInstancesSelector1(InstancesSelector1{ByStatus: statuses}); err != nil {
 		return nil, err
 	}
@@ -484,27 +491,7 @@ func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
 }
 
 func (c *HttpClient) GetInstance(id string) (*InstanceAndUsageInfo, error) {
-	var selector InstancesSelector
-	if c.TeamID != "" {
-		// Team instances are not visible via ById; query by team scope and filter.
-		statuses := StatusSelector{
-			Statuses: []InstanceStatus{Active, Initializing, Deactivating},
-		}
-		scope, err := teamScope(c.TeamID)
-		if err != nil {
-			return nil, err
-		}
-		statuses.Scope = &scope
-		if err := selector.FromInstancesSelector1(InstancesSelector1{ByStatus: statuses}); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := selector.FromInstancesSelector0(InstancesSelector0{ById: []string{id}}); err != nil {
-			return nil, err
-		}
-	}
-
-	instances, err := c.listInstances(selector)
+	instances, err := c.listInstancesForGet(id)
 	if err != nil {
 		return nil, err
 	}
@@ -523,11 +510,38 @@ func (c *HttpClient) GetInstance(id string) (*InstanceAndUsageInfo, error) {
 	return nil, ErrNotFound
 }
 
-// teamScope returns a SelectorScope that targets the given team.
-func teamScope(teamID string) (SelectorScope, error) {
-	var scope SelectorScope
-	err := scope.FromSelectorScope1(SelectorScope1{Teams: []string{teamID}})
-	return scope, err
+// listInstancesForGet returns the instance list GetInstance should filter
+// over. Team instances are not visible via ById, so team accounts list by
+// team via the dated ByTeamId path (see listInstancesByTeam). Personal
+// accounts use the typed ById selector on the configured ProtoVersion.
+func (c *HttpClient) listInstancesForGet(id string) (*ListInstancesResponseProto, error) {
+	if c.TeamID != "" {
+		return c.listInstancesByTeam()
+	}
+	var selector InstancesSelector
+	if err := selector.FromInstancesSelector0(InstancesSelector0{ById: []string{id}}); err != nil {
+		return nil, err
+	}
+	return c.listInstances(selector)
+}
+
+// listInstancesByTeam queries /instances/list with the legacy ByTeamId
+// selector pinned to ProtoVersion 2025-06-10. The newer ~upcoming +
+// ByStatus+scope path returns host_address=null for team instances even
+// after Active+Ready, which breaks the Create provisioning poll. ByTeamId
+// is not part of the InstancesSelector union on ~upcoming, so the body is
+// hand-crafted; the response shape is a superset of ListInstancesResponseProto
+// so the generated parser handles it.
+func (c *HttpClient) listInstancesByTeam() (*ListInstancesResponseProto, error) {
+	body, err := marshalVersionedRequest(Proto20250610, map[string]any{
+		"selector": map[string]any{
+			"ByTeamId": map[string]any{"id": c.TeamID},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return c.doListInstances(body)
 }
 
 // marshalVersionedRequest serializes a request body with "version" before "data".

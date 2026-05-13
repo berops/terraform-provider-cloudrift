@@ -15,10 +15,21 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// Polling interval for the creation/destruction of resources.
-const InstancePollingInterval = 5 * time.Second
+const (
+	// InstancePollingInterval is the cadence at which Create/Delete polls
+	// the CloudRift API for status transitions.
+	InstancePollingInterval = 5 * time.Second
+	// provisioningTimeout caps the Create polling loop. Heavier images
+	// (CUDA / driver-bundled recipes) on slow nodes have been observed
+	// taking 10+ minutes before VirtualMachines[0].Ready flips true.
+	provisioningTimeout = 15 * time.Minute
+	// destructionTimeout caps the Delete polling loop. Deactivation
+	// completes much faster than provisioning in the common case.
+	destructionTimeout = 5 * time.Minute
+)
 
 var (
 	_ resource.Resource                = &virtualMachineResource{}
@@ -312,15 +323,13 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 		}
 	}
 
-	// The provisioning timeout covers the case where the VM never reaches a
-	// terminal state (e.g. stuck Initializing due to capacity issues).
-	// Typical provisioning completes in 2-6 minutes.
-	provisioningTimeout := time.After(5 * time.Minute)
+	deadline := time.After(provisioningTimeout)
+	pollStart := time.Now()
 
 	// We have successfully rented out the VM. Poll until finished creating, or timeout is reached.
 	for {
 		select {
-		case <-provisioningTimeout:
+		case <-deadline:
 			// Hard failure: give up on this VM, release it, and leave no state.
 			abandonRentedInstance("provisioning timeout")
 			resp.Diagnostics.AddError(
@@ -399,7 +408,24 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			// here.
 			vmReady := len(last.VirtualMachines) > 0 && last.VirtualMachines[0].Ready
 
-			if last.Status == cloudriftapi.Active && vmReady {
+			ipReady := last.HostAddress != nil
+			hostAddr := ""
+			if last.HostAddress != nil {
+				hostAddr = *last.HostAddress
+			}
+
+			tflog.Debug(ctx, "polled CloudRift instance", map[string]any{
+				"id":           id,
+				"elapsed_s":    int(time.Since(pollStart).Seconds()),
+				"status":       string(last.Status),
+				"node_status":  string(last.NodeStatus),
+				"vm_count":     len(last.VirtualMachines),
+				"vm_ready":     vmReady,
+				"ip_ready":     ipReady,
+				"host_address": hostAddr,
+			})
+
+			if last.Status == cloudriftapi.Active && vmReady && ipReady {
 				savePartialState()
 				return
 			}
@@ -474,11 +500,11 @@ func (r *virtualMachineResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	destructionTimeout := time.After(5 * time.Minute)
+	deadline := time.After(destructionTimeout)
 
 	for {
 		select {
-		case <-destructionTimeout:
+		case <-deadline:
 			resp.Diagnostics.AddError(
 				"Destruction timeout reached",
 				"Destruction timeout reached before finished waiting on instance deletion for ID: "+id,
@@ -532,13 +558,20 @@ func populateModelFromInstanceResponse(m *virtualMachineModel, data *cloudriftap
 	m.NodeStatus = types.StringValue(string(data.NodeStatus))
 	if data.HostAddress != nil {
 		m.PublicIP = types.StringValue(*data.HostAddress)
+	} else {
+		m.PublicIP = types.StringNull()
 	}
 	if data.InternalHostAddress != nil {
 		m.PrivateIP = types.StringValue(*data.InternalHostAddress)
+	} else {
+		m.PrivateIP = types.StringNull()
 	}
 	if data.ResourceInfo != nil {
 		m.ProviderName = types.StringValue(data.ResourceInfo.ProviderName)
 		m.InstanceType = types.StringValue(data.ResourceInfo.InstanceType)
+	} else {
+		m.ProviderName = types.StringNull()
+		// m.InstanceType is Required (not Computed) — leave the plan value untouched.
 	}
 
 	vmAttrTypes := map[string]attr.Type{
