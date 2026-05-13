@@ -22,10 +22,10 @@ const (
 	// InstancePollingInterval is the cadence at which Create/Delete polls
 	// the CloudRift API for status transitions.
 	InstancePollingInterval = 5 * time.Second
-	// provisioningTimeout caps the Create polling loop. Heavier images
-	// (CUDA / driver-bundled recipes) on slow nodes have been observed
-	// taking 10+ minutes before VirtualMachines[0].Ready flips true.
-	provisioningTimeout = 15 * time.Minute
+	// provisioningTimeout caps the Create polling loop. Typical provisioning
+	// completes in 2-6 minutes; heavier CUDA / driver-bundled recipes have
+	// been observed taking up to ~4 minutes on slow nodes.
+	provisioningTimeout = 10 * time.Minute
 	// destructionTimeout caps the Delete polling loop. Deactivation
 	// completes much faster than provisioning in the common case.
 	destructionTimeout = 5 * time.Minute
