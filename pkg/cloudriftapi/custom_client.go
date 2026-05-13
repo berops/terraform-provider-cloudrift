@@ -26,6 +26,7 @@ const (
 
 const (
 	ProtoUpcoming = `~upcoming`
+	Proto20260510 = "2026-05-10"
 	Proto20250610 = "2025-06-10"
 	Proto20250529 = "2025-05-29"
 	Proto20250321 = "2025-03-21"
@@ -82,11 +83,15 @@ func NewCustom(endpoint, token, protoVersion, teamID string, opts ...HttpClientO
 		c.HostURL += "/"
 	}
 
-	// Default to ~upcoming because team-scoped selectors (scope field)
-	// are not yet available in any dated API version.
-	// TODO: switch to a fixed version once one supports team scope.
+	// Default to a dated protocol version rather than ~upcoming so the
+	// provider does not silently shift when the server cuts a new contract.
+	// 2026-03-10 was the first dated version to accept ByStatus+scope; we
+	// pick the most recent one that is currently equivalent to ~upcoming.
+	// The team-scoped listing path (listInstancesByTeam) overrides this
+	// per-call with Proto20250610 because that older contract is the only
+	// one that populates host_address for team instances.
 	if protoVersion == "" {
-		c.ProtoVersion = ProtoUpcoming
+		c.ProtoVersion = Proto20260510
 	}
 
 	if err := c.Auth(); err != nil {
