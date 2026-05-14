@@ -3,6 +3,8 @@ Terraform Provider - CloudRift
 
 Terraform provider for [CloudRift](https://www.cloudrift.ai/)
 
+The provider is developed and maintained by [Berops](https://berops.io/) with the minimum surface area required to integrate CloudRift into [Claudie](https://claudie.io/), a multi-cloud Kubernetes management platform. Contributions that expand coverage are welcome.
+
 ## Example
 
 
