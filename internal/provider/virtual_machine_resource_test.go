@@ -10,6 +10,9 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/berops/terraform-provider-cloudrift/pkg/cloudriftapi"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -425,4 +428,89 @@ func newVMTestServerStuckDeactivating(keyName, publicKey string) *httptest.Serve
 		"/api/v1/ssh-keys/list":  sshKeyListHandlerWithKey(keyName, publicKey),
 		"/api/v1/ssh-keys/11111": sshKeyDeleteHandler(),
 	})
+}
+
+// Test_PopulateModelFromInstanceResponse_NullableFields guards the Plugin
+// Framework contract: a Computed attribute that ends as Unknown after apply
+// triggers "Provider returned invalid result object after apply" in OpenTofu.
+// The function must assign Null in every nil branch.
+func Test_PopulateModelFromInstanceResponse_NullableFields(t *testing.T) {
+	t.Parallel()
+
+	publicIP := "203.0.113.10"
+	privateIP := "10.0.0.5"
+	resourceInfo := &cloudriftapi.InstanceResourceInfo{
+		ProviderName: "test-provider",
+		InstanceType: "rtx49-10c-kn.1",
+	}
+
+	tests := []struct {
+		name             string
+		data             *cloudriftapi.InstanceAndUsageInfo
+		wantPublicIP     types.String
+		wantPrivateIP    types.String
+		wantProviderName types.String
+	}{
+		{
+			name: "all nullable fields populated",
+			data: &cloudriftapi.InstanceAndUsageInfo{
+				HostAddress:         &publicIP,
+				InternalHostAddress: &privateIP,
+				ResourceInfo:        resourceInfo,
+			},
+			wantPublicIP:     types.StringValue(publicIP),
+			wantPrivateIP:    types.StringValue(privateIP),
+			wantProviderName: types.StringValue("test-provider"),
+		},
+		{
+			name: "host_address and internal_host_address nil",
+			data: &cloudriftapi.InstanceAndUsageInfo{
+				ResourceInfo: resourceInfo,
+			},
+			wantPublicIP:     types.StringNull(),
+			wantPrivateIP:    types.StringNull(),
+			wantProviderName: types.StringValue("test-provider"),
+		},
+		{
+			name: "resource_info nil",
+			data: &cloudriftapi.InstanceAndUsageInfo{
+				HostAddress:         &publicIP,
+				InternalHostAddress: &privateIP,
+			},
+			wantPublicIP:     types.StringValue(publicIP),
+			wantPrivateIP:    types.StringValue(privateIP),
+			wantProviderName: types.StringNull(),
+		},
+		{
+			name:             "all three nullable fields nil — the regression case",
+			data:             &cloudriftapi.InstanceAndUsageInfo{},
+			wantPublicIP:     types.StringNull(),
+			wantPrivateIP:    types.StringNull(),
+			wantProviderName: types.StringNull(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var m virtualMachineModel
+			diags := populateModelFromInstanceResponse(&m, tt.data)
+			for _, d := range diags {
+				if d.Severity() == diag.SeverityError {
+					t.Fatalf("unexpected error diagnostic: %s — %s", d.Summary(), d.Detail())
+				}
+			}
+
+			if !m.PublicIP.Equal(tt.wantPublicIP) {
+				t.Errorf("PublicIP: got %v, want %v", m.PublicIP, tt.wantPublicIP)
+			}
+			if !m.PrivateIP.Equal(tt.wantPrivateIP) {
+				t.Errorf("PrivateIP: got %v, want %v", m.PrivateIP, tt.wantPrivateIP)
+			}
+			if !m.ProviderName.Equal(tt.wantProviderName) {
+				t.Errorf("ProviderName: got %v, want %v", m.ProviderName, tt.wantProviderName)
+			}
+		})
+	}
 }

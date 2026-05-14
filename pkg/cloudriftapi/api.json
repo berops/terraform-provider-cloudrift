@@ -101,6 +101,53 @@
           }
         ]
       },
+      "AccountTargetSelector": {
+        "description": "Selector for financial operations targeting specific user or team accounts by ID.",
+        "oneOf": [
+          {
+            "description": "Target user accounts by ID",
+            "example": {
+              "ByUserIds": [
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "properties": {
+              "ByUserIds": {
+                "description": "Target user accounts by ID",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ByUserIds"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "Target team accounts by ID",
+            "example": {
+              "ByTeamIds": [
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "properties": {
+              "ByTeamIds": {
+                "description": "Target team accounts by ID",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ByTeamIds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
       "AddApiKeyRequest": {
         "properties": {
           "active": {
@@ -397,8 +444,9 @@
             "type": "string"
           },
           "gateway": {
-            "description": "Gateway IP address",
+            "description": "Optional gateway IP address",
             "example": "192.168.1.1",
+            "nullable": true,
             "type": "string"
           },
           "iface": {
@@ -447,7 +495,6 @@
         },
         "required": [
           "name",
-          "gateway",
           "datacenter",
           "ip_ranges"
         ],
@@ -463,8 +510,9 @@
                 "type": "string"
               },
               "gateway": {
-                "description": "Gateway IP address",
+                "description": "Optional gateway IP address",
                 "example": "192.168.1.1",
+                "nullable": true,
                 "type": "string"
               },
               "iface": {
@@ -513,7 +561,6 @@
             },
             "required": [
               "name",
-              "gateway",
               "datacenter",
               "ip_ranges"
             ],
@@ -1031,13 +1078,16 @@
         "type": "object"
       },
       "AddTeamMemberRequest": {
+        "description": "Request to add a team member or create an invite for a non-existent user.",
         "properties": {
           "email": {
+            "description": "Email of the user to add or invite.",
             "example": "john.doe@example.com",
             "type": "string"
           },
           "role": {
             "$ref": "#/components/schemas/TeamRole",
+            "description": "Role to assign (defaults to Member if not specified).",
             "nullable": true
           }
         },
@@ -1049,17 +1099,148 @@
       "AddTeamMemberRequestProto": {
         "properties": {
           "data": {
+            "description": "Request to add a team member or create an invite for a non-existent user.",
             "properties": {
               "email": {
+                "description": "Email of the user to add or invite.",
                 "example": "john.doe@example.com",
                 "type": "string"
               },
               "role": {
                 "$ref": "#/components/schemas/TeamRole",
+                "description": "Role to assign (defaults to Member if not specified).",
                 "nullable": true
               }
             },
             "required": [
+              "email"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "AddUserFinancialInfo": {
+        "description": "Financial settings to apply when creating a new user account.",
+        "properties": {
+          "credit_limit": {
+            "description": "Credit limit in currency units (cents). Ignored when `unlimited` is true.",
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "initial_balance": {
+            "description": "Initial balance in currency units (cents).",
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "unlimited": {
+            "description": "Use unlimited credit limit.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "AddUserRequest": {
+        "properties": {
+          "email": {
+            "example": "newuser@example.com",
+            "type": "string"
+          },
+          "financial": {
+            "$ref": "#/components/schemas/AddUserFinancialInfo",
+            "description": "Optional financial settings for the new account.",
+            "nullable": true
+          },
+          "name": {
+            "example": "Jane Doe",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "name"
+        ],
+        "type": "object"
+      },
+      "AddUserRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "email": {
+                "example": "newuser@example.com",
+                "type": "string"
+              },
+              "financial": {
+                "$ref": "#/components/schemas/AddUserFinancialInfo",
+                "description": "Optional financial settings for the new account.",
+                "nullable": true
+              },
+              "name": {
+                "example": "Jane Doe",
+                "type": "string"
+              }
+            },
+            "required": [
+              "email",
+              "name"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "AddUserResponse": {
+        "properties": {
+          "email": {
+            "example": "newuser@example.com",
+            "type": "string"
+          },
+          "user_id": {
+            "example": "00000000-0000-0000-0000-000000000000",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email"
+        ],
+        "type": "object"
+      },
+      "AddUserResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "email": {
+                "example": "newuser@example.com",
+                "type": "string"
+              },
+              "user_id": {
+                "example": "00000000-0000-0000-0000-000000000000",
+                "type": "string"
+              }
+            },
+            "required": [
+              "user_id",
               "email"
             ],
             "type": "object"
@@ -1097,6 +1278,124 @@
             },
             "required": [
               "user_email"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "AdminAuthorizedKeysResponse": {
+        "properties": {
+          "ssh_keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ssh_keys"
+        ],
+        "type": "object"
+      },
+      "AdminAuthorizedKeysResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "ssh_keys": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ssh_keys"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "AdvanceClockRequest": {
+        "properties": {
+          "seconds": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seconds"
+        ],
+        "type": "object"
+      },
+      "AdvanceClockRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "seconds": {
+                "format": "int64",
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "seconds"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "AdvanceClockResponse": {
+        "properties": {
+          "current_time": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_time"
+        ],
+        "type": "object"
+      },
+      "AdvanceClockResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "current_time": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "current_time"
             ],
             "type": "object"
           },
@@ -1369,7 +1668,7 @@
         "description": "Request to cancel an active drain",
         "properties": {
           "selector": {
-            "$ref": "#/components/schemas/NodeDrainSelector"
+            "$ref": "#/components/schemas/NodeAdminSelector"
           }
         },
         "required": [
@@ -1383,7 +1682,7 @@
             "description": "Request to cancel an active drain",
             "properties": {
               "selector": {
-                "$ref": "#/components/schemas/NodeDrainSelector"
+                "$ref": "#/components/schemas/NodeAdminSelector"
               }
             },
             "required": [
@@ -1703,6 +2002,17 @@
           },
           {
             "properties": {
+              "SshKeys": {
+                "$ref": "#/components/schemas/SshServerCommandProto"
+              }
+            },
+            "required": [
+              "SshKeys"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
               "Ip": {
                 "$ref": "#/components/schemas/IpCommandProto"
               }
@@ -1861,6 +2171,17 @@
           },
           {
             "properties": {
+              "SshKeys": {
+                "$ref": "#/components/schemas/SshServerCommandOutputProto"
+              }
+            },
+            "required": [
+              "SshKeys"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
               "Ip": {
                 "$ref": "#/components/schemas/IpCommandOutputProto"
               }
@@ -1950,6 +2271,17 @@
                 },
                 "required": [
                   "BareMetal"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "SshKeys": {
+                    "$ref": "#/components/schemas/SshServerCommandOutputProto"
+                  }
+                },
+                "required": [
+                  "SshKeys"
                 ],
                 "type": "object"
               },
@@ -2057,6 +2389,17 @@
                 },
                 "required": [
                   "BareMetal"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "SshKeys": {
+                    "$ref": "#/components/schemas/SshServerCommandProto"
+                  }
+                },
+                "required": [
+                  "SshKeys"
                 ],
                 "type": "object"
               },
@@ -2879,6 +3222,10 @@
       },
       "CreateVolumeRequest": {
         "properties": {
+          "billing_exempt": {
+            "description": "Admin-only: if true, no billing or provider payout for this volume",
+            "type": "boolean"
+          },
           "datacenter": {
             "description": "Datacenter name where the volume should be created",
             "example": "us-east-1",
@@ -2925,6 +3272,10 @@
         "properties": {
           "data": {
             "properties": {
+              "billing_exempt": {
+                "description": "Admin-only: if true, no billing or provider payout for this volume",
+                "type": "boolean"
+              },
               "datacenter": {
                 "description": "Datacenter name where the volume should be created",
                 "example": "us-east-1",
@@ -3298,6 +3649,86 @@
           }
         ]
       },
+      "DeleteNodeRequest": {
+        "description": "Request to permanently delete nodes from the system",
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/NodeAdminSelector"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "DeleteNodeRequestProto": {
+        "properties": {
+          "data": {
+            "description": "Request to permanently delete nodes from the system",
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/NodeAdminSelector"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "DeleteNodeResponse": {
+        "properties": {
+          "node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "node_ids"
+        ],
+        "type": "object"
+      },
+      "DeleteNodeResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "node_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "node_ids"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
       "DeleteSshKeyRequest": {
         "properties": {
           "selector": {
@@ -3319,6 +3750,110 @@
             },
             "required": [
               "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "DeleteUserRequest": {
+        "description": "Admin-only request to erase a user. See `docs/SOC2_USER_DELETION.md`.",
+        "properties": {
+          "dry_run": {
+            "description": "If true, run pre-flight only; no mutation.",
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "example": "GDPR erasure request, ticket SOC2-42",
+            "type": "string"
+          },
+          "user_id": {
+            "example": "00000000-0000-0000-0000-000000000000",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "DeleteUserRequestProto": {
+        "properties": {
+          "data": {
+            "description": "Admin-only request to erase a user. See `docs/SOC2_USER_DELETION.md`.",
+            "properties": {
+              "dry_run": {
+                "description": "If true, run pre-flight only; no mutation.",
+                "type": "boolean"
+              },
+              "reason": {
+                "description": "Recorded in the audit log.",
+                "example": "GDPR erasure request, ticket SOC2-42",
+                "type": "string"
+              },
+              "user_id": {
+                "example": "00000000-0000-0000-0000-000000000000",
+                "type": "string"
+              }
+            },
+            "required": [
+              "user_id",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "DeleteUserResponse": {
+        "properties": {
+          "dry_run": {
+            "type": "boolean"
+          },
+          "report": {
+            "$ref": "#/components/schemas/UserDeletionReport"
+          }
+        },
+        "required": [
+          "dry_run",
+          "report"
+        ],
+        "type": "object"
+      },
+      "DeleteUserResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "dry_run": {
+                "type": "boolean"
+              },
+              "report": {
+                "$ref": "#/components/schemas/UserDeletionReport"
+              }
+            },
+            "required": [
+              "dry_run",
+              "report"
             ],
             "type": "object"
           },
@@ -5014,7 +5549,7 @@
             "type": "boolean"
           },
           "selector": {
-            "$ref": "#/components/schemas/NodeDrainSelector",
+            "$ref": "#/components/schemas/NodeAdminSelector",
             "description": "Selector for nodes to drain"
           }
         },
@@ -5045,7 +5580,7 @@
                 "type": "boolean"
               },
               "selector": {
-                "$ref": "#/components/schemas/NodeDrainSelector",
+                "$ref": "#/components/schemas/NodeAdminSelector",
                 "description": "Selector for nodes to drain"
               }
             },
@@ -5472,6 +6007,48 @@
               "TeamByName"
             ],
             "type": "object"
+          },
+          {
+            "description": "Target user accounts by ID",
+            "example": {
+              "ByUserIds": [
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "properties": {
+              "ByUserIds": {
+                "description": "Target user accounts by ID",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ByUserIds"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "Target team accounts by ID",
+            "example": {
+              "ByTeamIds": [
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "properties": {
+              "ByTeamIds": {
+                "description": "Target team accounts by ID",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ByTeamIds"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -5730,7 +6307,7 @@
             "type": "string"
           },
           "selector": {
-            "$ref": "#/components/schemas/NodeDrainSelector"
+            "$ref": "#/components/schemas/NodeAdminSelector"
           }
         },
         "required": [
@@ -5749,7 +6326,7 @@
                 "type": "string"
               },
               "selector": {
-                "$ref": "#/components/schemas/NodeDrainSelector"
+                "$ref": "#/components/schemas/NodeAdminSelector"
               }
             },
             "required": [
@@ -6387,6 +6964,64 @@
         ],
         "type": "object"
       },
+      "GpuMetrics": {
+        "description": "Metrics for a single GPU",
+        "properties": {
+          "fb_free_mib": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "fb_used_mib": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "gpu_index": {
+            "type": "string"
+          },
+          "gpu_utilization_percent": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "gpu_uuid": {
+            "nullable": true,
+            "type": "string"
+          },
+          "gr_activity": {
+            "description": "Graphics/compute engine active ratio (0.0–1.0)",
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "pci_bdf": {
+            "example": "0000:41:00.0",
+            "nullable": true,
+            "type": "string"
+          },
+          "power_usage_watts": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "temperature_celsius": {
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          },
+          "tensor_activity": {
+            "description": "Tensor core active ratio (0.0–1.0)",
+            "format": "double",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "gpu_index"
+        ],
+        "type": "object"
+      },
       "HostConfig": {
         "properties": {
           "console_size": {
@@ -6475,6 +7110,10 @@
             "$ref": "#/components/schemas/InstanceBareMetalInfo",
             "nullable": true
           },
+          "billing_exempt": {
+            "description": "Whether this instance is exempt from billing (admins only)",
+            "type": "boolean"
+          },
           "containers": {
             "description": "Containers running on this instance",
             "items": {
@@ -6499,6 +7138,10 @@
             "description": "CPUs available to instance as a hex number making a bitmask",
             "example": "ffffffffffffffffffffffff",
             "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "description": "When the instance was created",
             "type": "string"
           },
           "disk_limit": {
@@ -6553,6 +7196,12 @@
           },
           "id": {
             "description": "ID of the instance to be used in API calls",
+            "type": "string"
+          },
+          "instance_name": {
+            "description": "Human-readable instance name (e.g. \"bright-falcon\")",
+            "example": "bright-falcon",
+            "nullable": true,
             "type": "string"
           },
           "instructions": {
@@ -6612,6 +7261,10 @@
             "description": "Information about rented instance like cost, provider, etc.",
             "nullable": true
           },
+          "ssh_key_auth": {
+            "description": "Whether this instance uses SSH key authentication (true) or password authentication (false)",
+            "type": "boolean"
+          },
           "status": {
             "$ref": "#/components/schemas/InstanceStatus",
             "description": "Status of the instance, like offline or active"
@@ -6644,7 +7297,9 @@
           "node_mode",
           "node_status",
           "virtual_machines",
-          "containers"
+          "containers",
+          "created_at",
+          "ssh_key_auth"
         ],
         "type": "object"
       },
@@ -6867,6 +7522,24 @@
         ],
         "type": "object"
       },
+      "InstanceInfoFlags": {
+        "description": "Controls which optional data fields the server fetches for each instance.\nAll fields default to `false` — set a flag to `true` to include that data.",
+        "properties": {
+          "with_connection_info": {
+            "description": "Include connection fields: host_address, internal_host_address, instructions, reservation_data, volume_mounts.",
+            "type": "boolean"
+          },
+          "with_hardware_info": {
+            "description": "Include detailed hardware fields: cpu, cpu_mask, dram, disk_limit, gpu_mask, mig_profile.",
+            "type": "boolean"
+          },
+          "with_usage_info": {
+            "description": "Include billing/usage info: resource_info (provider, cost) and usage_info (duration, user).",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "InstanceLoginInfo": {
         "oneOf": [
           {
@@ -6908,6 +7581,140 @@
             },
             "required": [
               "Username"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "InstanceMetrics": {
+        "description": "Hardware metrics for a single instance, filtered to GPUs allocated via gpu_mask",
+        "properties": {
+          "gpus": {
+            "description": "GPU metrics filtered to the GPUs assigned to this instance",
+            "items": {
+              "$ref": "#/components/schemas/GpuMetrics"
+            },
+            "type": "array"
+          },
+          "instance_id": {
+            "description": "Instance (executor) ID",
+            "type": "string"
+          },
+          "node_id": {
+            "description": "Node the instance is running on",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance_id",
+          "node_id",
+          "gpus"
+        ],
+        "type": "object"
+      },
+      "InstanceMetricsRequest": {
+        "description": "Request to fetch hardware metrics for instances",
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/InstanceMetricsSelector"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "InstanceMetricsRequestProto": {
+        "properties": {
+          "data": {
+            "description": "Request to fetch hardware metrics for instances",
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/InstanceMetricsSelector"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "InstanceMetricsResponse": {
+        "description": "Response containing instance-level GPU metrics",
+        "properties": {
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/InstanceMetrics"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "metrics"
+        ],
+        "type": "object"
+      },
+      "InstanceMetricsResponseProto": {
+        "properties": {
+          "data": {
+            "description": "Response containing instance-level GPU metrics",
+            "properties": {
+              "metrics": {
+                "items": {
+                  "$ref": "#/components/schemas/InstanceMetrics"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "InstanceMetricsSelector": {
+        "description": "Selector for which instances to query metrics for",
+        "oneOf": [
+          {
+            "description": "Select instances by ID",
+            "example": {
+              "ById": [
+                "f8c403e6-7101-11ee-b00d-63f746883a19"
+              ]
+            },
+            "properties": {
+              "ById": {
+                "description": "Select instances by ID",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ById"
             ],
             "type": "object"
           }
@@ -7312,6 +8119,10 @@
             "example": "jdoe@me.com",
             "type": "string"
           },
+          "user_id": {
+            "description": "User ID of the instance renter",
+            "type": "string"
+          },
           "user_name": {
             "description": "User's name of the instance",
             "example": "John Doe",
@@ -7321,6 +8132,7 @@
         "required": [
           "usage",
           "accounted_usage",
+          "user_id",
           "user_email",
           "user_name"
         ],
@@ -7912,6 +8724,22 @@
             },
             "required": [
               "ByNodeId"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "List all instances for a specific user (admin: all instances, provider: only instances on their nodes)",
+            "example": {
+              "ByUserId": "f8c403e6-7101-11ee-b00d-63f746883a19"
+            },
+            "properties": {
+              "ByUserId": {
+                "description": "List all instances for a specific user (admin: all instances, provider: only instances on their nodes)",
+                "type": "string"
+              }
+            },
+            "required": [
+              "ByUserId"
             ],
             "type": "object"
           }
@@ -8627,6 +9455,10 @@
       },
       "ListInstancesRequest": {
         "properties": {
+          "mask": {
+            "$ref": "#/components/schemas/InstanceInfoFlags",
+            "description": "Controls which optional data fields are fetched. Absent or empty object means no optional data."
+          },
           "selector": {
             "$ref": "#/components/schemas/InstancesSelector",
             "description": "Instances to list"
@@ -8641,6 +9473,10 @@
         "properties": {
           "data": {
             "properties": {
+              "mask": {
+                "$ref": "#/components/schemas/InstanceInfoFlags",
+                "description": "Controls which optional data fields are fetched. Absent or empty object means no optional data."
+              },
               "selector": {
                 "$ref": "#/components/schemas/InstancesSelector",
                 "description": "Instances to list"
@@ -9267,17 +10103,70 @@
         ],
         "type": "object"
       },
+      "ListTeamsRequest": {
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/TeamListSelector"
+          },
+          "with_account_info": {
+            "description": "Include account/financial info (admin/provider).",
+            "type": "boolean"
+          },
+          "with_members": {
+            "description": "Include team members in the response.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ListTeamsRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/TeamListSelector"
+              },
+              "with_account_info": {
+                "description": "Include account/financial info (admin/provider).",
+                "type": "boolean"
+              },
+              "with_members": {
+                "description": "Include team members in the response.",
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
       "ListTeamsResponse": {
         "properties": {
           "teams": {
             "items": {
-              "$ref": "#/components/schemas/Team"
+              "$ref": "#/components/schemas/TeamInfo"
             },
             "type": "array"
+          },
+          "total": {
+            "description": "Total number of teams matching the selector.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
           }
         },
         "required": [
-          "teams"
+          "teams",
+          "total"
         ],
         "type": "object"
       },
@@ -9287,13 +10176,122 @@
             "properties": {
               "teams": {
                 "items": {
-                  "$ref": "#/components/schemas/Team"
+                  "$ref": "#/components/schemas/TeamInfo"
+                },
+                "type": "array"
+              },
+              "total": {
+                "description": "Total number of teams matching the selector.",
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "teams",
+              "total"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "ListUsersRequest": {
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/UserSelector",
+            "description": "Filter users. A selector is always required."
+          },
+          "with_account_info": {
+            "description": "Include account/financial info (admin/provider).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "ListUsersRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/UserSelector",
+                "description": "Filter users. A selector is always required."
+              },
+              "with_account_info": {
+                "description": "Include account/financial info (admin/provider).",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "ListUsersResponse": {
+        "properties": {
+          "total": {
+            "description": "Total number of users matching the selector.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/UserInfo"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "users",
+          "total"
+        ],
+        "type": "object"
+      },
+      "ListUsersResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "total": {
+                "description": "Total number of users matching the selector.",
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "users": {
+                "items": {
+                  "$ref": "#/components/schemas/UserInfo"
                 },
                 "type": "array"
               }
             },
             "required": [
-              "teams"
+              "users",
+              "total"
             ],
             "type": "object"
           },
@@ -9455,17 +10453,13 @@
       },
       "LoginUserResponse": {
         "properties": {
-          "pat": {
-            "type": "string"
-          },
           "token": {
             "description": "Token for authentication to be used in the Authorization header",
             "type": "string"
           }
         },
         "required": [
-          "token",
-          "pat"
+          "token"
         ],
         "type": "object"
       },
@@ -9473,17 +10467,13 @@
         "properties": {
           "data": {
             "properties": {
-              "pat": {
-                "type": "string"
-              },
               "token": {
                 "description": "Token for authentication to be used in the Authorization header",
                 "type": "string"
               }
             },
             "required": [
-              "token",
-              "pat"
+              "token"
             ],
             "type": "object"
           },
@@ -10090,14 +11080,29 @@
             "description": "user email",
             "type": "string"
           },
+          "id": {
+            "description": "user ID",
+            "type": "string"
+          },
           "name": {
             "description": "user name",
             "nullable": true,
             "type": "string"
+          },
+          "provider": {
+            "description": "authentication provider: \"CloudRift\", \"Google\", or \"GitHub\"",
+            "type": "string"
+          },
+          "totp_enabled": {
+            "description": "whether TOTP 2FA is enabled",
+            "type": "boolean"
           }
         },
         "required": [
-          "email"
+          "id",
+          "email",
+          "provider",
+          "totp_enabled"
         ],
         "type": "object"
       },
@@ -10109,14 +11114,29 @@
                 "description": "user email",
                 "type": "string"
               },
+              "id": {
+                "description": "user ID",
+                "type": "string"
+              },
               "name": {
                 "description": "user name",
                 "nullable": true,
                 "type": "string"
+              },
+              "provider": {
+                "description": "authentication provider: \"CloudRift\", \"Google\", or \"GitHub\"",
+                "type": "string"
+              },
+              "totp_enabled": {
+                "description": "whether TOTP 2FA is enabled",
+                "type": "boolean"
               }
             },
             "required": [
-              "email"
+              "id",
+              "email",
+              "provider",
+              "totp_enabled"
             ],
             "type": "object"
           },
@@ -10284,6 +11304,10 @@
           "team_id": {
             "nullable": true,
             "type": "string"
+          },
+          "team_name": {
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -10387,6 +11411,32 @@
           }
         ]
       },
+      "NodeAdminSelector": {
+        "description": "Selector for node admin operations (drain, delete, marketplace listing toggle, etc.)",
+        "oneOf": [
+          {
+            "description": "Select nodes by ID",
+            "example": {
+              "ById": [
+                "f8c403e6-7101-11ee-b00d-63f746883a19"
+              ]
+            },
+            "properties": {
+              "ById": {
+                "description": "Select nodes by ID",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ById"
+            ],
+            "type": "object"
+          }
+        ]
+      },
       "NodeDrainInfo": {
         "description": "Information about the drain state of a node",
         "properties": {
@@ -10458,32 +11508,6 @@
           "users_notified"
         ],
         "type": "object"
-      },
-      "NodeDrainSelector": {
-        "description": "Selector for node drain operations",
-        "oneOf": [
-          {
-            "description": "Select nodes by ID",
-            "example": {
-              "ById": [
-                "f8c403e6-7101-11ee-b00d-63f746883a19"
-              ]
-            },
-            "properties": {
-              "ById": {
-                "description": "Select nodes by ID",
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            },
-            "required": [
-              "ById"
-            ],
-            "type": "object"
-          }
-        ]
       },
       "NodeDrainState": {
         "description": "State of node draining process",
@@ -10790,6 +11814,133 @@
           "data"
         ],
         "type": "object"
+      },
+      "NodeMetrics": {
+        "description": "Hardware metrics for a single node",
+        "properties": {
+          "gpus": {
+            "items": {
+              "$ref": "#/components/schemas/GpuMetrics"
+            },
+            "type": "array"
+          },
+          "node_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "gpus"
+        ],
+        "type": "object"
+      },
+      "NodeMetricsRequest": {
+        "description": "Request to fetch hardware metrics for nodes",
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/NodeMetricsSelector"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "NodeMetricsRequestProto": {
+        "properties": {
+          "data": {
+            "description": "Request to fetch hardware metrics for nodes",
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/NodeMetricsSelector"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "NodeMetricsResponse": {
+        "description": "Response containing node metrics",
+        "properties": {
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/NodeMetrics"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "metrics"
+        ],
+        "type": "object"
+      },
+      "NodeMetricsResponseProto": {
+        "properties": {
+          "data": {
+            "description": "Response containing node metrics",
+            "properties": {
+              "metrics": {
+                "items": {
+                  "$ref": "#/components/schemas/NodeMetrics"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "NodeMetricsSelector": {
+        "description": "Selector for which nodes to query metrics for",
+        "oneOf": [
+          {
+            "description": "Select nodes by ID",
+            "example": {
+              "ById": [
+                "f8c403e6-7101-11ee-b00d-63f746883a19"
+              ]
+            },
+            "properties": {
+              "ById": {
+                "description": "Select nodes by ID",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ById"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "NodeSelector": {
         "oneOf": [
@@ -11213,6 +12364,86 @@
             },
             "required": [
               "email"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "PauseInstancesRequest": {
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/InstancesSelector",
+            "description": "Instances to pause (freezes vCPUs; resources stay allocated)"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "PauseInstancesRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/InstancesSelector",
+                "description": "Instances to pause (freezes vCPUs; resources stay allocated)"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "PauseInstancesResponse": {
+        "properties": {
+          "paused_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "paused_ids"
+        ],
+        "type": "object"
+      },
+      "PauseInstancesResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "paused_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "paused_ids"
             ],
             "type": "object"
           },
@@ -12341,6 +13572,35 @@
             "description": "Whether the node is listed on the marketplace for new rentals",
             "type": "boolean"
           },
+          "proxy_jump": {
+            "nullable": true,
+            "type": "string"
+          },
+          "proxy_port": {
+            "format": "int32",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "proxy_user": {
+            "nullable": true,
+            "type": "string"
+          },
+          "ssh_host": {
+            "description": "SSH connection details for reaching the node",
+            "nullable": true,
+            "type": "string"
+          },
+          "ssh_port": {
+            "format": "int32",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "ssh_user": {
+            "nullable": true,
+            "type": "string"
+          },
           "status": {
             "$ref": "#/components/schemas/NodeStatus",
             "description": "Status of the node, like offline or active"
@@ -12390,6 +13650,11 @@
           "gpus_available_mask": {
             "description": "Available GPUs as a hex number making a bitmask",
             "example": "1ff",
+            "type": "string"
+          },
+          "mig_gpu_mask": {
+            "description": "Bitmask of GPUs hosting MIG instances",
+            "example": "0",
             "type": "string"
           }
         },
@@ -13102,28 +14367,30 @@
         "type": "object"
       },
       "RemoveTeamMemberRequest": {
+        "description": "Request to remove a team member or cancel a pending invite.",
         "properties": {
-          "user_id": {
-            "example": "00000000-0000-0000-0000-000000000000",
-            "type": "string"
+          "selector": {
+            "$ref": "#/components/schemas/TeamMemberSelector",
+            "description": "The member or invite to remove."
           }
         },
         "required": [
-          "user_id"
+          "selector"
         ],
         "type": "object"
       },
       "RemoveTeamMemberRequestProto": {
         "properties": {
           "data": {
+            "description": "Request to remove a team member or cancel a pending invite.",
             "properties": {
-              "user_id": {
-                "example": "00000000-0000-0000-0000-000000000000",
-                "type": "string"
+              "selector": {
+                "$ref": "#/components/schemas/TeamMemberSelector",
+                "description": "The member or invite to remove."
               }
             },
             "required": [
-              "user_id"
+              "selector"
             ],
             "type": "object"
           },
@@ -13177,6 +14444,10 @@
       },
       "RentInstanceRequest": {
         "properties": {
+          "billing_exempt": {
+            "description": "Admin-only: if true, no billing or provider payout for this rental",
+            "type": "boolean"
+          },
           "cluster_name": {
             "description": "Optional cluster name",
             "nullable": true,
@@ -13234,6 +14505,10 @@
         "properties": {
           "data": {
             "properties": {
+              "billing_exempt": {
+                "description": "Admin-only: if true, no billing or provider payout for this rental",
+                "type": "boolean"
+              },
               "cluster_name": {
                 "description": "Optional cluster name",
                 "nullable": true,
@@ -13360,10 +14635,6 @@
           "instance_variant": {
             "$ref": "#/components/schemas/InstanceVariant"
           },
-          "node_mode": {
-            "$ref": "#/components/schemas/InstanceMode",
-            "description": "mode of the instance, like Container or VM"
-          },
           "valid_till": {
             "type": "string"
           }
@@ -13374,8 +14645,7 @@
           "created_at",
           "valid_till",
           "instance_variant",
-          "instance_type",
-          "node_mode"
+          "instance_type"
         ],
         "type": "object"
       },
@@ -13567,6 +14837,13 @@
         ],
         "type": "object"
       },
+      "ResourceType": {
+        "enum": [
+          "Compute",
+          "Volume"
+        ],
+        "type": "string"
+      },
       "ResponseStatus": {
         "enum": [
           "success",
@@ -13575,11 +14852,91 @@
         ],
         "type": "string"
       },
+      "ResumeInstancesRequest": {
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/InstancesSelector",
+            "description": "Instances to resume from Paused state"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "ResumeInstancesRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/InstancesSelector",
+                "description": "Instances to resume from Paused state"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "ResumeInstancesResponse": {
+        "properties": {
+          "resumed_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "resumed_ids"
+        ],
+        "type": "object"
+      },
+      "ResumeInstancesResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "resumed_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "resumed_ids"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
       "ResumeNodeRequest": {
         "description": "Request to resume nodes (bring them back online after being drained)",
         "properties": {
           "selector": {
-            "$ref": "#/components/schemas/NodeDrainSelector"
+            "$ref": "#/components/schemas/NodeAdminSelector"
           }
         },
         "required": [
@@ -13593,7 +14950,7 @@
             "description": "Request to resume nodes (bring them back online after being drained)",
             "properties": {
               "selector": {
-                "$ref": "#/components/schemas/NodeDrainSelector"
+                "$ref": "#/components/schemas/NodeAdminSelector"
               }
             },
             "required": [
@@ -13640,6 +14997,217 @@
             },
             "required": [
               "node_ids"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "SearchResultEntry": {
+        "description": "A single search result entry.",
+        "properties": {
+          "email": {
+            "example": "alex@example.com",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "example": "00000000-0000-0000-0000-000000000000",
+            "type": "string"
+          },
+          "name": {
+            "example": "Alex Chen",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "SearchTeamsRequest": {
+        "properties": {
+          "limit": {
+            "description": "Maximum number of results to return.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "query": {
+            "description": "Name substring to search for (case-insensitive).",
+            "example": "engineering",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "SearchTeamsRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "limit": {
+                "description": "Maximum number of results to return.",
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "query": {
+                "description": "Name substring to search for (case-insensitive).",
+                "example": "engineering",
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "SearchTeamsResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TeamSearchResultEntry"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "SearchTeamsResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "results": {
+                "items": {
+                  "$ref": "#/components/schemas/TeamSearchResultEntry"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "results"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "SearchUsersRequest": {
+        "properties": {
+          "limit": {
+            "description": "Maximum number of results to return.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "query": {
+            "description": "Name or email substring to search for (case-insensitive).",
+            "example": "alex",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "SearchUsersRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "limit": {
+                "description": "Maximum number of results to return.",
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "query": {
+                "description": "Name or email substring to search for (case-insensitive).",
+                "example": "alex",
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "SearchUsersResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResultEntry"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "SearchUsersResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "results": {
+                "items": {
+                  "$ref": "#/components/schemas/SearchResultEntry"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "results"
             ],
             "type": "object"
           },
@@ -13705,6 +15273,104 @@
             "type": "string"
           }
         ]
+      },
+      "SendUsersMessageRequest": {
+        "properties": {
+          "message": {
+            "example": "Your account settings have been updated.",
+            "type": "string"
+          },
+          "selector": {
+            "$ref": "#/components/schemas/UserSelector"
+          },
+          "subject": {
+            "example": "CloudRift account update",
+            "type": "string"
+          }
+        },
+        "required": [
+          "selector",
+          "subject",
+          "message"
+        ],
+        "type": "object"
+      },
+      "SendUsersMessageRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "message": {
+                "example": "Your account settings have been updated.",
+                "type": "string"
+              },
+              "selector": {
+                "$ref": "#/components/schemas/UserSelector"
+              },
+              "subject": {
+                "example": "CloudRift account update",
+                "type": "string"
+              }
+            },
+            "required": [
+              "selector",
+              "subject",
+              "message"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "SendUsersMessageResponse": {
+        "properties": {
+          "sent_user_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "sent_user_ids"
+        ],
+        "type": "object"
+      },
+      "SendUsersMessageResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "sent_user_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "sent_user_ids"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
       },
       "ServiceCharge": {
         "properties": {
@@ -13908,6 +15574,96 @@
         ],
         "type": "object"
       },
+      "SetNodeMarketplaceListingRequest": {
+        "description": "Toggle marketplace visibility on non-draining nodes. Draining/drained nodes are rejected.",
+        "properties": {
+          "list_on_marketplace": {
+            "description": "Whether the node appears on the marketplace for new rentals (true = visible, false = hidden)",
+            "type": "boolean"
+          },
+          "selector": {
+            "$ref": "#/components/schemas/NodeAdminSelector"
+          }
+        },
+        "required": [
+          "selector",
+          "list_on_marketplace"
+        ],
+        "type": "object"
+      },
+      "SetNodeMarketplaceListingRequestProto": {
+        "properties": {
+          "data": {
+            "description": "Toggle marketplace visibility on non-draining nodes. Draining/drained nodes are rejected.",
+            "properties": {
+              "list_on_marketplace": {
+                "description": "Whether the node appears on the marketplace for new rentals (true = visible, false = hidden)",
+                "type": "boolean"
+              },
+              "selector": {
+                "$ref": "#/components/schemas/NodeAdminSelector"
+              }
+            },
+            "required": [
+              "selector",
+              "list_on_marketplace"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "SetNodeMarketplaceListingResponse": {
+        "properties": {
+          "node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "node_ids"
+        ],
+        "type": "object"
+      },
+      "SetNodeMarketplaceListingResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "node_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "node_ids"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
       "SshKey": {
         "properties": {
           "id": {
@@ -13920,16 +15676,28 @@
             "example": "my-key",
             "type": "string"
           },
+          "owner": {
+            "description": "Whether the key is owned by the user",
+            "example": true,
+            "type": "boolean"
+          },
           "public_key": {
             "description": "SSH key public part",
             "example": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD...",
+            "type": "string"
+          },
+          "user_name": {
+            "description": "SSH User name",
+            "example": "John Doe",
             "type": "string"
           }
         },
         "required": [
           "id",
           "name",
-          "public_key"
+          "public_key",
+          "user_name",
+          "owner"
         ],
         "type": "object"
       },
@@ -14012,6 +15780,31 @@
               "type"
             ],
             "type": "object"
+          },
+          {
+            "properties": {
+              "ssh_keys": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": {
+                "enum": [
+                  "SyncAuthorizedKeys"
+                ],
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "username",
+              "ssh_keys",
+              "type"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -14036,6 +15829,20 @@
               "type": {
                 "enum": [
                   "RemoveSshKeys"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "type": {
+                "enum": [
+                  "SyncAuthorizedKeys"
                 ],
                 "type": "string"
               }
@@ -14070,6 +15877,20 @@
                   "type": {
                     "enum": [
                       "RemoveSshKeys"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "SyncAuthorizedKeys"
                     ],
                     "type": "string"
                   }
@@ -14133,6 +15954,31 @@
                   "type": {
                     "enum": [
                       "RemoveSshKeys"
+                    ],
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "ssh_keys",
+                  "type"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ssh_keys": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": {
+                    "enum": [
+                      "SyncAuthorizedKeys"
                     ],
                     "type": "string"
                   },
@@ -14567,6 +16413,11 @@
             "minimum": 0,
             "type": "integer"
           },
+          "topology": {
+            "$ref": "#/components/schemas/SystemCpuTopologyInfo",
+            "description": "NUMA and socket topology; None when unavailable (non-Linux or older client)",
+            "nullable": true
+          },
           "vendor": {
             "description": "Vendor of the CPU",
             "example": "AMD",
@@ -14578,6 +16429,54 @@
           "brand",
           "physical_core_count",
           "logical_core_count"
+        ],
+        "type": "object"
+      },
+      "SystemCpuTopologyInfo": {
+        "properties": {
+          "core_groups": {
+            "description": "Physical core groups: each entry lists the logical CPU IDs that share one physical core.\nUsed to correctly identify sibling hyperthreads for vCPU pinning and overhead reservation.",
+            "items": {
+              "items": {
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "cores_per_socket": {
+            "description": "Number of cores per socket",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "numa_nodes": {
+            "description": "NUMA node topology",
+            "items": {
+              "$ref": "#/components/schemas/SystemNUMANodeInfo"
+            },
+            "type": "array"
+          },
+          "sockets": {
+            "description": "Number of CPU sockets",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "threads_per_core": {
+            "description": "Number of logical threads per physical core (SMT/HT)",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "numa_nodes",
+          "sockets",
+          "cores_per_socket",
+          "threads_per_core"
         ],
         "type": "object"
       },
@@ -14671,6 +16570,13 @@
             "example": "RTX 4090",
             "nullable": true,
             "type": "string"
+          },
+          "numa_node": {
+            "description": "NUMA node nearest to this GPU's PCIe slot; None when unavailable",
+            "format": "int32",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
           },
           "pci_device_id": {
             "description": "PCI device ID, it can be used to locate GPU model if high-level information is not available",
@@ -14806,6 +16712,43 @@
         ],
         "type": "object"
       },
+      "SystemNUMANodeInfo": {
+        "properties": {
+          "cpu_ids": {
+            "description": "Logical CPU IDs that belong to this NUMA node",
+            "items": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "memory_bytes": {
+            "description": "Total memory on this NUMA node in bytes",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "node_id": {
+            "description": "NUMA node identifier",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "nr_hugepages_1g": {
+            "description": "Static reservation of 1 GiB hugepages on this node (from\n/sys/devices/system/node/nodeN/hugepages/hugepages-1048576kB/nr_hugepages).\n0 means unknown or not configured.",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "node_id",
+          "cpu_ids",
+          "memory_bytes"
+        ],
+        "type": "object"
+      },
       "SystemPciPowerState": {
         "oneOf": [
           {
@@ -14934,6 +16877,44 @@
         ],
         "type": "object"
       },
+      "TeamAccountInfo": {
+        "description": "Financial/account information for a team (admin/provider).",
+        "properties": {
+          "balance": {
+            "description": "Account balance in currency units (cents).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "credit_limit": {
+            "description": "Account credit limit in currency units (cents).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "instance_count": {
+            "description": "Number of active instances owned by this team.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "is_unlimited": {
+            "description": "Whether the credit limit is unlimited.",
+            "type": "boolean"
+          },
+          "total_spent": {
+            "description": "Total amount spent in currency units (cents).",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "balance",
+          "credit_limit",
+          "is_unlimited",
+          "instance_count",
+          "total_spent"
+        ],
+        "type": "object"
+      },
       "TeamAssignment": {
         "description": "Selector for team assignment",
         "oneOf": [
@@ -14968,6 +16949,129 @@
           }
         ]
       },
+      "TeamInfo": {
+        "description": "Unified team response returned from /teams/list.",
+        "properties": {
+          "account_id": {
+            "nullable": true,
+            "type": "string"
+          },
+          "account_info": {
+            "$ref": "#/components/schemas/TeamAccountInfo",
+            "description": "Present when with_account_info=true (admin/provider).",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "example": "00000000-0000-0000-0000-000000000000",
+            "type": "string"
+          },
+          "members": {
+            "description": "Present when with_members=true.",
+            "items": {
+              "$ref": "#/components/schemas/TeamMember"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "name": {
+            "example": "Engineering Team",
+            "type": "string"
+          },
+          "updated_at": {
+            "nullable": true,
+            "type": "string"
+          },
+          "user_role": {
+            "$ref": "#/components/schemas/TeamRole",
+            "description": "Present when the caller is a member of this team (Mine selector).",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "TeamListSelector": {
+        "description": "Selector for the unified teams/list endpoint.",
+        "oneOf": [
+          {
+            "description": "Return teams the authenticated user belongs to (default).",
+            "enum": [
+              "Mine"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "Return teams by specific IDs (admin or provider root user only).",
+            "example": [
+              "00000000-0000-0000-0000-000000000000"
+            ],
+            "properties": {
+              "ById": {
+                "description": "Return teams by specific IDs (admin or provider root user only).",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ById"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "Return teams with active instances on the given provider's nodes (admin or provider root user only).",
+            "example": {
+              "ByProvider": "TestProvider"
+            },
+            "properties": {
+              "ByProvider": {
+                "description": "Return teams with active instances on the given provider's nodes (admin or provider root user only).",
+                "type": "string"
+              }
+            },
+            "required": [
+              "ByProvider"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "Filter to teams whose total spend is at least this value (cents).",
+            "example": {
+              "ByMinSpend": 10000
+            },
+            "properties": {
+              "ByMinSpend": {
+                "description": "Filter to teams whose total spend is at least this value (cents).",
+                "format": "int64",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "ByMinSpend"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "Filter to teams that currently have running executors (instances).",
+            "enum": [
+              "ByActiveExecutors"
+            ],
+            "type": "string"
+          }
+        ]
+      },
       "TeamMember": {
         "properties": {
           "email": {
@@ -14996,6 +17100,158 @@
           "joined_at",
           "name",
           "email"
+        ],
+        "type": "object"
+      },
+      "TeamMemberInvite": {
+        "properties": {
+          "email": {
+            "example": "john.doe@example.com",
+            "type": "string"
+          },
+          "invited_at": {
+            "type": "string"
+          },
+          "invited_by_id": {
+            "example": "00000000-0000-0000-0000-000000000000",
+            "type": "string"
+          },
+          "role": {
+            "example": "Member",
+            "type": "string"
+          },
+          "team_id": {
+            "example": "00000000-0000-0000-0000-000000000000",
+            "type": "string"
+          },
+          "team_name": {
+            "example": "Engineering Team",
+            "type": "string"
+          }
+        },
+        "required": [
+          "team_id",
+          "team_name",
+          "email",
+          "role",
+          "invited_by_id",
+          "invited_at"
+        ],
+        "type": "object"
+      },
+      "TeamMemberInviteResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "email": {
+                "example": "john.doe@example.com",
+                "type": "string"
+              },
+              "invited_at": {
+                "type": "string"
+              },
+              "invited_by_id": {
+                "example": "00000000-0000-0000-0000-000000000000",
+                "type": "string"
+              },
+              "role": {
+                "example": "Member",
+                "type": "string"
+              },
+              "team_id": {
+                "example": "00000000-0000-0000-0000-000000000000",
+                "type": "string"
+              },
+              "team_name": {
+                "example": "Engineering Team",
+                "type": "string"
+              }
+            },
+            "required": [
+              "team_id",
+              "team_name",
+              "email",
+              "role",
+              "invited_by_id",
+              "invited_at"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "TeamMemberOrInvite": {
+        "oneOf": [
+          {
+            "properties": {
+              "Member": {
+                "$ref": "#/components/schemas/TeamMember"
+              }
+            },
+            "required": [
+              "Member"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "Invite": {
+                "$ref": "#/components/schemas/TeamMemberInvite"
+              }
+            },
+            "required": [
+              "Invite"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "TeamMemberOrInviteResponseProto": {
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "properties": {
+                  "Member": {
+                    "$ref": "#/components/schemas/TeamMember"
+                  }
+                },
+                "required": [
+                  "Member"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "Invite": {
+                    "$ref": "#/components/schemas/TeamMemberInvite"
+                  }
+                },
+                "required": [
+                  "Invite"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
         ],
         "type": "object"
       },
@@ -15044,8 +17300,47 @@
         ],
         "type": "object"
       },
+      "TeamMemberSelector": {
+        "description": "Selector for identifying a team member or pending invite.",
+        "oneOf": [
+          {
+            "description": "Select an existing team member by their user ID.",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "properties": {
+              "ById": {
+                "description": "Select an existing team member by their user ID.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "ById"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "Select a pending team invite by email.",
+            "example": "john.doe@example.com",
+            "properties": {
+              "ByEmail": {
+                "description": "Select a pending team invite by email.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "ByEmail"
+            ],
+            "type": "object"
+          }
+        ]
+      },
       "TeamResponse": {
         "properties": {
+          "invites": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberInvite"
+            },
+            "type": "array"
+          },
           "members": {
             "items": {
               "$ref": "#/components/schemas/TeamMember"
@@ -15058,7 +17353,8 @@
         },
         "required": [
           "team",
-          "members"
+          "members",
+          "invites"
         ],
         "type": "object"
       },
@@ -15066,6 +17362,12 @@
         "properties": {
           "data": {
             "properties": {
+              "invites": {
+                "items": {
+                  "$ref": "#/components/schemas/TeamMemberInvite"
+                },
+                "type": "array"
+              },
               "members": {
                 "items": {
                   "$ref": "#/components/schemas/TeamMember"
@@ -15078,7 +17380,8 @@
             },
             "required": [
               "team",
-              "members"
+              "members",
+              "invites"
             ],
             "type": "object"
           },
@@ -15101,6 +17404,23 @@
           "Member"
         ],
         "type": "string"
+      },
+      "TeamSearchResultEntry": {
+        "properties": {
+          "id": {
+            "example": "00000000-0000-0000-0000-000000000000",
+            "type": "string"
+          },
+          "name": {
+            "example": "Engineering Team",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
       },
       "TerminalEvent": {
         "oneOf": [
@@ -15260,6 +17580,256 @@
         ],
         "type": "object"
       },
+      "TotpChallengeResponse": {
+        "properties": {
+          "partial_token": {
+            "description": "Short-lived token (5 min) to be used with POST /auth/totp/complete",
+            "type": "string"
+          }
+        },
+        "required": [
+          "partial_token"
+        ],
+        "type": "object"
+      },
+      "TotpChallengeResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "partial_token": {
+                "description": "Short-lived token (5 min) to be used with POST /auth/totp/complete",
+                "type": "string"
+              }
+            },
+            "required": [
+              "partial_token"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "TotpCompleteRequest": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "partial_token": {
+            "description": "Partial token received from POST /auth/login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "partial_token",
+          "code"
+        ],
+        "type": "object"
+      },
+      "TotpCompleteRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "partial_token": {
+                "description": "Partial token received from POST /auth/login",
+                "type": "string"
+              }
+            },
+            "required": [
+              "partial_token",
+              "code"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "TotpConfirmRequest": {
+        "description": "Sent to POST /auth/totp/confirm — verifies the TOTP code and enables 2FA.",
+        "properties": {
+          "code": {
+            "description": "6-digit TOTP code from Google Authenticator",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "TotpConfirmRequestProto": {
+        "properties": {
+          "data": {
+            "description": "Sent to POST /auth/totp/confirm — verifies the TOTP code and enables 2FA.",
+            "properties": {
+              "code": {
+                "description": "6-digit TOTP code from Google Authenticator",
+                "type": "string"
+              }
+            },
+            "required": [
+              "code"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "TotpConfirmResponse": {
+        "description": "Returned by POST /auth/totp/confirm — indicates 2FA has been successfully enabled.",
+        "properties": {
+          "totp_enabled": {
+            "description": "Whether TOTP 2FA is now enabled on the account",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "totp_enabled"
+        ],
+        "type": "object"
+      },
+      "TotpConfirmResponseProto": {
+        "properties": {
+          "data": {
+            "description": "Returned by POST /auth/totp/confirm — indicates 2FA has been successfully enabled.",
+            "properties": {
+              "totp_enabled": {
+                "description": "Whether TOTP 2FA is now enabled on the account",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "totp_enabled"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "TotpDisableRequest": {
+        "description": "Sent to POST /auth/totp/disable — verifies the TOTP code and disables 2FA.",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "TotpDisableRequestProto": {
+        "properties": {
+          "data": {
+            "description": "Sent to POST /auth/totp/disable — verifies the TOTP code and disables 2FA.",
+            "properties": {
+              "code": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "TotpSetupResponse": {
+        "properties": {
+          "secret": {
+            "description": "Base32-encoded TOTP secret for manual entry",
+            "type": "string"
+          },
+          "totp_uri": {
+            "description": "otpauth:// URI — scan this with Google Authenticator",
+            "type": "string"
+          }
+        },
+        "required": [
+          "totp_uri",
+          "secret"
+        ],
+        "type": "object"
+      },
+      "TotpSetupResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "secret": {
+                "description": "Base32-encoded TOTP secret for manual entry",
+                "type": "string"
+              },
+              "totp_uri": {
+                "description": "otpauth:// URI — scan this with Google Authenticator",
+                "type": "string"
+              }
+            },
+            "required": [
+              "totp_uri",
+              "secret"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
       "Transaction": {
         "properties": {
           "amount": {
@@ -15368,6 +17938,16 @@
                     "description": "ID of the resource providing the service",
                     "type": "string"
                   },
+                  "resource_name": {
+                    "description": "Human-readable resource name (e.g. \"bright-falcon-042\" for instances, volume name for volumes)",
+                    "example": "bright-falcon-042",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "resource_type": {
+                    "$ref": "#/components/schemas/ResourceType",
+                    "description": "Type of resource"
+                  },
                   "rounding": {
                     "description": "Additional charge due to rounding included in the transaction",
                     "items": {},
@@ -15389,6 +17969,7 @@
                 },
                 "required": [
                   "resource_id",
+                  "resource_type",
                   "carryover",
                   "rounding"
                 ],
@@ -15644,6 +18225,62 @@
             "type": "object"
           }
         ]
+      },
+      "TransactionListRequest": {
+        "properties": {
+          "from": {
+            "description": "Start of time range (inclusive). Defaults to 30 days ago if omitted.",
+            "nullable": true,
+            "type": "string"
+          },
+          "selector": {
+            "$ref": "#/components/schemas/AccountSelector"
+          },
+          "to": {
+            "description": "End of time range (inclusive). Defaults to now if omitted.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "TransactionListRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "from": {
+                "description": "Start of time range (inclusive). Defaults to 30 days ago if omitted.",
+                "nullable": true,
+                "type": "string"
+              },
+              "selector": {
+                "$ref": "#/components/schemas/AccountSelector"
+              },
+              "to": {
+                "description": "End of time range (inclusive). Defaults to now if omitted.",
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
       },
       "TransactionProto": {
         "properties": {
@@ -16157,17 +18794,19 @@
         "type": "object"
       },
       "UpdateTeamMembershipRequest": {
+        "description": "Request to update the role of a team member or pending invite.",
         "properties": {
           "role": {
-            "$ref": "#/components/schemas/TeamRole"
+            "$ref": "#/components/schemas/TeamRole",
+            "description": "The new role to assign."
           },
-          "user_id": {
-            "example": "00000000-0000-0000-0000-000000000000",
-            "type": "string"
+          "selector": {
+            "$ref": "#/components/schemas/TeamMemberSelector",
+            "description": "The member or invite to update."
           }
         },
         "required": [
-          "user_id",
+          "selector",
           "role"
         ],
         "type": "object"
@@ -16175,18 +18814,118 @@
       "UpdateTeamMembershipRequestProto": {
         "properties": {
           "data": {
+            "description": "Request to update the role of a team member or pending invite.",
             "properties": {
               "role": {
-                "$ref": "#/components/schemas/TeamRole"
+                "$ref": "#/components/schemas/TeamRole",
+                "description": "The new role to assign."
               },
-              "user_id": {
-                "example": "00000000-0000-0000-0000-000000000000",
-                "type": "string"
+              "selector": {
+                "$ref": "#/components/schemas/TeamMemberSelector",
+                "description": "The member or invite to update."
               }
             },
             "required": [
-              "user_id",
+              "selector",
               "role"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "UpdateUsersCreditLimitRequest": {
+        "properties": {
+          "credit_limit": {
+            "description": "Credit limit in currency units (cents). Ignored when `unlimited` is true.",
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "selector": {
+            "$ref": "#/components/schemas/AccountTargetSelector"
+          },
+          "unlimited": {
+            "description": "Use unlimited credit limit.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "UpdateUsersCreditLimitRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "credit_limit": {
+                "description": "Credit limit in currency units (cents). Ignored when `unlimited` is true.",
+                "format": "int64",
+                "nullable": true,
+                "type": "integer"
+              },
+              "selector": {
+                "$ref": "#/components/schemas/AccountTargetSelector"
+              },
+              "unlimited": {
+                "description": "Use unlimited credit limit.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "UpdateUsersCreditLimitResponse": {
+        "properties": {
+          "updated_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "updated_ids"
+        ],
+        "type": "object"
+      },
+      "UpdateUsersCreditLimitResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "updated_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "updated_ids"
             ],
             "type": "object"
           },
@@ -16416,6 +19155,44 @@
         ],
         "type": "object"
       },
+      "UserAccountInfo": {
+        "description": "Financial/account information for a user (admin/provider).",
+        "properties": {
+          "balance": {
+            "description": "Account balance in currency units (cents).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "credit_limit": {
+            "description": "Account credit limit in currency units (cents).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "instance_count": {
+            "description": "Number of active instances owned by this user.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "is_unlimited": {
+            "description": "Whether the credit limit is unlimited.",
+            "type": "boolean"
+          },
+          "total_spent": {
+            "description": "Total amount spent in currency units (cents).",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "balance",
+          "credit_limit",
+          "is_unlimited",
+          "instance_count",
+          "total_spent"
+        ],
+        "type": "object"
+      },
       "UserBreakdown": {
         "properties": {
           "dispute_amount": {
@@ -16632,6 +19409,209 @@
         ],
         "type": "object"
       },
+      "UserDeletionAnonymizedCounts": {
+        "properties": {
+          "fraud_activities": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "service_usage_payout_tx_nulled": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "team_api_keys_creator_nulled": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "team_memberships": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "usage_payout_tx_nulled": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fraud_activities",
+          "team_memberships",
+          "team_api_keys_creator_nulled",
+          "usage_payout_tx_nulled",
+          "service_usage_payout_tx_nulled"
+        ],
+        "type": "object"
+      },
+      "UserDeletionHardCounts": {
+        "properties": {
+          "api_keys": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "recipes": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "ssh_keys": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "volumes": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "api_keys",
+          "ssh_keys",
+          "volumes",
+          "recipes"
+        ],
+        "type": "object"
+      },
+      "UserDeletionReport": {
+        "properties": {
+          "anonymized": {
+            "$ref": "#/components/schemas/UserDeletionAnonymizedCounts"
+          },
+          "ceph_cleanup_failures": {
+            "description": "Volumes whose Ceph RBD image delete failed; DB row was still removed.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "finished_at": {
+            "type": "string"
+          },
+          "hard_deleted": {
+            "$ref": "#/components/schemas/UserDeletionHardCounts"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "requester_admin_id": {
+            "type": "string"
+          },
+          "retained_account_id": {
+            "nullable": true,
+            "type": "string"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "requester_admin_id",
+          "reason",
+          "started_at",
+          "finished_at",
+          "hard_deleted",
+          "anonymized",
+          "ceph_cleanup_failures"
+        ],
+        "type": "object"
+      },
+      "UserInfo": {
+        "description": "Unified user response returned from /users/list.",
+        "properties": {
+          "account_info": {
+            "$ref": "#/components/schemas/UserAccountInfo",
+            "description": "Present when with_account_info=true (admin/provider).",
+            "nullable": true
+          },
+          "email": {
+            "example": "alex@example.com",
+            "type": "string"
+          },
+          "id": {
+            "example": "00000000-0000-0000-0000-000000000000",
+            "type": "string"
+          },
+          "last_login_at": {
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "example": "Alex Chen",
+            "nullable": true,
+            "type": "string"
+          },
+          "registered_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "registered_at"
+        ],
+        "type": "object"
+      },
+      "UserSelector": {
+        "oneOf": [
+          {
+            "example": [
+              "00000000-0000-0000-0000-000000000000"
+            ],
+            "properties": {
+              "ById": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "ById"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "Filter to users active on the given provider's nodes.",
+            "example": {
+              "ByProvider": "TestProvider"
+            },
+            "properties": {
+              "ByProvider": {
+                "description": "Filter to users active on the given provider's nodes.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "ByProvider"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "Filter to users whose total spend is at least this value (cents).",
+            "example": {
+              "ByMinSpend": 10000
+            },
+            "properties": {
+              "ByMinSpend": {
+                "description": "Filter to users whose total spend is at least this value (cents).",
+                "format": "int64",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "ByMinSpend"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "Filter to users that currently have running executors (instances).",
+            "enum": [
+              "ByActiveExecutors"
+            ],
+            "type": "string"
+          }
+        ]
+      },
       "VirtCommand": {
         "description": "Command to execute on the node",
         "oneOf": [
@@ -16739,9 +19719,13 @@
                   "Suspend"
                 ],
                 "type": "string"
+              },
+              "vmid_or_name": {
+                "type": "string"
               }
             },
             "required": [
+              "vmid_or_name",
               "type"
             ],
             "type": "object"
@@ -16753,9 +19737,13 @@
                   "Resume"
                 ],
                 "type": "string"
+              },
+              "vmid_or_name": {
+                "type": "string"
               }
             },
             "required": [
+              "vmid_or_name",
               "type"
             ],
             "type": "object"
@@ -16815,6 +19803,9 @@
               "erase_grace_period": {
                 "type": "string"
               },
+              "erase_stray_grace_period": {
+                "type": "string"
+              },
               "type": {
                 "enum": [
                   "SyncVirtMachines"
@@ -16831,6 +19822,7 @@
             "required": [
               "vm_info_list",
               "erase_grace_period",
+              "erase_stray_grace_period",
               "type"
             ],
             "type": "object"
@@ -16950,6 +19942,46 @@
               "type": {
                 "enum": [
                   "Start"
+                ],
+                "type": "string"
+              },
+              "vmid": {
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "vmid",
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "type": {
+                "enum": [
+                  "Suspend"
+                ],
+                "type": "string"
+              },
+              "vmid": {
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "vmid",
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "type": {
+                "enum": [
+                  "Resume"
                 ],
                 "type": "string"
               },
@@ -17150,6 +20182,46 @@
               },
               {
                 "properties": {
+                  "type": {
+                    "enum": [
+                      "Suspend"
+                    ],
+                    "type": "string"
+                  },
+                  "vmid": {
+                    "format": "int32",
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "vmid",
+                  "type"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Resume"
+                    ],
+                    "type": "string"
+                  },
+                  "vmid": {
+                    "format": "int32",
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "vmid",
+                  "type"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
                   "existing_images": {
                     "items": {
                       "type": "string"
@@ -17322,9 +20394,13 @@
                       "Suspend"
                     ],
                     "type": "string"
+                  },
+                  "vmid_or_name": {
+                    "type": "string"
                   }
                 },
                 "required": [
+                  "vmid_or_name",
                   "type"
                 ],
                 "type": "object"
@@ -17336,9 +20412,13 @@
                       "Resume"
                     ],
                     "type": "string"
+                  },
+                  "vmid_or_name": {
+                    "type": "string"
                   }
                 },
                 "required": [
+                  "vmid_or_name",
                   "type"
                 ],
                 "type": "object"
@@ -17398,6 +20478,9 @@
                   "erase_grace_period": {
                     "type": "string"
                   },
+                  "erase_stray_grace_period": {
+                    "type": "string"
+                  },
                   "type": {
                     "enum": [
                       "SyncVirtMachines"
@@ -17414,6 +20497,7 @@
                 "required": [
                   "vm_info_list",
                   "erase_grace_period",
+                  "erase_stray_grace_period",
                   "type"
                 ],
                 "type": "object"
@@ -17454,6 +20538,10 @@
             "minimum": 0,
             "type": "integer"
           },
+          "mig_config": {
+            "$ref": "#/components/schemas/VirtMigConfig",
+            "nullable": true
+          },
           "mig_profile": {
             "description": "MIG profile for fractional GPU allocation (e.g., \"1g.5gb\", \"2g.10gb\")\nIf set, provider creates a MIG instance instead of passing through whole GPUs",
             "nullable": true,
@@ -17463,10 +20551,19 @@
             "$ref": "#/components/schemas/VirtNetworkConfig",
             "description": "Network interface to expose"
           },
+          "numa_config": {
+            "$ref": "#/components/schemas/VmNUMAConfig",
+            "description": "NUMA placement config; None falls back to simple vCPU count (no pinning)",
+            "nullable": true
+          },
           "storage_dir": {
             "description": "Directory to store VM data",
             "nullable": true,
             "type": "string"
+          },
+          "use_1g_hugepages": {
+            "description": "Server-authoritative decision on whether to back this VM's memory\nwith 1 GiB hugepages.  When true, the host MUST verify a 1 GiB\nhugetlbfs mount exists and emit hugepage XML.  When false, the host\nMUST NOT emit hugepage backing even if its sysfs reports hugepages —\nthe server has determined the host's hugepage budget is unknown\nor zero (most often during rolling upgrades when the DB hasn't\ncaught up to the host's current state).  `#[serde(default)]` keeps\nolder payloads backwards-compatible: a missing field deserializes\nto `false`, which is the safe direction.",
+            "type": "boolean"
           }
         },
         "required": [
@@ -17663,6 +20760,22 @@
         ],
         "type": "object"
       },
+      "VirtMigConfig": {
+        "properties": {
+          "default_profile": {
+            "nullable": true,
+            "type": "string"
+          },
+          "use_mig_for_whole_gpu": {
+            "description": "Use MIG for all GPUs in the VM, even if mig_profile is not set.\nIt means that 7/7 MIG profile will be used when profile is not specified.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "use_mig_for_whole_gpu"
+        ],
+        "type": "object"
+      },
       "VirtNetworkConfig": {
         "oneOf": [
           {
@@ -17726,6 +20839,105 @@
         "required": [
           "ceph_pool",
           "ceph_image"
+        ],
+        "type": "object"
+      },
+      "VmNUMAConfig": {
+        "description": "Full NUMA placement configuration for a VM",
+        "properties": {
+          "cores_per_socket": {
+            "description": "Number of cores per socket exposed to guest",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "emulator_cpu_ids": {
+            "description": "Host CPU IDs reserved for the QEMU emulator thread and host OS overhead (one physical core)",
+            "items": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "gpu_to_cell": {
+            "description": "(passthrough_position, guest_cell_id) for each passthrough GPU whose\nhost NUMA node corresponds to one of the guest cells.  The first u32\nis the GPU's POSITION in the passthrough list (i.e. its index in the\nhost's `vgpus` Vec, which mirrors the order of `gpu_indices` requested\nby the server), not the hardware GPU index.  Position semantics let\nthe XML emitter look the cell up directly from its enumerate loop\nwithout plumbing hardware indices through `VmGpuDeviceConfig`.\n\nLets the host emit each GPU hostdev behind the pxb-pcie bus of the\nmatching guest cell so `nvidia-smi topo -m` and\n`/sys/bus/pci/.../numa_node` inside the guest report real per-GPU\nNUMA affinity.  Empty when the host has no per-GPU NUMA data or when\nno GPUs are passed through.  May be a strict subset of the\npassthrough positions (e.g. one GPU has `numa_node = None`); the\nhost falls back to the legacy flat layout when the mapping is\nincomplete.\n\n`#[serde(default)]` keeps wire compatibility with older desktops\nthat pre-date Plan B (rolling upgrades): they ignore the field on\nreceive, and a new desktop reading from an old server gets an\nempty Vec → falls back to the existing flat hostdev placement.",
+            "items": {
+              "items": {},
+              "prefixItems": [
+                {
+                  "format": "int32",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "format": "int32",
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "nodes": {
+            "description": "Per-node vCPU assignments; sum of cpu_ids lengths == total vCPUs",
+            "items": {
+              "$ref": "#/components/schemas/VmNUMANodeConfig"
+            },
+            "type": "array"
+          },
+          "sockets": {
+            "description": "Number of CPU sockets exposed to guest",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "threads_per_core": {
+            "description": "Number of logical threads per core exposed to guest",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "nodes",
+          "emulator_cpu_ids",
+          "sockets",
+          "cores_per_socket",
+          "threads_per_core"
+        ],
+        "type": "object"
+      },
+      "VmNUMANodeConfig": {
+        "description": "Per-NUMA-node vCPU and memory assignment for a VM",
+        "properties": {
+          "cpu_ids": {
+            "description": "Host CPU IDs assigned as vCPUs from this node",
+            "items": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "memory_kb": {
+            "description": "Memory assigned to this guest NUMA node in KiB",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "node_id": {
+            "description": "NUMA node identifier on the host",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "node_id",
+          "cpu_ids",
+          "memory_kb"
         ],
         "type": "object"
       },
@@ -17938,6 +21150,10 @@
             "description": "Executor ID if the volume is mounted to one",
             "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b",
             "type": "string"
+          },
+          "billing_exempt": {
+            "description": "Whether this volume is exempt from billing (admin-created)",
+            "type": "boolean"
           },
           "ceph_image": {
             "description": "Ceph image name",
@@ -18160,7 +21376,7 @@
       "name": ""
     },
     "title": "rift-server",
-    "version": "0.55.0"
+    "version": "0.58.0"
   },
   "openapi": "3.0.4",
   "paths": {
@@ -18273,6 +21489,54 @@
         "security": [
           {
             "token": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/v1/account/update_credit_limit": {
+      "post": {
+        "description": "Update credit limit for selected accounts (admin only)",
+        "operationId": "update_credit_limit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUsersCreditLimitRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateUsersCreditLimitResponseProto"
+                }
+              }
+            },
+            "description": "Request succeeded"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
           }
         ],
         "tags": [
@@ -19019,6 +22283,92 @@
         ]
       }
     },
+    "/api/v1/instances/metrics": {
+      "post": {
+        "description": "Get GPU metrics (utilization, temperature, VRAM, power) for instances, filtered to only the GPUs allocated to each instance",
+        "operationId": "instance_metrics",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstanceMetricsRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceMetricsResponseProto"
+                }
+              }
+            },
+            "description": "Metrics retrieved"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "instances"
+        ]
+      }
+    },
+    "/api/v1/instances/pause": {
+      "post": {
+        "description": "Pause (freeze vCPU execution via libvirt virDomainSuspend) virtual machine instance(s). The VM stops executing but memory, GPU passthrough, and host resources remain allocated. Users can pause their own instances; providers can pause instances on their nodes; admins can pause any instance.",
+        "operationId": "pause_vm",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PauseInstancesRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Vm(s) paused"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthenticated - invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - not authorized to pause this instance"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "instances"
+        ]
+      }
+    },
     "/api/v1/instances/rent": {
       "post": {
         "description": "Rent instance for the user",
@@ -19090,6 +22440,47 @@
           },
           "403": {
             "description": "Forbidden - not authorized to reset this instance"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "instances"
+        ]
+      }
+    },
+    "/api/v1/instances/resume": {
+      "post": {
+        "description": "Resume (unfreeze vCPU execution via libvirt virDomainResume) previously paused virtual machine instance(s). Users can resume their own instances; providers can resume instances on their nodes; admins can resume any instance.",
+        "operationId": "resume_vm",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeInstancesRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Vm(s) resumed"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthenticated - invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - not authorized to resume this instance"
           }
         },
         "security": [
@@ -19576,6 +22967,94 @@
         ]
       }
     },
+    "/api/v1/nodes/metrics/list": {
+      "post": {
+        "description": "Get hardware metrics (GPU temperature, utilization, VRAM, power) for nodes",
+        "operationId": "node_metrics",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NodeMetricsRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeMetricsResponseProto"
+                }
+              }
+            },
+            "description": "Metrics retrieved"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ],
+        "tags": [
+          "nodes"
+        ]
+      }
+    },
+    "/api/v1/nodes/metrics/list/{node_id}": {
+      "post": {
+        "description": "Get hardware metrics (GPU temperature, utilization, VRAM, power) for a specific node",
+        "operationId": "node_metrics_by_id",
+        "parameters": [
+          {
+            "description": "Node UUID",
+            "in": "path",
+            "name": "node_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeMetricsResponseProto"
+                }
+              }
+            },
+            "description": "Metrics retrieved"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Node not found"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ],
+        "tags": [
+          "nodes"
+        ]
+      }
+    },
     "/api/v1/nodes/resume": {
       "post": {
         "description": "Resume nodes - bring them back online after being drained",
@@ -19609,6 +23088,54 @@
           },
           "403": {
             "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ],
+        "tags": [
+          "nodes"
+        ]
+      }
+    },
+    "/api/v1/nodes/set_marketplace_listing": {
+      "post": {
+        "description": "Toggle whether nodes appear on the marketplace. Does not affect drain state; rejects nodes in any drain state other than None (their listing is controlled by the drain lifecycle).",
+        "operationId": "set_marketplace_listing",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetNodeMarketplaceListingRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetNodeMarketplaceListingResponseProto"
+                }
+              }
+            },
+            "description": "Listing updated"
+          },
+          "400": {
+            "description": "Node is in a drain state"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - not authorized to manage this node"
+          },
+          "404": {
+            "description": "Node not found"
           }
         },
         "security": [
@@ -20221,8 +23748,18 @@
     },
     "/api/v1/teams/list": {
       "post": {
-        "description": "List teams the authenticated user is a member of",
+        "description": "List teams. Defaults to the authenticated user's teams. Admin/provider can use selectors to query all teams, with optional account info and member details.",
         "operationId": "list_teams",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListTeamsRequestProto",
+                "nullable": true
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {
@@ -20236,6 +23773,9 @@
           },
           "401": {
             "description": "Not authorized"
+          },
+          "403": {
+            "description": "Forbidden"
           }
         },
         "security": [
@@ -20248,9 +23788,57 @@
         ]
       }
     },
+    "/api/v1/teams/search": {
+      "post": {
+        "description": "Search teams by name substring (admin/provider only).",
+        "operationId": "search_teams",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchTeamsRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchTeamsResponseProto"
+                }
+              }
+            },
+            "description": "Request succeeded"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "teams"
+        ]
+      }
+    },
     "/api/v1/teams/{team_id}": {
       "get": {
-        "description": "Get details of a specific team including its members",
+        "description": "Get details of a specific team including its members and pending invites",
         "operationId": "get_team",
         "parameters": [
           {
@@ -20296,7 +23884,7 @@
     },
     "/api/v1/teams/{team_id}/members/add": {
       "put": {
-        "description": "Add a new member to a team by their email",
+        "description": "Add a new member to a team by their email. If the user exists, they are added directly and a Member is returned. If the user doesn't exist, an invite is created and an Invite is returned.",
         "operationId": "add_team_member",
         "parameters": [
           {
@@ -20325,11 +23913,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TeamMemberResponseProto"
+                  "$ref": "#/components/schemas/TeamMemberOrInviteResponseProto"
                 }
               }
             },
-            "description": "Member added successfully"
+            "description": "Member added or invite created"
           },
           "400": {
             "description": "Bad request"
@@ -20353,7 +23941,7 @@
     },
     "/api/v1/teams/{team_id}/members/remove": {
       "post": {
-        "description": "Remove a member from a team by their email",
+        "description": "Remove a member from a team or cancel a pending invite",
         "operationId": "remove_team_member",
         "parameters": [
           {
@@ -20376,15 +23964,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamMemberResponseProto"
-                }
-              }
-            },
-            "description": "Member removed successfully"
+          "204": {
+            "description": "Member removed or invite cancelled successfully"
           },
           "400": {
             "description": "Invalid request parameters"
@@ -20392,8 +23973,11 @@
           "401": {
             "description": "Unauthorized"
           },
+          "403": {
+            "description": "Forbidden"
+          },
           "404": {
-            "description": "Team not found"
+            "description": "Team, member, or invite not found"
           }
         },
         "security": [
@@ -20408,7 +23992,7 @@
     },
     "/api/v1/teams/{team_id}/members/update": {
       "put": {
-        "description": "Update the role of a team member",
+        "description": "Update the role of a team member or pending invite",
         "operationId": "update_team_membership",
         "parameters": [
           {
@@ -20432,7 +24016,7 @@
         },
         "responses": {
           "204": {
-            "description": "Member role updated successfully"
+            "description": "Role updated successfully"
           },
           "400": {
             "description": "Invalid request parameters"
@@ -20441,7 +24025,7 @@
             "description": "Unauthorized"
           },
           "404": {
-            "description": "Team not found"
+            "description": "Team, member, or invite not found"
           }
         },
         "security": [
@@ -20451,6 +24035,150 @@
         ],
         "tags": [
           "teams"
+        ]
+      }
+    },
+    "/api/v1/users/add": {
+      "post": {
+        "description": "Create a new user (admin/provider). Credit limit and initial balance are admin-only.",
+        "operationId": "add_user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddUserResponseProto"
+                }
+              }
+            },
+            "description": "User created"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Email already exists"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/delete": {
+      "post": {
+        "description": "Admin-only: erase a user. See docs/SOC2_USER_DELETION.md. Refuses with 409 for provider roots, node owners, or users with active executors.",
+        "operationId": "delete_user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteUserRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteUserResponseProto"
+                }
+              }
+            },
+            "description": "Deletion (or dry-run) completed"
+          },
+          "401": {
+            "description": "Not authenticated, or target user not found"
+          },
+          "403": {
+            "description": "Caller is not an admin"
+          },
+          "409": {
+            "description": "Deletion refused by pre-flight (provider root / owns nodes / active executors)"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/list": {
+      "post": {
+        "description": "List users for admin or provider user-management views",
+        "operationId": "list_users",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListUsersRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListUsersResponseProto"
+                }
+              }
+            },
+            "description": "Request succeeded"
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "users"
         ]
       }
     },
@@ -20477,6 +24205,102 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/search": {
+      "post": {
+        "description": "Search users by name or email substring (admin/provider only).",
+        "operationId": "search_users",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchUsersRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUsersResponseProto"
+                }
+              }
+            },
+            "description": "Request succeeded"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/send_message": {
+      "post": {
+        "description": "Send a custom email message to selected users (admin/provider only)",
+        "operationId": "send_users_message",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendUsersMessageRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendUsersMessageResponseProto"
+                }
+              }
+            },
+            "description": "Request succeeded"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
           {
             "api-key": []
           }
