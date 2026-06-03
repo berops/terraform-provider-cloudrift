@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -65,10 +67,11 @@ type virtualMachineModel struct {
 	PortMappings    types.List `tfsdk:"port_mappings"`
 
 	// Write only attributes.
-	Metadata   *virtualMachineMetadataModel `tfsdk:"metadata"`
-	Recipe     types.String                 `tfsdk:"recipe"`
-	Datacenter types.String                 `tfsdk:"datacenter"`
-	SSHKeyID   types.String                 `tfsdk:"ssh_key_id"`
+	Metadata     *virtualMachineMetadataModel `tfsdk:"metadata"`
+	Recipe       types.String                 `tfsdk:"recipe"`
+	Datacenter   types.String                 `tfsdk:"datacenter"`
+	SSHKeyID     types.String                 `tfsdk:"ssh_key_id"`
+	WithPublicIP types.Bool                   `tfsdk:"with_public_ip"`
 }
 
 type virtualMachineResource struct {
@@ -224,6 +227,17 @@ func (r *virtualMachineResource) Schema(_ context.Context, req resource.SchemaRe
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+			"with_public_ip": schema.BoolAttribute{
+				MarkdownDescription: "Whether to allocate a dedicated public IP from the pool. " +
+					"Defaults to true. Set to false to request a shared public IP with port " +
+					"forwarding (the assigned host ports are exposed via port_mappings).",
+				Optional: true,
+				Computed: true,
+				Default:  booldefault.StaticBool(true),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+			},
 		},
 	}
 }
@@ -272,6 +286,7 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 		plan.InstanceType.ValueString(),
 		startupCommands,
 		[]string{matched.PublicKey},
+		plan.WithPublicIP.ValueBool(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(

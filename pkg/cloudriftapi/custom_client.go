@@ -334,7 +334,7 @@ func (c *HttpClient) TerminateInstance(id string) error {
 	return err
 }
 
-func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands string, pubKeys []string) (*RentInstanceResponseProto, error) {
+func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands string, pubKeys []string, withPublicIp bool) (*RentInstanceResponseProto, error) {
 	if recipe == "" {
 		return nil, errors.New("no image specified")
 	}
@@ -401,7 +401,7 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands
 
 	var reqData RentInstanceRequestProto
 	reqData.Data.Selector = instanceSelector
-	reqData.Data.WithPublicIp = true
+	reqData.Data.WithPublicIp = withPublicIp
 	reqData.Data.Config = instanceConfiguration
 	if c.TeamID != "" {
 		reqData.Data.TeamId = &c.TeamID
