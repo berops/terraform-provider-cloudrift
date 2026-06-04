@@ -25,6 +25,7 @@ Manage virtualMachines
 ### Optional
 
 - `metadata` (Attributes) Option to provide metadata. Currently supported is `startup_commands`. (see [below for nested schema](#nestedatt--metadata))
+- `with_public_ip` (Boolean) Whether to allocate a dedicated public IP from the pool. Defaults to true. Set to false to request a shared public IP with port forwarding (the assigned host ports are exposed via port_mappings).
 
 ### Read-Only
 
