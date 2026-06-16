@@ -169,10 +169,6 @@ func TestAcc_VirtualMachineResource(t *testing.T) {
 	instance := findCheapestAvailableInstance(t)
 
 	keyName := fmt.Sprintf("ci-test-vm-%d", time.Now().UnixNano())
-	// Plain Ubuntu image boots on any GPU node. The instance type is chosen
-	// dynamically (findCheapestAvailableInstance), so a vendor-specific image
-	// like "Ubuntu 22.04 Server (NVidia)" can fail to provision on whatever
-	// hardware happens to be cheapest, causing the rental to drop out mid-boot.
 	recipe := "Ubuntu 24.04 Server"
 
 	resource.Test(t, resource.TestCase{
