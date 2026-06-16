@@ -154,7 +154,7 @@ func Test_VirtualMachineResource_FailsOnTerminalStatus(t *testing.T) {
 // server has observed — used to verify best-effort cleanup on failed creates.
 func newVMTestServerWithStatus(keyName, publicKey, status string, vmReady bool) (*httptest.Server, *int32) {
 	var terminateCalls int32
-	terminated := false
+	var terminated int32 // atomic: written by /terminate, read by /list concurrently
 
 	instanceResponse := fmt.Sprintf(`
 	{
@@ -188,13 +188,13 @@ func newVMTestServerWithStatus(keyName, publicKey, status string, vmReady bool) 
 	server := defaultHttpTestServer(map[string]func(w http.ResponseWriter, req *http.Request){
 		"/api/v1/instances/terminate": func(w http.ResponseWriter, _ *http.Request) {
 			atomic.AddInt32(&terminateCalls, 1)
-			terminated = true
+			atomic.StoreInt32(&terminated, 1)
 			w.WriteHeader(http.StatusOK)
 		},
 		"/api/v1/instances/list": func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "json")
 			w.WriteHeader(http.StatusOK)
-			if terminated {
+			if atomic.LoadInt32(&terminated) == 1 {
 				_, _ = w.Write([]byte(`{"data": {"instances": []}}`))
 				return
 			}
