@@ -45,6 +45,10 @@
         "properties": {
           "selector": {
             "$ref": "#/components/schemas/AccountSelector"
+          },
+          "with_auto_top_up": {
+            "description": "Include the account's auto top-up state in the response\n(`AccountInfo.auto_top_up`). Team accounts require billing role.",
+            "type": "boolean"
           }
         },
         "required": [
@@ -58,6 +62,10 @@
             "properties": {
               "selector": {
                 "$ref": "#/components/schemas/AccountSelector"
+              },
+              "with_auto_top_up": {
+                "description": "Include the account's auto top-up state in the response\n(`AccountInfo.auto_top_up`). Team accounts require billing role.",
+                "type": "boolean"
               }
             },
             "required": [
@@ -1511,6 +1519,290 @@
             "type": "string"
           }
         ]
+      },
+      "AutoTopUpRecoveryInfo": {
+        "description": "Returned by `/auto-top-up/recovery-info` when the latest attempt is in\n`RequiresAction`. The FE passes `client_secret` to `stripe.handleNextAction`.",
+        "properties": {
+          "amount_cents": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "client_secret": {
+            "type": "string"
+          },
+          "payment_intent_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "payment_intent_id",
+          "client_secret",
+          "amount_cents"
+        ],
+        "type": "object"
+      },
+      "AutoTopUpRecoveryInfoProto": {
+        "properties": {
+          "data": {
+            "description": "Returned by `/auto-top-up/recovery-info` when the latest attempt is in\n`RequiresAction`. The FE passes `client_secret` to `stripe.handleNextAction`.",
+            "properties": {
+              "amount_cents": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "client_secret": {
+                "type": "string"
+              },
+              "payment_intent_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "payment_intent_id",
+              "client_secret",
+              "amount_cents"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "AutoTopUpRequest": {
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/AccountSelector"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "AutoTopUpRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/AccountSelector"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "AutoTopUpSettings": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "monthly_cap_cents": {
+            "description": "Optional cap on auto-top-up spend per calendar month, in cents.",
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "threshold_cents": {
+            "description": "Trigger threshold in cents. Charge fires when pending balance falls below this.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "top_up_amount_cents": {
+            "description": "Amount charged per top-up, in cents.",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enabled",
+          "threshold_cents",
+          "top_up_amount_cents"
+        ],
+        "type": "object"
+      },
+      "AutoTopUpState": {
+        "properties": {
+          "grace_period_ends_at": {
+            "description": "`last_failed_at + GRACE_DURATION` — frontend shows \"Instances will\nkeep running until {date}\" during the grace window.",
+            "nullable": true,
+            "type": "string"
+          },
+          "last_charged_at": {
+            "nullable": true,
+            "type": "string"
+          },
+          "last_failed_at": {
+            "nullable": true,
+            "type": "string"
+          },
+          "last_failure_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "last_failure_message": {
+            "nullable": true,
+            "type": "string"
+          },
+          "paused_until": {
+            "nullable": true,
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/AutoTopUpSettings",
+            "description": "`None` when status is `Off` and no row exists in the DB yet.",
+            "nullable": true
+          },
+          "spent_this_month_cents": {
+            "description": "Cents charged this calendar month via auto-top-up (sum of Succeeded + Recovered).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutoTopUpStatus"
+          }
+        },
+        "required": [
+          "status",
+          "spent_this_month_cents"
+        ],
+        "type": "object"
+      },
+      "AutoTopUpStateProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "grace_period_ends_at": {
+                "description": "`last_failed_at + GRACE_DURATION` — frontend shows \"Instances will\nkeep running until {date}\" during the grace window.",
+                "nullable": true,
+                "type": "string"
+              },
+              "last_charged_at": {
+                "nullable": true,
+                "type": "string"
+              },
+              "last_failed_at": {
+                "nullable": true,
+                "type": "string"
+              },
+              "last_failure_code": {
+                "nullable": true,
+                "type": "string"
+              },
+              "last_failure_message": {
+                "nullable": true,
+                "type": "string"
+              },
+              "paused_until": {
+                "nullable": true,
+                "type": "string"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/AutoTopUpSettings",
+                "description": "`None` when status is `Off` and no row exists in the DB yet.",
+                "nullable": true
+              },
+              "spent_this_month_cents": {
+                "description": "Cents charged this calendar month via auto-top-up (sum of Succeeded + Recovered).",
+                "format": "int64",
+                "type": "integer"
+              },
+              "status": {
+                "$ref": "#/components/schemas/AutoTopUpStatus"
+              }
+            },
+            "required": [
+              "status",
+              "spent_this_month_cents"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "AutoTopUpStatus": {
+        "description": "Derived status — computed server-side from settings + failure state +\nmonthly spend. Frontend uses this directly for UI dispatch.",
+        "enum": [
+          "Off",
+          "Active",
+          "CapReached",
+          "ChargeFailed",
+          "DisabledAfterFailures"
+        ],
+        "type": "string"
+      },
+      "AutoTopUpUpdateRequest": {
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/AccountSelector"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/AutoTopUpSettings"
+          }
+        },
+        "required": [
+          "selector",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "AutoTopUpUpdateRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/AccountSelector"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/AutoTopUpSettings"
+              }
+            },
+            "required": [
+              "selector",
+              "settings"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
       },
       "Bucket": {
         "properties": {
@@ -3024,6 +3316,10 @@
       },
       "CreateReservationRequest": {
         "properties": {
+          "billing_exempt": {
+            "description": "Whether this reservation is exempt from billing (admins only)",
+            "type": "boolean"
+          },
           "executor_id": {
             "description": "ID of the executor to attach the reservation to",
             "type": "string"
@@ -3048,6 +3344,10 @@
         "properties": {
           "data": {
             "properties": {
+              "billing_exempt": {
+                "description": "Whether this reservation is exempt from billing (admins only)",
+                "type": "boolean"
+              },
               "executor_id": {
                 "description": "ID of the executor to attach the reservation to",
                 "type": "string"
@@ -3368,6 +3668,34 @@
         ],
         "type": "object"
       },
+      "CustomInstancePricing": {
+        "description": "Per-dimension weights (sum to 1.0) for splitting a node's `cost_per_hour`\nacross a custom shape's resources.",
+        "properties": {
+          "disk_weight": {
+            "format": "double",
+            "type": "number"
+          },
+          "gpu_weight": {
+            "format": "double",
+            "type": "number"
+          },
+          "ram_weight": {
+            "format": "double",
+            "type": "number"
+          },
+          "vcpu_weight": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "required": [
+          "gpu_weight",
+          "vcpu_weight",
+          "ram_weight",
+          "disk_weight"
+        ],
+        "type": "object"
+      },
       "DataCenterInfo": {
         "properties": {
           "country_code": {
@@ -3424,6 +3752,16 @@
           "networks"
         ],
         "type": "object"
+      },
+      "DeactivationCause": {
+        "description": "Why a rental was deactivated before reaching the Active state.",
+        "enum": [
+          "DockerImagePullFailed",
+          "DockerCommandFailed",
+          "VmBootFailed",
+          "PlatformError"
+        ],
+        "type": "string"
       },
       "DeleteApiKeysRequest": {
         "properties": {
@@ -7105,17 +7443,16 @@
         "type": "object"
       },
       "InstanceAndUsageInfo": {
+        "description": "Same shape as `v045::InstanceAndUsageInfo` but with `status: v059::InstanceStatus`\n(so `Failed` is a valid value) and an extra `failure` field that's populated when\nthe rental ended up in `Failed`.",
         "properties": {
           "bare_metal": {
             "$ref": "#/components/schemas/InstanceBareMetalInfo",
             "nullable": true
           },
           "billing_exempt": {
-            "description": "Whether this instance is exempt from billing (admins only)",
             "type": "boolean"
           },
           "containers": {
-            "description": "Containers running on this instance",
             "items": {
               "$ref": "#/components/schemas/InstanceContainerInfo"
             },
@@ -7123,11 +7460,9 @@
           },
           "cpu": {
             "$ref": "#/components/schemas/CpuInfo",
-            "description": "CPU information on the instance node",
             "nullable": true
           },
           "cpu_limit": {
-            "description": "Number of CPUs available to the instance",
             "example": "96",
             "format": "int32",
             "minimum": 0,
@@ -7135,39 +7470,38 @@
             "type": "integer"
           },
           "cpu_mask": {
-            "description": "CPUs available to instance as a hex number making a bitmask",
             "example": "ffffffffffffffffffffffff",
             "nullable": true,
             "type": "string"
           },
           "created_at": {
-            "description": "When the instance was created",
             "type": "string"
           },
           "disk_limit": {
-            "description": "GPU information on the instance node\nmaximum amount of disk space",
             "format": "int64",
             "minimum": 0,
             "nullable": true,
             "type": "integer"
           },
           "dram": {
-            "description": "Information about memory on the node",
             "format": "int64",
             "minimum": 0,
             "nullable": true,
             "type": "integer"
           },
           "dram_limit": {
-            "description": "Maximum amount of DRAM available to the instance",
             "example": "1236950581248",
             "format": "int64",
             "minimum": 0,
             "nullable": true,
             "type": "integer"
           },
+          "failure": {
+            "$ref": "#/components/schemas/RentalFailureInfo",
+            "description": "Populated when `status == Failed`: the reason this rental never reached Active.\n`None` for any other status, including normal stop, balance depletion, and\nuser-requested terminate.",
+            "nullable": true
+          },
           "gpu_limit": {
-            "description": "number of GPUs available to the instance",
             "example": "8",
             "format": "int32",
             "minimum": 0,
@@ -7175,13 +7509,11 @@
             "type": "integer"
           },
           "gpu_mask": {
-            "description": "gpus available to instance as a hex number making a bitmask",
             "example": "1ff",
             "nullable": true,
             "type": "string"
           },
           "gpus": {
-            "description": "GPU models like GeForce RTX 4090",
             "items": {
               "$ref": "#/components/schemas/GpuInfo"
             },
@@ -7189,17 +7521,14 @@
             "type": "array"
           },
           "host_address": {
-            "description": "instance public IP address (external IP when available, internal IP otherwise)",
             "example": "38.108.83.41",
             "nullable": true,
             "type": "string"
           },
           "id": {
-            "description": "ID of the instance to be used in API calls",
             "type": "string"
           },
           "instance_name": {
-            "description": "Human-readable instance name (e.g. \"bright-falcon\")",
             "example": "bright-falcon",
             "nullable": true,
             "type": "string"
@@ -7209,28 +7538,23 @@
             "nullable": true
           },
           "internal_host_address": {
-            "description": "instance internal IP address (for implementation details)",
             "example": "172.154.10.38",
             "nullable": true,
             "type": "string"
           },
           "mig_profile": {
-            "description": "MIG profile name if this instance is using a fractional GPU (e.g., \"1g.5gb\")",
             "example": "1g.5gb",
             "nullable": true,
             "type": "string"
           },
           "node_id": {
-            "description": "ID of the node the instance is running on",
             "type": "string"
           },
           "node_mode": {
-            "$ref": "#/components/schemas/InstanceMode",
-            "description": "mode of the instance, like Container or VM"
+            "$ref": "#/components/schemas/InstanceMode"
           },
           "node_status": {
-            "$ref": "#/components/schemas/NodeStatus",
-            "description": "Status of the node, like offline or active"
+            "$ref": "#/components/schemas/NodeStatus"
           },
           "port_mappings": {
             "items": {
@@ -7258,31 +7582,25 @@
           },
           "resource_info": {
             "$ref": "#/components/schemas/InstanceResourceInfo",
-            "description": "Information about rented instance like cost, provider, etc.",
             "nullable": true
           },
           "ssh_key_auth": {
-            "description": "Whether this instance uses SSH key authentication (true) or password authentication (false)",
             "type": "boolean"
           },
           "status": {
-            "$ref": "#/components/schemas/InstanceStatus",
-            "description": "Status of the instance, like offline or active"
+            "$ref": "#/components/schemas/InstanceStatus"
           },
           "usage_info": {
             "$ref": "#/components/schemas/InstanceUsageInfo",
-            "description": "Information about the usage, e.g. how much time was charged",
             "nullable": true
           },
           "virtual_machines": {
-            "description": "Virtual machines running on this instance",
             "items": {
               "$ref": "#/components/schemas/InstanceVirtualMachineInfo"
             },
             "type": "array"
           },
           "volume_mounts": {
-            "description": "Information about volumes mounted on the instance",
             "items": {
               "$ref": "#/components/schemas/VolumeInfo"
             },
@@ -7510,6 +7828,11 @@
             "minimum": 0,
             "type": "integer"
           },
+          "custom_pricing": {
+            "$ref": "#/components/schemas/CustomInstancePricing",
+            "description": "Per-dimension pricing weights for custom (off-catalog) configs, so a\nclient can price a custom shape locally the same way the server does\nat rent. Kept in its own optional struct: it isn't always needed and\nthe pricing model is still in flux.",
+            "nullable": true
+          },
           "name": {
             "description": "Instance type name",
             "example": "p4d.24xlarge",
@@ -7728,6 +8051,52 @@
         ],
         "type": "string"
       },
+      "InstancePreset": {
+        "description": "A saved resource shape that pre-fills the rental sliders. Captured\nautomatically when a custom config is rented; `dram`/`disk` are bytes,\n`cpu_count` is guest vCPUs.",
+        "properties": {
+          "cpu_count": {
+            "example": "16",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "disk": {
+            "example": "8796093022208",
+            "format": "int64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "dram": {
+            "example": "48000000000",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "gpu_count": {
+            "example": "1",
+            "format": "int32",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "id": {
+            "example": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b",
+            "type": "string"
+          },
+          "instance_type": {
+            "example": "h200-141gb",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "instance_type",
+          "cpu_count",
+          "dram"
+        ],
+        "type": "object"
+      },
       "InstanceResourceInfo": {
         "properties": {
           "cost_per_hour": {
@@ -7816,11 +8185,13 @@
         ]
       },
       "InstanceStatus": {
+        "description": "Adds `Failed` for rentals that never reached `Active`. Distinct type from\n`v045::InstanceStatus` so v045 clients keep their original 4-variant contract.",
         "enum": [
           "Initializing",
           "Active",
           "Deactivating",
-          "Inactive"
+          "Inactive",
+          "Failed"
         ],
         "type": "string"
       },
@@ -9362,6 +9733,48 @@
             },
             "required": [
               "files"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "ListInstancePresetsResponse": {
+        "properties": {
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/InstancePreset"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "presets"
+        ],
+        "type": "object"
+      },
+      "ListInstancePresetsResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "presets": {
+                "items": {
+                  "$ref": "#/components/schemas/InstancePreset"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "presets"
             ],
             "type": "object"
           },
@@ -12002,6 +12415,34 @@
               "ByNodeId"
             ],
             "type": "object"
+          },
+          {
+            "description": "Rent a custom off-catalog configuration on a specific node. Gated by\nthe `allow_custom_instances` flag; available to any user when enabled.",
+            "properties": {
+              "ByNodeWithResources": {
+                "description": "Rent a custom off-catalog configuration on a specific node. Gated by\nthe `allow_custom_instances` flag; available to any user when enabled.",
+                "properties": {
+                  "node_id": {
+                    "description": "Node ID to rent on",
+                    "example": "f8c403e6-7101-11ee-b00d-63f746883a19",
+                    "type": "string"
+                  },
+                  "resources": {
+                    "$ref": "#/components/schemas/ResourceSpec",
+                    "description": "Exact hardware resources to allocate"
+                  }
+                },
+                "required": [
+                  "node_id",
+                  "resources"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ByNodeWithResources"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -13633,6 +14074,14 @@
             "example": "ffffffffffffffffffffffff",
             "type": "string"
           },
+          "disk_available": {
+            "description": "Disk available for renting, in bytes. `None` when the node reports no\nusable storage disk.",
+            "example": "8796093022208",
+            "format": "int64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
           "dram_available": {
             "description": "DRAM available for renting",
             "example": "1236950581248",
@@ -14618,8 +15067,39 @@
         ],
         "type": "object"
       },
+      "RentalFailureInfo": {
+        "description": "Surfaced under `InstanceAndUsageInfo.failure` when a rental ended up in `Failed`.",
+        "properties": {
+          "cause": {
+            "$ref": "#/components/schemas/DeactivationCause"
+          },
+          "id": {
+            "description": "Stable identifier for this failure record. Surfaced in the UI for the\nReport-issue flow so users / support can reference a specific incident.",
+            "type": "string"
+          },
+          "occurred_at": {
+            "description": "When the failure was recorded.",
+            "type": "string"
+          },
+          "user_message": {
+            "description": "Safe-to-show message. For `PlatformError` this is a stable constant; for the other\ncauses it includes the relevant detail (image name, exit code, libvirt reason).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "cause",
+          "user_message",
+          "occurred_at"
+        ],
+        "type": "object"
+      },
       "Reservation": {
         "properties": {
+          "billing_exempt": {
+            "description": "Whether prepayment / extension debits are skipped for this reservation",
+            "type": "boolean"
+          },
           "bound_resource": {
             "type": "string"
           },
@@ -14630,10 +15110,18 @@
             "type": "string"
           },
           "instance_type": {
-            "$ref": "#/components/schemas/InstanceType"
+            "$ref": "#/components/schemas/InstanceType",
+            "nullable": true
           },
           "instance_variant": {
-            "$ref": "#/components/schemas/InstanceVariant"
+            "$ref": "#/components/schemas/InstanceVariant",
+            "description": "Present for catalog reservations; `None` for custom (off-catalog) ones.",
+            "nullable": true
+          },
+          "resources": {
+            "$ref": "#/components/schemas/ReservationResources",
+            "description": "The raw reserved shape; present for custom reservations, `None` for catalog.",
+            "nullable": true
           },
           "valid_till": {
             "type": "string"
@@ -14643,9 +15131,7 @@
           "id",
           "bound_resource",
           "created_at",
-          "valid_till",
-          "instance_variant",
-          "instance_type"
+          "valid_till"
         ],
         "type": "object"
       },
@@ -14665,37 +15151,85 @@
         "type": "object"
       },
       "ReservationParameters": {
-        "description": "Parameters for using reservations with instances",
+        "description": "Parameters for using reservations with instances.\n`billing_exempt` on `New` skips the prepayment debit on the new\nreservation; independent of the rental's billing_exempt flag.",
         "oneOf": [
           {
-            "description": "Create a new reservation with the selected reservation type ID",
-            "example": "00000000-0000-0000-0000-000000000000",
+            "description": "Create a new reservation of the selected type",
             "properties": {
-              "TypeID": {
-                "description": "Create a new reservation with the selected reservation type ID",
-                "type": "string"
+              "New": {
+                "description": "Create a new reservation of the selected type",
+                "properties": {
+                  "billing_exempt": {
+                    "description": "Admin-only: skip prepayment debit on the new reservation",
+                    "type": "boolean"
+                  },
+                  "type_id": {
+                    "description": "ID of the reservation type (duration \u0026 discount tier)",
+                    "example": "00000000-0000-0000-0000-000000000000",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type_id"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "TypeID"
+              "New"
             ],
             "type": "object"
           },
           {
-            "description": "Use an existing reservation by ID",
+            "description": "Attach an existing unbound reservation by id",
             "example": "00000000-0000-0000-0000-000000000000",
             "properties": {
-              "ID": {
-                "description": "Use an existing reservation by ID",
+              "Existing": {
+                "description": "Attach an existing unbound reservation by id",
                 "type": "string"
               }
             },
             "required": [
-              "ID"
+              "Existing"
             ],
             "type": "object"
           }
         ]
+      },
+      "ReservationResources": {
+        "properties": {
+          "cpu_count": {
+            "example": "24",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "disk": {
+            "example": "8796093022208",
+            "format": "int64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "dram": {
+            "example": "48000000000",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "gpu_count": {
+            "example": "2",
+            "format": "int32",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cpu_count",
+          "dram"
+        ],
+        "type": "object"
       },
       "ReservationSelector": {
         "oneOf": [
@@ -14834,6 +15368,42 @@
         "required": [
           "version",
           "data"
+        ],
+        "type": "object"
+      },
+      "ResourceSpec": {
+        "description": "Raw hardware resources for a custom (off-catalog) rental. `dram`/`disk`\nare in bytes; `vcpu` is the guest vCPU count; `gpu = 0` is CPU-only.",
+        "properties": {
+          "disk": {
+            "example": "8796093022208",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "dram": {
+            "example": "48000000000",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "gpu": {
+            "example": "1",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "vcpu": {
+            "example": "16",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "vcpu",
+          "gpu",
+          "dram",
+          "disk"
         ],
         "type": "object"
       },
@@ -15676,28 +16246,16 @@
             "example": "my-key",
             "type": "string"
           },
-          "owner": {
-            "description": "Whether the key is owned by the user",
-            "example": true,
-            "type": "boolean"
-          },
           "public_key": {
             "description": "SSH key public part",
             "example": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD...",
-            "type": "string"
-          },
-          "user_name": {
-            "description": "SSH User name",
-            "example": "John Doe",
             "type": "string"
           }
         },
         "required": [
           "id",
           "name",
-          "public_key",
-          "user_name",
-          "owner"
+          "public_key"
         ],
         "type": "object"
       },
@@ -16090,6 +16648,13 @@
       "StatusSelector": {
         "description": "Selector for filtering instances by status, with optional scope control.",
         "properties": {
+          "limit": {
+            "description": "Maximum number of matching instances to return. Defaults server-side when omitted.",
+            "format": "int32",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
           "scope": {
             "$ref": "#/components/schemas/SelectorScope",
             "nullable": true
@@ -16186,12 +16751,98 @@
         ],
         "type": "object"
       },
+      "StripeCustomerRequest": {
+        "properties": {
+          "create": {
+            "description": "When the Account has no Stripe customer yet: `true`/omitted creates\none server-side; `false` only reads (response id is null if none).",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "selector": {
+            "$ref": "#/components/schemas/AccountSelector"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "type": "object"
+      },
+      "StripeCustomerRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "create": {
+                "description": "When the Account has no Stripe customer yet: `true`/omitted creates\none server-side; `false` only reads (response id is null if none).",
+                "nullable": true,
+                "type": "boolean"
+              },
+              "selector": {
+                "$ref": "#/components/schemas/AccountSelector"
+              }
+            },
+            "required": [
+              "selector"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "StripeCustomerResponse": {
+        "properties": {
+          "stripe_customer_id": {
+            "description": "Null only when `create=false` and the Account has no customer yet.",
+            "example": "cus_1234abcdEFGH",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "StripeCustomerResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "stripe_customer_id": {
+                "description": "Null only when `create=false` and the Account has no customer yet.",
+                "example": "cus_1234abcdEFGH",
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
       "StripeTransactionInfo": {
         "oneOf": [
           {
             "properties": {
               "Payment": {
                 "properties": {
+                  "auto_top_up": {
+                    "description": "True when initiated by the auto top-up cron (off-session charge)",
+                    "type": "boolean"
+                  },
                   "payment_intent_id": {
                     "description": "ID of CloudRift payment intent",
                     "type": "string"
@@ -21376,10 +22027,94 @@
       "name": ""
     },
     "title": "rift-server",
-    "version": "0.58.0"
+    "version": "0.59.2"
   },
   "openapi": "3.0.4",
   "paths": {
+    "/api/v1/account/auto-top-up/recovery-info": {
+      "post": {
+        "description": "Fetch 3DS recovery info for the latest RequiresAction auto top-up attempt",
+        "operationId": "get_auto_top_up_recovery_info",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoTopUpRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoTopUpRecoveryInfoProto"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "403": {
+            "description": "User is not allowed to manage billing for the selected team"
+          },
+          "404": {
+            "description": "No attempt awaiting 3DS recovery"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/v1/account/auto-top-up/update": {
+      "post": {
+        "description": "Create or update the auto top-up settings for an Account",
+        "operationId": "update_auto_top_up",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoTopUpUpdateRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoTopUpStateProto"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid settings (threshold/amount/cap validation failed)"
+          },
+          "403": {
+            "description": "User is not allowed to manage billing for the selected team"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/api/v1/account/info": {
       "post": {
         "description": "Retrieve account information",
@@ -21402,6 +22137,45 @@
           },
           {
             "api-key": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/v1/account/stripe-customer": {
+      "post": {
+        "description": "Get-or-create the Stripe Customer ID for an Account. With `create=false`, only reads — returns null when none exists.",
+        "operationId": "get_or_create_stripe_customer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StripeCustomerRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StripeCustomerResponseProto"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "403": {
+            "description": "User is not allowed to manage billing for the selected team"
+          }
+        },
+        "security": [
+          {
+            "token": []
           }
         ],
         "tags": [

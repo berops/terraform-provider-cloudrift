@@ -178,6 +178,45 @@ func Test_VirtualMachineResource_FailsOnDeactivatingStatus(t *testing.T) {
 	}
 }
 
+func Test_VirtualMachineResource_FailsOnFailedStatus(t *testing.T) {
+	t.Parallel()
+
+	keyName := "anotheruser-key"
+	publicKey := "ssh-rsa AAAA anotheruser"
+
+	// Simulate a rental that never reaches Active and lands in Failed
+	// (server 0.59.0+). Failed is terminal, so Create must abort the poll.
+	server, terminateCalls := newVMTestServerWithStatus(keyName, publicKey, "Failed", false)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
+					resource "cloudrift_ssh_key" "primary" {
+					  name       = "%s"
+					  public_key = "%s"
+					}
+
+					resource "cloudrift_virtual_machine" "machine0" {
+					  recipe        = "ubuntu"
+					  datacenter    = "us-east-nc-nr-1"
+					  instance_type = "rtx49-10c-kn.1"
+					  ssh_key_id    = cloudrift_ssh_key.primary.id
+					}
+				`, keyName, publicKey),
+				ExpectError: regexp.MustCompile(`reached terminal status "Failed"`),
+			},
+		},
+	})
+
+	// Same contract as the Deactivating path: a terminal-status failure during
+	// Create must best-effort terminate the rented instance so it doesn't leak.
+	if got := atomic.LoadInt32(terminateCalls); got < 1 {
+		t.Fatalf("expected Create to call /instances/terminate at least once to release the failed VM, got %d calls", got)
+	}
+}
+
 // newVMTestServerWithStatus creates a test server where the instance reports
 // the given status and VM readiness. After terminate is called, the instance
 // list returns empty so the test framework's destroy cleanup completes.

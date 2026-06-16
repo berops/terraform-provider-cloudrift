@@ -22,14 +22,36 @@ const (
 	TokenScopes       = "token.Scopes"
 )
 
+// Defines values for AccountSelector0.
+const (
+	ByToken AccountSelector0 = "ByToken"
+)
+
 // Defines values for ApiKeySelector2.
 const (
 	ApiKeySelector2All ApiKeySelector2 = "All"
 )
 
+// Defines values for AutoTopUpStatus.
+const (
+	AutoTopUpStatusActive                AutoTopUpStatus = "Active"
+	AutoTopUpStatusCapReached            AutoTopUpStatus = "CapReached"
+	AutoTopUpStatusChargeFailed          AutoTopUpStatus = "ChargeFailed"
+	AutoTopUpStatusDisabledAfterFailures AutoTopUpStatus = "DisabledAfterFailures"
+	AutoTopUpStatusOff                   AutoTopUpStatus = "Off"
+)
+
 // Defines values for ComputeProviderSelector0.
 const (
 	ComputeProviderSelector0All ComputeProviderSelector0 = "All"
+)
+
+// Defines values for DeactivationCause.
+const (
+	DockerCommandFailed   DeactivationCause = "DockerCommandFailed"
+	DockerImagePullFailed DeactivationCause = "DockerImagePullFailed"
+	PlatformError         DeactivationCause = "PlatformError"
+	VmBootFailed          DeactivationCause = "VmBootFailed"
 )
 
 // Defines values for DiskKind.
@@ -48,10 +70,11 @@ const (
 
 // Defines values for InstanceStatus.
 const (
-	Active       InstanceStatus = "Active"
-	Deactivating InstanceStatus = "Deactivating"
-	Inactive     InstanceStatus = "Inactive"
-	Initializing InstanceStatus = "Initializing"
+	InstanceStatusActive       InstanceStatus = "Active"
+	InstanceStatusDeactivating InstanceStatus = "Deactivating"
+	InstanceStatusFailed       InstanceStatus = "Failed"
+	InstanceStatusInactive     InstanceStatus = "Inactive"
+	InstanceStatusInitializing InstanceStatus = "Initializing"
 )
 
 // Defines values for InstanceTypeSelector0.
@@ -190,6 +213,19 @@ type AccountInfoProto struct {
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
 	Version string `json:"version"`
+}
+
+// AccountSelector defines model for AccountSelector.
+type AccountSelector struct {
+	union json.RawMessage
+}
+
+// AccountSelector0 defines model for AccountSelector.0.
+type AccountSelector0 string
+
+// AccountSelector1 defines model for .
+type AccountSelector1 struct {
+	ByTeam string `json:"ByTeam"`
 }
 
 // AccountTargetSelector Selector for financial operations targeting specific user or team accounts by ID.
@@ -497,6 +533,84 @@ type ApiKeySelector1 struct {
 // ApiKeySelector2 defines model for ApiKeySelector.2.
 type ApiKeySelector2 string
 
+// AutoTopUpRecoveryInfoProto defines model for AutoTopUpRecoveryInfoProto.
+type AutoTopUpRecoveryInfoProto struct {
+	// Data Returned by `/auto-top-up/recovery-info` when the latest attempt is in
+	// `RequiresAction`. The FE passes `client_secret` to `stripe.handleNextAction`.
+	Data struct {
+		AmountCents     int64  `json:"amount_cents"`
+		ClientSecret    string `json:"client_secret"`
+		PaymentIntentId string `json:"payment_intent_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// AutoTopUpRequestProto defines model for AutoTopUpRequestProto.
+type AutoTopUpRequestProto struct {
+	Data struct {
+		Selector AccountSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// AutoTopUpSettings defines model for AutoTopUpSettings.
+type AutoTopUpSettings struct {
+	Enabled bool `json:"enabled"`
+
+	// MonthlyCapCents Optional cap on auto-top-up spend per calendar month, in cents.
+	MonthlyCapCents *int64 `json:"monthly_cap_cents"`
+
+	// ThresholdCents Trigger threshold in cents. Charge fires when pending balance falls below this.
+	ThresholdCents int64 `json:"threshold_cents"`
+
+	// TopUpAmountCents Amount charged per top-up, in cents.
+	TopUpAmountCents int64 `json:"top_up_amount_cents"`
+}
+
+// AutoTopUpStateProto defines model for AutoTopUpStateProto.
+type AutoTopUpStateProto struct {
+	Data struct {
+		// GracePeriodEndsAt `last_failed_at + GRACE_DURATION` — frontend shows "Instances will
+		// keep running until {date}" during the grace window.
+		GracePeriodEndsAt  *string            `json:"grace_period_ends_at"`
+		LastChargedAt      *string            `json:"last_charged_at"`
+		LastFailedAt       *string            `json:"last_failed_at"`
+		LastFailureCode    *string            `json:"last_failure_code"`
+		LastFailureMessage *string            `json:"last_failure_message"`
+		PausedUntil        *string            `json:"paused_until"`
+		Settings           *AutoTopUpSettings `json:"settings,omitempty"`
+
+		// SpentThisMonthCents Cents charged this calendar month via auto-top-up (sum of Succeeded + Recovered).
+		SpentThisMonthCents int64 `json:"spent_this_month_cents"`
+
+		// Status Derived status — computed server-side from settings + failure state +
+		// monthly spend. Frontend uses this directly for UI dispatch.
+		Status AutoTopUpStatus `json:"status"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// AutoTopUpStatus Derived status — computed server-side from settings + failure state +
+// monthly spend. Frontend uses this directly for UI dispatch.
+type AutoTopUpStatus string
+
+// AutoTopUpUpdateRequestProto defines model for AutoTopUpUpdateRequestProto.
+type AutoTopUpUpdateRequestProto struct {
+	Data struct {
+		Selector AccountSelector   `json:"selector"`
+		Settings AutoTopUpSettings `json:"settings"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // BulkServiceChargeRequestProto defines model for BulkServiceChargeRequestProto.
 type BulkServiceChargeRequestProto struct {
 	Data struct {
@@ -625,6 +739,9 @@ type CpuInfo struct {
 // CreateReservationRequestProto defines model for CreateReservationRequestProto.
 type CreateReservationRequestProto struct {
 	Data struct {
+		// BillingExempt Whether this reservation is exempt from billing (admins only)
+		BillingExempt *bool `json:"billing_exempt,omitempty"`
+
 		// ExecutorId ID of the executor to attach the reservation to
 		ExecutorId string `json:"executor_id"`
 
@@ -716,6 +833,15 @@ type CreateVolumeResponseProto struct {
 	Version string `json:"version"`
 }
 
+// CustomInstancePricing Per-dimension weights (sum to 1.0) for splitting a node's `cost_per_hour`
+// across a custom shape's resources.
+type CustomInstancePricing struct {
+	DiskWeight float64 `json:"disk_weight"`
+	GpuWeight  float64 `json:"gpu_weight"`
+	RamWeight  float64 `json:"ram_weight"`
+	VcpuWeight float64 `json:"vcpu_weight"`
+}
+
 // DataCenterInfo defines model for DataCenterInfo.
 type DataCenterInfo struct {
 	// CountryCode Data center country code
@@ -733,6 +859,9 @@ type DatacenterNetworks struct {
 	Datacenter string        `json:"datacenter"`
 	Networks   []NetworkInfo `json:"networks"`
 }
+
+// DeactivationCause Why a rental was deactivated before reaching the Active state.
+type DeactivationCause string
 
 // DeleteApiKeysRequestProto defines model for DeleteApiKeysRequestProto.
 type DeleteApiKeysRequestProto struct {
@@ -1053,79 +1182,46 @@ type GpuMetrics struct {
 	TensorActivity *float64 `json:"tensor_activity"`
 }
 
-// InstanceAndUsageInfo defines model for InstanceAndUsageInfo.
+// InstanceAndUsageInfo Same shape as `v045::InstanceAndUsageInfo` but with `status: v059::InstanceStatus`
+// (so `Failed` is a valid value) and an extra `failure` field that's populated when
+// the rental ended up in `Failed`.
 type InstanceAndUsageInfo struct {
-	BareMetal *InstanceBareMetalInfo `json:"bare_metal,omitempty"`
+	BareMetal     *InstanceBareMetalInfo  `json:"bare_metal,omitempty"`
+	BillingExempt *bool                   `json:"billing_exempt,omitempty"`
+	Containers    []InstanceContainerInfo `json:"containers"`
+	Cpu           *CpuInfo                `json:"cpu,omitempty"`
+	CpuLimit      *int32                  `json:"cpu_limit"`
+	CpuMask       *string                 `json:"cpu_mask"`
+	CreatedAt     string                  `json:"created_at"`
+	DiskLimit     *int64                  `json:"disk_limit"`
+	Dram          *int64                  `json:"dram"`
+	DramLimit     *int64                  `json:"dram_limit"`
 
-	// BillingExempt Whether this instance is exempt from billing (admins only)
-	BillingExempt *bool `json:"billing_exempt,omitempty"`
+	// Failure Surfaced under `InstanceAndUsageInfo.failure` when a rental ended up in `Failed`.
+	Failure             *RentalFailureInfo        `json:"failure,omitempty"`
+	GpuLimit            *int32                    `json:"gpu_limit"`
+	GpuMask             *string                   `json:"gpu_mask"`
+	Gpus                *[]GpuInfo                `json:"gpus"`
+	HostAddress         *string                   `json:"host_address"`
+	Id                  string                    `json:"id"`
+	InstanceName        *string                   `json:"instance_name"`
+	Instructions        *InstanceUserInstructions `json:"instructions,omitempty"`
+	InternalHostAddress *string                   `json:"internal_host_address"`
+	MigProfile          *string                   `json:"mig_profile"`
+	NodeId              string                    `json:"node_id"`
+	NodeMode            InstanceMode              `json:"node_mode"`
+	NodeStatus          NodeStatus                `json:"node_status"`
+	PortMappings        *[][]interface{}          `json:"port_mappings"`
+	ReservationData     *ReservationDates         `json:"reservation_data,omitempty"`
+	ResourceInfo        *InstanceResourceInfo     `json:"resource_info,omitempty"`
+	SshKeyAuth          bool                      `json:"ssh_key_auth"`
 
-	// Containers Containers running on this instance
-	Containers []InstanceContainerInfo `json:"containers"`
-	Cpu        *CpuInfo                `json:"cpu,omitempty"`
-
-	// CpuLimit Number of CPUs available to the instance
-	CpuLimit *int32 `json:"cpu_limit"`
-
-	// CpuMask CPUs available to instance as a hex number making a bitmask
-	CpuMask *string `json:"cpu_mask"`
-
-	// CreatedAt When the instance was created
-	CreatedAt string `json:"created_at"`
-
-	// DiskLimit GPU information on the instance node
-	// maximum amount of disk space
-	DiskLimit *int64 `json:"disk_limit"`
-
-	// Dram Information about memory on the node
-	Dram *int64 `json:"dram"`
-
-	// DramLimit Maximum amount of DRAM available to the instance
-	DramLimit *int64 `json:"dram_limit"`
-
-	// GpuLimit number of GPUs available to the instance
-	GpuLimit *int32 `json:"gpu_limit"`
-
-	// GpuMask gpus available to instance as a hex number making a bitmask
-	GpuMask *string `json:"gpu_mask"`
-
-	// Gpus GPU models like GeForce RTX 4090
-	Gpus *[]GpuInfo `json:"gpus"`
-
-	// HostAddress instance public IP address (external IP when available, internal IP otherwise)
-	HostAddress *string `json:"host_address"`
-
-	// Id ID of the instance to be used in API calls
-	Id string `json:"id"`
-
-	// InstanceName Human-readable instance name (e.g. "bright-falcon")
-	InstanceName *string                   `json:"instance_name"`
-	Instructions *InstanceUserInstructions `json:"instructions,omitempty"`
-
-	// InternalHostAddress instance internal IP address (for implementation details)
-	InternalHostAddress *string `json:"internal_host_address"`
-
-	// MigProfile MIG profile name if this instance is using a fractional GPU (e.g., "1g.5gb")
-	MigProfile *string `json:"mig_profile"`
-
-	// NodeId ID of the node the instance is running on
-	NodeId          string                `json:"node_id"`
-	NodeMode        InstanceMode          `json:"node_mode"`
-	NodeStatus      NodeStatus            `json:"node_status"`
-	PortMappings    *[][]interface{}      `json:"port_mappings"`
-	ReservationData *ReservationDates     `json:"reservation_data,omitempty"`
-	ResourceInfo    *InstanceResourceInfo `json:"resource_info,omitempty"`
-
-	// SshKeyAuth Whether this instance uses SSH key authentication (true) or password authentication (false)
-	SshKeyAuth bool               `json:"ssh_key_auth"`
-	Status     InstanceStatus     `json:"status"`
-	UsageInfo  *InstanceUsageInfo `json:"usage_info,omitempty"`
-
-	// VirtualMachines Virtual machines running on this instance
+	// Status Adds `Failed` for rentals that never reached `Active`. Distinct type from
+	// `v045::InstanceStatus` so v045 clients keep their original 4-variant contract.
+	Status          InstanceStatus               `json:"status"`
+	UsageInfo       *InstanceUsageInfo           `json:"usage_info,omitempty"`
 	VirtualMachines []InstanceVirtualMachineInfo `json:"virtual_machines"`
-
-	// VolumeMounts Information about volumes mounted on the instance
-	VolumeMounts *[]VolumeInfo `json:"volume_mounts"`
+	VolumeMounts    *[]VolumeInfo                `json:"volume_mounts"`
 }
 
 // InstanceBareMetalInfo defines model for InstanceBareMetalInfo.
@@ -1200,6 +1296,10 @@ type InstanceContainerInfo struct {
 type InstanceInfo struct {
 	// CostPerHour Cost per hour in currency units (cents)
 	CostPerHour int32 `json:"cost_per_hour"`
+
+	// CustomPricing Per-dimension weights (sum to 1.0) for splitting a node's `cost_per_hour`
+	// across a custom shape's resources.
+	CustomPricing *CustomInstancePricing `json:"custom_pricing,omitempty"`
 
 	// Name Instance type name
 	Name string `json:"name"`
@@ -1321,7 +1421,8 @@ type InstanceSshKeySelector2 struct {
 	ById []string `json:"ById"`
 }
 
-// InstanceStatus defines model for InstanceStatus.
+// InstanceStatus Adds `Failed` for rentals that never reached `Active`. Distinct type from
+// `v045::InstanceStatus` so v045 clients keep their original 4-variant contract.
 type InstanceStatus string
 
 // InstanceType defines model for InstanceType.
@@ -2207,6 +2308,21 @@ type NodeSelector1 struct {
 	} `json:"ByNodeId"`
 }
 
+// NodeSelector2 Rent a custom off-catalog configuration on a specific node. Gated by
+// the `allow_custom_instances` flag; available to any user when enabled.
+type NodeSelector2 struct {
+	// ByNodeWithResources Rent a custom off-catalog configuration on a specific node. Gated by
+	// the `allow_custom_instances` flag; available to any user when enabled.
+	ByNodeWithResources struct {
+		// NodeId Node ID to rent on
+		NodeId string `json:"node_id"`
+
+		// Resources Raw hardware resources for a custom (off-catalog) rental. `dram`/`disk`
+		// are in bytes; `vcpu` is the guest vCPU count; `gpu = 0` is CPU-only.
+		Resources ResourceSpec `json:"resources"`
+	} `json:"ByNodeWithResources"`
+}
+
 // NodeStatus defines model for NodeStatus.
 type NodeStatus string
 
@@ -2311,6 +2427,10 @@ type ProviderNodeUtilizationInfo struct {
 
 	// CpuCoresAvailableMask Available CPU cores as a hex number making a bitmask
 	CpuCoresAvailableMask string `json:"cpu_cores_available_mask"`
+
+	// DiskAvailable Disk available for renting, in bytes. `None` when the node reports no
+	// usable storage disk.
+	DiskAvailable *int64 `json:"disk_available"`
 
 	// DramAvailable DRAM available for renting
 	DramAvailable int64 `json:"dram_available"`
@@ -2513,7 +2633,9 @@ type RentInstanceRequestProto struct {
 		// Recipe Recipe name to use for the instance
 		Recipe *string `json:"recipe"`
 
-		// Reservation Parameters for using reservations with instances
+		// Reservation Parameters for using reservations with instances.
+		// `billing_exempt` on `New` skips the prepayment debit on the new
+		// reservation; independent of the rental's billing_exempt flag.
 		Reservation *ReservationParameters `json:"reservation,omitempty"`
 		Selector    NodeSelector           `json:"selector"`
 
@@ -2539,14 +2661,34 @@ type RentInstanceResponseProto struct {
 	Version string `json:"version"`
 }
 
+// RentalFailureInfo Surfaced under `InstanceAndUsageInfo.failure` when a rental ended up in `Failed`.
+type RentalFailureInfo struct {
+	// Cause Why a rental was deactivated before reaching the Active state.
+	Cause DeactivationCause `json:"cause"`
+
+	// Id Stable identifier for this failure record. Surfaced in the UI for the
+	// Report-issue flow so users / support can reference a specific incident.
+	Id string `json:"id"`
+
+	// OccurredAt When the failure was recorded.
+	OccurredAt string `json:"occurred_at"`
+
+	// UserMessage Safe-to-show message. For `PlatformError` this is a stable constant; for the other
+	// causes it includes the relevant detail (image name, exit code, libvirt reason).
+	UserMessage string `json:"user_message"`
+}
+
 // Reservation defines model for Reservation.
 type Reservation struct {
-	BoundResource   string          `json:"bound_resource"`
-	CreatedAt       string          `json:"created_at"`
-	Id              string          `json:"id"`
-	InstanceType    InstanceType    `json:"instance_type"`
-	InstanceVariant InstanceVariant `json:"instance_variant"`
-	ValidTill       string          `json:"valid_till"`
+	// BillingExempt Whether prepayment / extension debits are skipped for this reservation
+	BillingExempt   *bool                 `json:"billing_exempt,omitempty"`
+	BoundResource   string                `json:"bound_resource"`
+	CreatedAt       string                `json:"created_at"`
+	Id              string                `json:"id"`
+	InstanceType    *InstanceType         `json:"instance_type,omitempty"`
+	InstanceVariant *InstanceVariant      `json:"instance_variant,omitempty"`
+	Resources       *ReservationResources `json:"resources,omitempty"`
+	ValidTill       string                `json:"valid_till"`
 }
 
 // ReservationDates defines model for ReservationDates.
@@ -2555,21 +2697,37 @@ type ReservationDates struct {
 	ValidTill string `json:"valid_till"`
 }
 
-// ReservationParameters Parameters for using reservations with instances
+// ReservationParameters Parameters for using reservations with instances.
+// `billing_exempt` on `New` skips the prepayment debit on the new
+// reservation; independent of the rental's billing_exempt flag.
 type ReservationParameters struct {
 	union json.RawMessage
 }
 
-// ReservationParameters0 Create a new reservation with the selected reservation type ID
+// ReservationParameters0 Create a new reservation of the selected type
 type ReservationParameters0 struct {
-	// TypeID Create a new reservation with the selected reservation type ID
-	TypeID string `json:"TypeID"`
+	// New Create a new reservation of the selected type
+	New struct {
+		// BillingExempt Admin-only: skip prepayment debit on the new reservation
+		BillingExempt *bool `json:"billing_exempt,omitempty"`
+
+		// TypeId ID of the reservation type (duration & discount tier)
+		TypeId string `json:"type_id"`
+	} `json:"New"`
 }
 
-// ReservationParameters1 Use an existing reservation by ID
+// ReservationParameters1 Attach an existing unbound reservation by id
 type ReservationParameters1 struct {
-	// ID Use an existing reservation by ID
-	ID string `json:"ID"`
+	// Existing Attach an existing unbound reservation by id
+	Existing string `json:"Existing"`
+}
+
+// ReservationResources defines model for ReservationResources.
+type ReservationResources struct {
+	CpuCount int32  `json:"cpu_count"`
+	Disk     *int64 `json:"disk"`
+	Dram     int64  `json:"dram"`
+	GpuCount *int32 `json:"gpu_count"`
 }
 
 // ReservationSelector defines model for ReservationSelector.
@@ -2600,6 +2758,15 @@ type ResetInstancesRequestProto struct {
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
 	Version string `json:"version"`
+}
+
+// ResourceSpec Raw hardware resources for a custom (off-catalog) rental. `dram`/`disk`
+// are in bytes; `vcpu` is the guest vCPU count; `gpu = 0` is CPU-only.
+type ResourceSpec struct {
+	Disk int64 `json:"disk"`
+	Dram int64 `json:"dram"`
+	Gpu  int32 `json:"gpu"`
+	Vcpu int32 `json:"vcpu"`
 }
 
 // ResourceType defines model for ResourceType.
@@ -2819,14 +2986,8 @@ type SshKey struct {
 	// Name SSH key name
 	Name string `json:"name"`
 
-	// Owner Whether the key is owned by the user
-	Owner bool `json:"owner"`
-
 	// PublicKey SSH key public part
 	PublicKey string `json:"public_key"`
-
-	// UserName SSH User name
-	UserName string `json:"user_name"`
 }
 
 // SshKeySelector defines model for SshKeySelector.
@@ -2854,6 +3015,9 @@ type StartInstancesRequestProto struct {
 
 // StatusSelector Selector for filtering instances by status, with optional scope control.
 type StatusSelector struct {
+	// Limit Maximum number of matching instances to return. Defaults server-side when omitted.
+	Limit *int32 `json:"limit"`
+
 	// Scope Controls which clusters a selector searches.
 	Scope    *SelectorScope   `json:"scope,omitempty"`
 	Statuses []InstanceStatus `json:"statuses"`
@@ -2869,6 +3033,30 @@ type StopInstancesRequestProto struct {
 	Version string `json:"version"`
 }
 
+// StripeCustomerRequestProto defines model for StripeCustomerRequestProto.
+type StripeCustomerRequestProto struct {
+	Data struct {
+		// Create When the Account has no Stripe customer yet: `true`/omitted creates
+		// one server-side; `false` only reads (response id is null if none).
+		Create   *bool           `json:"create"`
+		Selector AccountSelector `json:"selector"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// StripeCustomerResponseProto defines model for StripeCustomerResponseProto.
+type StripeCustomerResponseProto struct {
+	Data struct {
+		// StripeCustomerId Null only when `create=false` and the Account has no customer yet.
+		StripeCustomerId *string `json:"stripe_customer_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
 // StripeTransactionInfo defines model for StripeTransactionInfo.
 type StripeTransactionInfo struct {
 	union json.RawMessage
@@ -2877,6 +3065,9 @@ type StripeTransactionInfo struct {
 // StripeTransactionInfo0 defines model for .
 type StripeTransactionInfo0 struct {
 	Payment struct {
+		// AutoTopUp True when initiated by the auto top-up cron (off-session charge)
+		AutoTopUp *bool `json:"auto_top_up,omitempty"`
+
 		// PaymentIntentId ID of CloudRift payment intent
 		PaymentIntentId string `json:"payment_intent_id"`
 
@@ -3625,6 +3816,15 @@ type VerifyEmailParams struct {
 	Token string `form:"token" json:"token"`
 }
 
+// GetAutoTopUpRecoveryInfoJSONRequestBody defines body for GetAutoTopUpRecoveryInfo for application/json ContentType.
+type GetAutoTopUpRecoveryInfoJSONRequestBody = AutoTopUpRequestProto
+
+// UpdateAutoTopUpJSONRequestBody defines body for UpdateAutoTopUp for application/json ContentType.
+type UpdateAutoTopUpJSONRequestBody = AutoTopUpUpdateRequestProto
+
+// GetOrCreateStripeCustomerJSONRequestBody defines body for GetOrCreateStripeCustomer for application/json ContentType.
+type GetOrCreateStripeCustomerJSONRequestBody = StripeCustomerRequestProto
+
 // CreateExternalTransactionJSONRequestBody defines body for CreateExternalTransaction for application/json ContentType.
 type CreateExternalTransactionJSONRequestBody = ExternalTransactionRequestProto
 
@@ -3816,6 +4016,68 @@ type ListVolumesJSONRequestBody = ListVolumesRequestProto
 
 // UpdateVolumeJSONRequestBody defines body for UpdateVolume for application/json ContentType.
 type UpdateVolumeJSONRequestBody = UpdateVolumeRequestProto
+
+// AsAccountSelector0 returns the union data inside the AccountSelector as a AccountSelector0
+func (t AccountSelector) AsAccountSelector0() (AccountSelector0, error) {
+	var body AccountSelector0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAccountSelector0 overwrites any union data inside the AccountSelector as the provided AccountSelector0
+func (t *AccountSelector) FromAccountSelector0(v AccountSelector0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAccountSelector0 performs a merge with any union data inside the AccountSelector, using the provided AccountSelector0
+func (t *AccountSelector) MergeAccountSelector0(v AccountSelector0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAccountSelector1 returns the union data inside the AccountSelector as a AccountSelector1
+func (t AccountSelector) AsAccountSelector1() (AccountSelector1, error) {
+	var body AccountSelector1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAccountSelector1 overwrites any union data inside the AccountSelector as the provided AccountSelector1
+func (t *AccountSelector) FromAccountSelector1(v AccountSelector1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAccountSelector1 performs a merge with any union data inside the AccountSelector, using the provided AccountSelector1
+func (t *AccountSelector) MergeAccountSelector1(v AccountSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t AccountSelector) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *AccountSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // AsAccountTargetSelector0 returns the union data inside the AccountTargetSelector as a AccountTargetSelector0
 func (t AccountTargetSelector) AsAccountTargetSelector0() (AccountTargetSelector0, error) {
@@ -5229,6 +5491,32 @@ func (t *NodeSelector) FromNodeSelector1(v NodeSelector1) error {
 
 // MergeNodeSelector1 performs a merge with any union data inside the NodeSelector, using the provided NodeSelector1
 func (t *NodeSelector) MergeNodeSelector1(v NodeSelector1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNodeSelector2 returns the union data inside the NodeSelector as a NodeSelector2
+func (t NodeSelector) AsNodeSelector2() (NodeSelector2, error) {
+	var body NodeSelector2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNodeSelector2 overwrites any union data inside the NodeSelector as the provided NodeSelector2
+func (t *NodeSelector) FromNodeSelector2(v NodeSelector2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNodeSelector2 performs a merge with any union data inside the NodeSelector, using the provided NodeSelector2
+func (t *NodeSelector) MergeNodeSelector2(v NodeSelector2) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -6704,8 +6992,23 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// GetAutoTopUpRecoveryInfoWithBody request with any body
+	GetAutoTopUpRecoveryInfoWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetAutoTopUpRecoveryInfo(ctx context.Context, body GetAutoTopUpRecoveryInfoJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateAutoTopUpWithBody request with any body
+	UpdateAutoTopUpWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateAutoTopUp(ctx context.Context, body UpdateAutoTopUpJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetAccountInfo request
 	GetAccountInfo(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrCreateStripeCustomerWithBody request with any body
+	GetOrCreateStripeCustomerWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetOrCreateStripeCustomer(ctx context.Context, body GetOrCreateStripeCustomerJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateExternalTransactionWithBody request with any body
 	CreateExternalTransactionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7061,8 +7364,80 @@ type ClientInterface interface {
 	UpdateVolume(ctx context.Context, body UpdateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+func (c *Client) GetAutoTopUpRecoveryInfoWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAutoTopUpRecoveryInfoRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAutoTopUpRecoveryInfo(ctx context.Context, body GetAutoTopUpRecoveryInfoJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAutoTopUpRecoveryInfoRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateAutoTopUpWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAutoTopUpRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateAutoTopUp(ctx context.Context, body UpdateAutoTopUpJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAutoTopUpRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetAccountInfo(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetAccountInfoRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetOrCreateStripeCustomerWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrCreateStripeCustomerRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetOrCreateStripeCustomer(ctx context.Context, body GetOrCreateStripeCustomerJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrCreateStripeCustomerRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -8741,6 +9116,86 @@ func (c *Client) UpdateVolume(ctx context.Context, body UpdateVolumeJSONRequestB
 	return c.Client.Do(req)
 }
 
+// NewGetAutoTopUpRecoveryInfoRequest calls the generic GetAutoTopUpRecoveryInfo builder with application/json body
+func NewGetAutoTopUpRecoveryInfoRequest(server string, body GetAutoTopUpRecoveryInfoJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetAutoTopUpRecoveryInfoRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewGetAutoTopUpRecoveryInfoRequestWithBody generates requests for GetAutoTopUpRecoveryInfo with any type of body
+func NewGetAutoTopUpRecoveryInfoRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/account/auto-top-up/recovery-info")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewUpdateAutoTopUpRequest calls the generic UpdateAutoTopUp builder with application/json body
+func NewUpdateAutoTopUpRequest(server string, body UpdateAutoTopUpJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateAutoTopUpRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewUpdateAutoTopUpRequestWithBody generates requests for UpdateAutoTopUp with any type of body
+func NewUpdateAutoTopUpRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/account/auto-top-up/update")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetAccountInfoRequest generates requests for GetAccountInfo
 func NewGetAccountInfoRequest(server string) (*http.Request, error) {
 	var err error
@@ -8764,6 +9219,46 @@ func NewGetAccountInfoRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewGetOrCreateStripeCustomerRequest calls the generic GetOrCreateStripeCustomer builder with application/json body
+func NewGetOrCreateStripeCustomerRequest(server string, body GetOrCreateStripeCustomerJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetOrCreateStripeCustomerRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewGetOrCreateStripeCustomerRequestWithBody generates requests for GetOrCreateStripeCustomer with any type of body
+func NewGetOrCreateStripeCustomerRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/account/stripe-customer")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -11728,8 +12223,23 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// GetAutoTopUpRecoveryInfoWithBodyWithResponse request with any body
+	GetAutoTopUpRecoveryInfoWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetAutoTopUpRecoveryInfoResponse, error)
+
+	GetAutoTopUpRecoveryInfoWithResponse(ctx context.Context, body GetAutoTopUpRecoveryInfoJSONRequestBody, reqEditors ...RequestEditorFn) (*GetAutoTopUpRecoveryInfoResponse, error)
+
+	// UpdateAutoTopUpWithBodyWithResponse request with any body
+	UpdateAutoTopUpWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAutoTopUpResponse, error)
+
+	UpdateAutoTopUpWithResponse(ctx context.Context, body UpdateAutoTopUpJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAutoTopUpResponse, error)
+
 	// GetAccountInfoWithResponse request
 	GetAccountInfoWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetAccountInfoResponse, error)
+
+	// GetOrCreateStripeCustomerWithBodyWithResponse request with any body
+	GetOrCreateStripeCustomerWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetOrCreateStripeCustomerResponse, error)
+
+	GetOrCreateStripeCustomerWithResponse(ctx context.Context, body GetOrCreateStripeCustomerJSONRequestBody, reqEditors ...RequestEditorFn) (*GetOrCreateStripeCustomerResponse, error)
 
 	// CreateExternalTransactionWithBodyWithResponse request with any body
 	CreateExternalTransactionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateExternalTransactionResponse, error)
@@ -12085,6 +12595,50 @@ type ClientWithResponsesInterface interface {
 	UpdateVolumeWithResponse(ctx context.Context, body UpdateVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateVolumeResponse, error)
 }
 
+type GetAutoTopUpRecoveryInfoResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AutoTopUpRecoveryInfoProto
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAutoTopUpRecoveryInfoResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAutoTopUpRecoveryInfoResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateAutoTopUpResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AutoTopUpStateProto
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateAutoTopUpResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateAutoTopUpResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetAccountInfoResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -12101,6 +12655,28 @@ func (r GetAccountInfoResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetAccountInfoResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetOrCreateStripeCustomerResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *StripeCustomerResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrCreateStripeCustomerResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrCreateStripeCustomerResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -13736,6 +14312,40 @@ func (r UpdateVolumeResponse) StatusCode() int {
 	return 0
 }
 
+// GetAutoTopUpRecoveryInfoWithBodyWithResponse request with arbitrary body returning *GetAutoTopUpRecoveryInfoResponse
+func (c *ClientWithResponses) GetAutoTopUpRecoveryInfoWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetAutoTopUpRecoveryInfoResponse, error) {
+	rsp, err := c.GetAutoTopUpRecoveryInfoWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAutoTopUpRecoveryInfoResponse(rsp)
+}
+
+func (c *ClientWithResponses) GetAutoTopUpRecoveryInfoWithResponse(ctx context.Context, body GetAutoTopUpRecoveryInfoJSONRequestBody, reqEditors ...RequestEditorFn) (*GetAutoTopUpRecoveryInfoResponse, error) {
+	rsp, err := c.GetAutoTopUpRecoveryInfo(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAutoTopUpRecoveryInfoResponse(rsp)
+}
+
+// UpdateAutoTopUpWithBodyWithResponse request with arbitrary body returning *UpdateAutoTopUpResponse
+func (c *ClientWithResponses) UpdateAutoTopUpWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAutoTopUpResponse, error) {
+	rsp, err := c.UpdateAutoTopUpWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateAutoTopUpResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateAutoTopUpWithResponse(ctx context.Context, body UpdateAutoTopUpJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAutoTopUpResponse, error) {
+	rsp, err := c.UpdateAutoTopUp(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateAutoTopUpResponse(rsp)
+}
+
 // GetAccountInfoWithResponse request returning *GetAccountInfoResponse
 func (c *ClientWithResponses) GetAccountInfoWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetAccountInfoResponse, error) {
 	rsp, err := c.GetAccountInfo(ctx, reqEditors...)
@@ -13743,6 +14353,23 @@ func (c *ClientWithResponses) GetAccountInfoWithResponse(ctx context.Context, re
 		return nil, err
 	}
 	return ParseGetAccountInfoResponse(rsp)
+}
+
+// GetOrCreateStripeCustomerWithBodyWithResponse request with arbitrary body returning *GetOrCreateStripeCustomerResponse
+func (c *ClientWithResponses) GetOrCreateStripeCustomerWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetOrCreateStripeCustomerResponse, error) {
+	rsp, err := c.GetOrCreateStripeCustomerWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrCreateStripeCustomerResponse(rsp)
+}
+
+func (c *ClientWithResponses) GetOrCreateStripeCustomerWithResponse(ctx context.Context, body GetOrCreateStripeCustomerJSONRequestBody, reqEditors ...RequestEditorFn) (*GetOrCreateStripeCustomerResponse, error) {
+	rsp, err := c.GetOrCreateStripeCustomer(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrCreateStripeCustomerResponse(rsp)
 }
 
 // CreateExternalTransactionWithBodyWithResponse request with arbitrary body returning *CreateExternalTransactionResponse
@@ -14932,6 +15559,58 @@ func (c *ClientWithResponses) UpdateVolumeWithResponse(ctx context.Context, body
 	return ParseUpdateVolumeResponse(rsp)
 }
 
+// ParseGetAutoTopUpRecoveryInfoResponse parses an HTTP response from a GetAutoTopUpRecoveryInfoWithResponse call
+func ParseGetAutoTopUpRecoveryInfoResponse(rsp *http.Response) (*GetAutoTopUpRecoveryInfoResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAutoTopUpRecoveryInfoResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AutoTopUpRecoveryInfoProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateAutoTopUpResponse parses an HTTP response from a UpdateAutoTopUpWithResponse call
+func ParseUpdateAutoTopUpResponse(rsp *http.Response) (*UpdateAutoTopUpResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateAutoTopUpResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AutoTopUpStateProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetAccountInfoResponse parses an HTTP response from a GetAccountInfoWithResponse call
 func ParseGetAccountInfoResponse(rsp *http.Response) (*GetAccountInfoResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -14948,6 +15627,32 @@ func ParseGetAccountInfoResponse(rsp *http.Response) (*GetAccountInfoResponse, e
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest AccountInfoProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetOrCreateStripeCustomerResponse parses an HTTP response from a GetOrCreateStripeCustomerWithResponse call
+func ParseGetOrCreateStripeCustomerResponse(rsp *http.Response) (*GetOrCreateStripeCustomerResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrCreateStripeCustomerResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest StripeCustomerResponseProto
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

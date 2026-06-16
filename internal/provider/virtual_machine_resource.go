@@ -376,10 +376,13 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			// This avoids waiting for the full timeout when the VM cannot be provisioned.
 			// Note: Inactive is not checked here because GetInstance already
 			// converts it to ErrNotFound, which is handled above.
-			if last.Status == cloudriftapi.Deactivating {
+			if last.Status == cloudriftapi.InstanceStatusDeactivating ||
+				last.Status == cloudriftapi.InstanceStatusFailed {
 				// Hard failure: release the VM and leave no Terraform state,
 				// so the next apply produces a fresh create rather than
 				// attempting to destroy a stuck-Deactivating zombie.
+				// Failed marks a rental that never reached Active (server
+				// 0.59.0+); it is terminal, so abort the poll immediately.
 				abandonRentedInstance(fmt.Sprintf("instance reached terminal status %q", last.Status))
 				resp.Diagnostics.AddError(
 					"Virtual Machine provisioning failed",
@@ -425,7 +428,7 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 				"host_address": hostAddr,
 			})
 
-			if last.Status == cloudriftapi.Active && vmReady && ipReady {
+			if last.Status == cloudriftapi.InstanceStatusActive && vmReady && ipReady {
 				savePartialState()
 				return
 			}
@@ -541,7 +544,7 @@ func (r *virtualMachineResource) Delete(ctx context.Context, req resource.Delete
 				)
 				return
 			}
-			if current.Status == cloudriftapi.Deactivating {
+			if current.Status == cloudriftapi.InstanceStatusDeactivating {
 				return
 			}
 		}
