@@ -488,7 +488,7 @@ func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
 		}
 		resp.Data.Instances = slices.DeleteFunc(resp.Data.Instances, func(i InstanceAndUsageInfo) bool {
 			switch i.Status {
-			case Active, Initializing, Deactivating:
+			case InstanceStatusActive, InstanceStatusInitializing, InstanceStatusDeactivating:
 				return false
 			default:
 				return true
@@ -499,9 +499,9 @@ func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
 	var selector InstancesSelector
 	statuses := StatusSelector{
 		Statuses: []InstanceStatus{
-			Active,
-			Initializing,
-			Deactivating,
+			InstanceStatusActive,
+			InstanceStatusInitializing,
+			InstanceStatusDeactivating,
 		},
 	}
 	if err := selector.FromInstancesSelector1(InstancesSelector1{ByStatus: statuses}); err != nil {
@@ -518,7 +518,7 @@ func (c *HttpClient) GetInstance(id string) (*InstanceAndUsageInfo, error) {
 
 	for _, i := range instances.Data.Instances {
 		if i.Id == id {
-			if i.Status == Inactive {
+			if i.Status == InstanceStatusInactive {
 				// listing ById will return the Instance
 				// thus, check if still active.
 				return nil, ErrNotFound

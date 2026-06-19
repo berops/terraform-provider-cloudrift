@@ -95,86 +95,55 @@ func Test_VirtualMachineResrouce(t *testing.T) {
 	})
 }
 
-func Test_VirtualMachineResource_FailsOnInactiveStatus(t *testing.T) {
+// Test_VirtualMachineResource_FailsOnTerminalStatus covers every instance
+// status that must abort Create and best-effort terminate the rented VM so it
+// doesn't leak. Inactive is special: GetInstance converts it to ErrNotFound at
+// the client level, so the provider reports a poll error rather than the status.
+func Test_VirtualMachineResource_FailsOnTerminalStatus(t *testing.T) {
 	t.Parallel()
 
 	keyName := "anotheruser-key"
 	publicKey := "ssh-rsa AAAA anotheruser"
 
-	// Simulate a VM that goes Inactive after rent (e.g. no capacity).
-	// Note: GetInstance converts Inactive to ErrNotFound at the client level,
-	// so the provider sees a "resource not found" error rather than the status.
-	server, terminateCalls := newVMTestServerWithStatus(keyName, publicKey, "Inactive", false)
+	for _, tc := range []struct {
+		status  string
+		wantErr string
+	}{
+		{"Inactive", `failed to poll status`},
+		{"Deactivating", `reached terminal status "Deactivating"`},
+		{"Failed", `reached terminal status "Failed"`}, // server 0.59.0+
+	} {
+		t.Run(tc.status, func(t *testing.T) {
+			t.Parallel()
 
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
-					resource "cloudrift_ssh_key" "primary" {
-					  name       = "%s"
-					  public_key = "%s"
-					}
+			server, terminateCalls := newVMTestServerWithStatus(keyName, publicKey, tc.status, false)
 
-					resource "cloudrift_virtual_machine" "machine0" {
-					  recipe        = "ubuntu"
-					  datacenter    = "us-east-nc-nr-1"
-					  instance_type = "rtx49-10c-kn.1"
-					  ssh_key_id    = cloudrift_ssh_key.primary.id
-					}
-				`, keyName, publicKey),
-				ExpectError: regexp.MustCompile(`failed to poll status`),
-			},
-		},
-	})
+			resource.Test(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
+							resource "cloudrift_ssh_key" "primary" {
+							  name       = "%s"
+							  public_key = "%s"
+							}
 
-	// Same contract as the Deactivating path: on any hard failure during
-	// provisioning, Create must best-effort terminate the rented instance to
-	// keep behavior symmetric and avoid relying on the backend to always
-	// deactivate on its own.
-	if got := atomic.LoadInt32(terminateCalls); got < 1 {
-		t.Fatalf("expected Create to call /instances/terminate at least once on Inactive failure, got %d calls", got)
-	}
-}
+							resource "cloudrift_virtual_machine" "machine0" {
+							  recipe        = "ubuntu"
+							  datacenter    = "us-east-nc-nr-1"
+							  instance_type = "rtx49-10c-kn.1"
+							  ssh_key_id    = cloudrift_ssh_key.primary.id
+							}
+						`, keyName, publicKey),
+						ExpectError: regexp.MustCompile(tc.wantErr),
+					},
+				},
+			})
 
-func Test_VirtualMachineResource_FailsOnDeactivatingStatus(t *testing.T) {
-	t.Parallel()
-
-	keyName := "anotheruser-key"
-	publicKey := "ssh-rsa AAAA anotheruser"
-
-	// Simulate a VM that goes Deactivating after rent.
-	server, terminateCalls := newVMTestServerWithStatus(keyName, publicKey, "Deactivating", false)
-
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
-					resource "cloudrift_ssh_key" "primary" {
-					  name       = "%s"
-					  public_key = "%s"
-					}
-
-					resource "cloudrift_virtual_machine" "machine0" {
-					  recipe        = "ubuntu"
-					  datacenter    = "us-east-nc-nr-1"
-					  instance_type = "rtx49-10c-kn.1"
-					  ssh_key_id    = cloudrift_ssh_key.primary.id
-					}
-				`, keyName, publicKey),
-				ExpectError: regexp.MustCompile(`reached terminal status "Deactivating"`),
-			},
-		},
-	})
-
-	// When Create fails on a terminal status, the provider must best-effort
-	// terminate the rented instance so it doesn't leak on the backend while
-	// Terraform's state is left empty. At least one terminate call is
-	// required; additional calls during test-framework cleanup are allowed
-	// but not required (state should be empty so cleanup is a no-op).
-	if got := atomic.LoadInt32(terminateCalls); got < 1 {
-		t.Fatalf("expected Create to call /instances/terminate at least once to release the failed VM, got %d calls", got)
+			if got := atomic.LoadInt32(terminateCalls); got < 1 {
+				t.Fatalf("expected Create to call /instances/terminate at least once to release the failed VM, got %d calls", got)
+			}
+		})
 	}
 }
 
@@ -185,7 +154,7 @@ func Test_VirtualMachineResource_FailsOnDeactivatingStatus(t *testing.T) {
 // server has observed — used to verify best-effort cleanup on failed creates.
 func newVMTestServerWithStatus(keyName, publicKey, status string, vmReady bool) (*httptest.Server, *int32) {
 	var terminateCalls int32
-	terminated := false
+	var terminated int32 // atomic: written by /terminate, read by /list concurrently
 
 	instanceResponse := fmt.Sprintf(`
 	{
@@ -219,13 +188,13 @@ func newVMTestServerWithStatus(keyName, publicKey, status string, vmReady bool) 
 	server := defaultHttpTestServer(map[string]func(w http.ResponseWriter, req *http.Request){
 		"/api/v1/instances/terminate": func(w http.ResponseWriter, _ *http.Request) {
 			atomic.AddInt32(&terminateCalls, 1)
-			terminated = true
+			atomic.StoreInt32(&terminated, 1)
 			w.WriteHeader(http.StatusOK)
 		},
 		"/api/v1/instances/list": func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "json")
 			w.WriteHeader(http.StatusOK)
-			if terminated {
+			if atomic.LoadInt32(&terminated) == 1 {
 				_, _ = w.Write([]byte(`{"data": {"instances": []}}`))
 				return
 			}

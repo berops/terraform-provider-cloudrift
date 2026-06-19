@@ -169,7 +169,7 @@ func TestAcc_VirtualMachineResource(t *testing.T) {
 	instance := findCheapestAvailableInstance(t)
 
 	keyName := fmt.Sprintf("ci-test-vm-%d", time.Now().UnixNano())
-	recipe := "Ubuntu 22.04 Server (NVidia)"
+	recipe := "Ubuntu 24.04 Server"
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
