@@ -171,13 +171,12 @@ func TestAcc_VirtualMachineResource(t *testing.T) {
 	keyName := fmt.Sprintf("ci-test-vm-%d", time.Now().UnixNano())
 	recipe := "Ubuntu 24.04 Server"
 
-	// Name the VM after the PR (or "local" when run outside CI) plus a random
-	// id, so dashboard entries are traceable instead of randomly named.
-	prNumber := os.Getenv("PR_NUMBER")
-	if prNumber == "" {
-		prNumber = "local"
+	// Name the VM after the PR (or "master" for non-PR runs) plus a random id,
+	// so dashboard entries are traceable instead of randomly named.
+	vmName := fmt.Sprintf("provider-test-master-%d", time.Now().UnixNano())
+	if pr := os.Getenv("PR_NUMBER"); pr != "" {
+		vmName = fmt.Sprintf("provider-test-pr-%s-%d", pr, time.Now().UnixNano())
 	}
-	vmName := fmt.Sprintf("acc-test-pr-%s-%d", prNumber, time.Now().UnixNano())
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
