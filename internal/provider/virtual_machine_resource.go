@@ -65,6 +65,7 @@ type virtualMachineModel struct {
 	PortMappings    types.List `tfsdk:"port_mappings"`
 
 	// Write only attributes.
+	Name       types.String                 `tfsdk:"name"`
 	Metadata   *virtualMachineMetadataModel `tfsdk:"metadata"`
 	Recipe     types.String                 `tfsdk:"recipe"`
 	Datacenter types.String                 `tfsdk:"datacenter"`
@@ -203,6 +204,13 @@ func (r *virtualMachineResource) Schema(_ context.Context, req resource.SchemaRe
 					},
 				},
 			},
+			"name": schema.StringAttribute{
+				MarkdownDescription: "Optional name for the Virtual Machine, shown in the CloudRift dashboard. Changing it forces replacement.",
+				Optional:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
 			"recipe": schema.StringAttribute{
 				MarkdownDescription: "The Base Image used for the Virtual Machine",
 				Required:            true,
@@ -271,6 +279,7 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 		plan.Datacenter.ValueString(),
 		plan.InstanceType.ValueString(),
 		startupCommands,
+		plan.Name.ValueString(),
 		[]string{matched.PublicKey},
 	)
 	if err != nil {

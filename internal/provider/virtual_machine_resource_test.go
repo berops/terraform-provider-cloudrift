@@ -66,6 +66,56 @@ func Test_VirtualMachineResource_TeamId(t *testing.T) {
 	})
 }
 
+func Test_VirtualMachineResource_Name(t *testing.T) {
+	t.Parallel()
+
+	keyName := "anotheruser-key"
+	publicKey := "ssh-rsa AAAA anotheruser"
+	vmName := "mycluster-a3f2-pool1-01"
+	var capturedName string
+
+	server := newVMTestServer(keyName, publicKey, func(req *http.Request) {
+		body, _ := io.ReadAll(req.Body)
+		var parsed struct {
+			Data struct {
+				Name *string `json:"name"`
+			} `json:"data"`
+		}
+		_ = json.Unmarshal(body, &parsed)
+		if parsed.Data.Name != nil {
+			capturedName = *parsed.Data.Name
+		}
+	})
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
+					resource "cloudrift_ssh_key" "primary" {
+					  name       = "%s"
+					  public_key = "%s"
+					}
+
+					resource "cloudrift_virtual_machine" "machine0" {
+					  name          = "%s"
+					  recipe        = "ubuntu"
+					  datacenter    = "us-east-nc-nr-1"
+					  instance_type = "rtx49-10c-kn.1"
+					  ssh_key_id    = cloudrift_ssh_key.primary.id
+					}
+				`, keyName, publicKey, vmName),
+				Check: resource.TestCheckFunc(func(s *terraform.State) error {
+					if capturedName != vmName {
+						return fmt.Errorf("expected name %q in rent request, got %q", vmName, capturedName)
+					}
+					return nil
+				}),
+			},
+		},
+	})
+}
+
 func Test_VirtualMachineResrouce(t *testing.T) {
 	t.Parallel()
 
