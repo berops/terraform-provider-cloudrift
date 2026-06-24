@@ -171,6 +171,13 @@ func TestAcc_VirtualMachineResource(t *testing.T) {
 	keyName := fmt.Sprintf("ci-test-vm-%d", time.Now().UnixNano())
 	recipe := "Ubuntu 24.04 Server"
 
+	// Name the VM after the PR (or "master" for non-PR runs) plus a random id,
+	// so dashboard entries are traceable instead of randomly named.
+	vmName := fmt.Sprintf("provider-test-master-%d", time.Now().UnixNano())
+	if pr := os.Getenv("PR_NUMBER"); pr != "" {
+		vmName = fmt.Sprintf("provider-test-pr-%s-%d", pr, time.Now().UnixNano())
+	}
+
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -184,13 +191,15 @@ func TestAcc_VirtualMachineResource(t *testing.T) {
 					}
 
 					resource "cloudrift_virtual_machine" "test" {
+						name          = %q
 						recipe        = %q
 						datacenter    = %q
 						instance_type = %q
 						ssh_key_id    = cloudrift_ssh_key.test.id
 					}
-				`, keyName, sshPublicKey, recipe, instance.datacenter, instance.variantName),
+				`, keyName, sshPublicKey, vmName, recipe, instance.datacenter, instance.variantName),
 				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("cloudrift_virtual_machine.test", "name", vmName),
 					resource.TestCheckResourceAttrSet("cloudrift_virtual_machine.test", "id"),
 					resource.TestCheckResourceAttrSet("cloudrift_virtual_machine.test", "public_ip"),
 					resource.TestCheckResourceAttr("cloudrift_virtual_machine.test", "status", "Active"),

@@ -25,6 +25,7 @@ Manage virtualMachines
 ### Optional
 
 - `metadata` (Attributes) Option to provide metadata. Currently supported is `startup_commands`. (see [below for nested schema](#nestedatt--metadata))
+- `name` (String) Optional name for the Virtual Machine, shown in the CloudRift dashboard. Changing it forces replacement.
 
 ### Read-Only
 
