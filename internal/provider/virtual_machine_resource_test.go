@@ -66,6 +66,86 @@ func Test_VirtualMachineResource_TeamId(t *testing.T) {
 	})
 }
 
+// A freshly rented VM can be missing from the first poll (eventual consistency)
+// or briefly Inactive. Create must keep polling through that not-found rather
+// than hard-failing on it.
+func Test_VirtualMachineResource_ToleratesTransientNotFound(t *testing.T) {
+	t.Parallel()
+
+	keyName := "anotheruser-key"
+	publicKey := "ssh-rsa AAAA anotheruser"
+
+	activeResponse := `
+	{
+		"data": {
+			"instances": [
+				{
+					"id": "1",
+					"node_id": "1",
+					"node_mode": "Virtual Machine",
+					"node_status": "Ready",
+					"host_address": "127.0.0.1",
+					"virtual_machines": [{"vmid": 100, "name": "vm-1", "ready": true}],
+					"status": "Active"
+				}
+			]
+		}
+	}`
+
+	var listCalls, terminated int32
+	server := defaultHttpTestServer(map[string]func(w http.ResponseWriter, req *http.Request){
+		"/api/v1/instances/list": func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			// After terminate (destroy step), report gone so Delete converges.
+			// Otherwise: first poll not listed yet, subsequent polls Active.
+			if atomic.LoadInt32(&terminated) == 1 || atomic.AddInt32(&listCalls, 1) <= 1 {
+				_, _ = w.Write([]byte(`{"data":{"instances":[]}}`))
+				return
+			}
+			_, _ = w.Write([]byte(activeResponse))
+		},
+		"/api/v1/instances/terminate": func(w http.ResponseWriter, _ *http.Request) {
+			atomic.StoreInt32(&terminated, 1)
+			w.WriteHeader(http.StatusOK)
+		},
+		"/api/v1/instances/rent": func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"data":{"instance_ids":["1"]}}`))
+		},
+		"/api/v1/ssh-keys/add":   sshKeyAddHandler(),
+		"/api/v1/ssh-keys/list":  sshKeyListHandlerWithKey(keyName, publicKey),
+		"/api/v1/ssh-keys/11111": sshKeyDeleteHandler(),
+	})
+	defer server.Close()
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
+					resource "cloudrift_ssh_key" "primary" {
+					  name       = "%s"
+					  public_key = "%s"
+					}
+
+					resource "cloudrift_virtual_machine" "machine0" {
+					  recipe        = "ubuntu"
+					  datacenter    = "us-east-nc-nr-1"
+					  instance_type = "rtx49-10c-kn.1"
+					  ssh_key_id    = cloudrift_ssh_key.primary.id
+					}
+				`, keyName, publicKey),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("cloudrift_virtual_machine.machine0", "id", "1"),
+					resource.TestCheckResourceAttr("cloudrift_virtual_machine.machine0", "status", "Active"),
+				),
+			},
+		},
+	})
+}
+
 func Test_VirtualMachineResource_Name(t *testing.T) {
 	t.Parallel()
 
@@ -147,8 +227,9 @@ func Test_VirtualMachineResrouce(t *testing.T) {
 
 // Test_VirtualMachineResource_FailsOnTerminalStatus covers every instance
 // status that must abort Create and best-effort terminate the rented VM so it
-// doesn't leak. Inactive is special: GetInstance converts it to ErrNotFound at
-// the client level, so the provider reports a poll error rather than the status.
+// doesn't leak. A freshly rented VM that is listed as Inactive has failed to
+// come up, so Create treats it as terminal (a not-yet-listed id, by contrast,
+// keeps polling — see Test_VirtualMachineResource_ToleratesTransientNotFound).
 func Test_VirtualMachineResource_FailsOnTerminalStatus(t *testing.T) {
 	t.Parallel()
 
@@ -159,7 +240,7 @@ func Test_VirtualMachineResource_FailsOnTerminalStatus(t *testing.T) {
 		status  string
 		wantErr string
 	}{
-		{"Inactive", `failed to poll status`},
+		{"Inactive", `reached terminal status "Inactive"`},
 		{"Deactivating", `reached terminal status "Deactivating"`},
 		{"Failed", `reached terminal status "Failed"`}, // server 0.59.0+
 	} {

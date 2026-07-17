@@ -36,9 +36,25 @@ const (
 
 type HttpClientOption func(*HttpClient)
 
+// DefaultRequestTimeout caps how long a single request waits for response
+// headers. It must tolerate a heavy team-wide /instances/list (the ByTeamId
+// path returns every team instance); the old 10s tripped on large teams and
+// hard-failed Read, wedging the whole apply. Override with WithTimeout.
+const DefaultRequestTimeout = 30 * time.Second
+
 func WithRetryableHttpClient(retries int) HttpClientOption {
 	return func(hc *HttpClient) {
 		hc.retries = retries
+	}
+}
+
+// WithTimeout overrides the HTTP client timeout. A non-positive duration is
+// ignored, leaving DefaultRequestTimeout in place.
+func WithTimeout(d time.Duration) HttpClientOption {
+	return func(hc *HttpClient) {
+		if d > 0 {
+			hc.HTTPClient.Timeout = d
+		}
 	}
 }
 
@@ -63,7 +79,7 @@ func NewCustom(endpoint, token, protoVersion, teamID string, opts ...HttpClientO
 		auth:    AuthData{Token: token},
 		retries: 0,
 		HTTPClient: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: DefaultRequestTimeout,
 		},
 		ProtoVersion: protoVersion,
 		TeamID:       teamID,
@@ -511,6 +527,25 @@ func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
 		return nil, err
 	}
 	return c.listInstances(selector)
+}
+
+// GetInstanceIncludingInactive is like GetInstance but returns the instance
+// even when its status is Inactive, returning ErrNotFound only when the id is
+// absent from the list. Create uses it to tell a terminal Inactive apart from
+// an id that is simply not listed yet (eventual consistency right after rent).
+func (c *HttpClient) GetInstanceIncludingInactive(id string) (*InstanceAndUsageInfo, error) {
+	instances, err := c.listInstancesForGet(id)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, i := range instances.Data.Instances {
+		if i.Id == id {
+			return &i, nil
+		}
+	}
+
+	return nil, ErrNotFound
 }
 
 func (c *HttpClient) GetInstance(id string) (*InstanceAndUsageInfo, error) {
