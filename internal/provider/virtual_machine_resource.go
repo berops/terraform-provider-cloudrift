@@ -360,18 +360,22 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			return
 
 		case <-time.After(InstancePollingInterval):
-			current, err := r.client.GetInstance(id)
+			current, err := r.client.GetInstanceIncludingInactive(id)
 			if err != nil {
 				if errors.Is(err, cloudriftapi.ErrNotFound) {
-					// Hard failure: the instance is gone (Inactive or not
-					// listed). Best-effort terminate to stay consistent with
-					// the other hard-failure branches, and leave no state.
-					abandonRentedInstance("instance not found during provisioning (Inactive or removed)")
-				} else {
-					// Transient polling error: the VM may still be healthy,
-					// persist state so a retry can reconcile.
-					savePartialState()
+					// The rent call already returned this id, so a not-found
+					// here means the instance is not listed yet (eventual
+					// consistency right after rent). Keep polling instead of
+					// treating it as terminal; a VM that never appears is
+					// released by the <-deadline case. A listed-but-Inactive
+					// instance is a real terminal state and is handled below.
+					tflog.Debug(ctx, "rented instance not listed yet, continuing to poll", map[string]any{"id": id})
+					continue // next poll tick of the outer for
+
 				}
+				// Transient polling error: the VM may still be healthy,
+				// persist state so a retry can reconcile.
+				savePartialState()
 				resp.Diagnostics.AddError(
 					"Error creating Virtual Machine",
 					"Could not create Virtual Machine, failed to poll status of the rented Virtual Machine ID: "+id+" : "+err.Error(),
@@ -382,10 +386,11 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 			last = current
 
 			// Fail fast if the instance entered a terminal non-success state.
-			// This avoids waiting for the full timeout when the VM cannot be provisioned.
-			// Note: Inactive is not checked here because GetInstance already
-			// converts it to ErrNotFound, which is handled above.
-			if last.Status == cloudriftapi.InstanceStatusDeactivating ||
+			// This avoids waiting for the full timeout when the VM cannot be
+			// provisioned. A freshly rented VM that is Inactive (rather than
+			// Initializing) has failed to come up, so it is terminal here.
+			if last.Status == cloudriftapi.InstanceStatusInactive ||
+				last.Status == cloudriftapi.InstanceStatusDeactivating ||
 				last.Status == cloudriftapi.InstanceStatusFailed {
 				// Hard failure: release the VM and leave no Terraform state,
 				// so the next apply produces a fresh create rather than

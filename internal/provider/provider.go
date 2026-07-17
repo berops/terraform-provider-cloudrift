@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/berops/terraform-provider-cloudrift/pkg/cloudriftapi"
 
@@ -36,6 +37,10 @@ type CloudRiftProviderModel struct {
 
 	// Optional Team ID for team-scoped operations (instance provisioning).
 	TeamID types.String `tfsdk:"team_id"`
+
+	// Optional per-request HTTP timeout (Go duration string, e.g. "30s").
+	// If not set the provider uses cloudriftapi.DefaultRequestTimeout.
+	RequestTimeout types.String `tfsdk:"request_timeout"`
 }
 
 type CloudRiftProvider struct {
@@ -79,6 +84,13 @@ func (p *CloudRiftProvider) Schema(ctx context.Context, req provider.SchemaReque
 				Description:         "Team ID for team-scoped operations (instance provisioning). May also be provided via CLOUDRIFT_TEAM_ID environment variable.",
 				MarkdownDescription: "Team ID for team-scoped operations (instance provisioning). May also be provided via CLOUDRIFT_TEAM_ID environment variable.",
 				Optional:            true,
+			},
+			"request_timeout": schema.StringAttribute{
+				Description: "Per-request HTTP timeout as a Go duration string (e.g. \"30s\", \"1m\"). Raise it if the CloudRift API is slow to respond on large teams. Defaults to 30s. " +
+					"May also be provided via CLOUDRIFT_REQUEST_TIMEOUT environment variable.",
+				MarkdownDescription: "Per-request HTTP timeout as a Go duration string (e.g. `30s`, `1m`). Raise it if the CloudRift API is slow to respond on large teams. Defaults to 30s. " +
+					"May also be provided via CLOUDRIFT_REQUEST_TIMEOUT environment variable.",
+				Optional: true,
 			},
 		},
 	}
@@ -128,6 +140,15 @@ func (p *CloudRiftProvider) Configure(ctx context.Context, req provider.Configur
 		)
 	}
 
+	if config.RequestTimeout.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("request_timeout"),
+			"Unknown CloudRift Request Timeout",
+			"The provider cannot create the CloudRift API client as there is an unknown configuration for the CloudRift request timeout."+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the CLOUDRIFT_REQUEST_TIMEOUT environment variable.",
+		)
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -136,6 +157,7 @@ func (p *CloudRiftProvider) Configure(ctx context.Context, req provider.Configur
 	baseURL := os.Getenv("CLOUDRIFT_BASE_URL")
 	protoVersion := os.Getenv("CLOUDRIFT_PROTO_VERSION")
 	teamID := os.Getenv("CLOUDRIFT_TEAM_ID")
+	requestTimeout := os.Getenv("CLOUDRIFT_REQUEST_TIMEOUT")
 
 	if !config.Token.IsNull() {
 		token = config.Token.ValueString()
@@ -151,6 +173,10 @@ func (p *CloudRiftProvider) Configure(ctx context.Context, req provider.Configur
 
 	if !config.TeamID.IsNull() {
 		teamID = config.TeamID.ValueString()
+	}
+
+	if !config.RequestTimeout.IsNull() {
+		requestTimeout = config.RequestTimeout.ValueString()
 	}
 
 	if baseURL == "" {
@@ -174,11 +200,30 @@ func (p *CloudRiftProvider) Configure(ctx context.Context, req provider.Configur
 		)
 	}
 
+	timeout := cloudriftapi.DefaultRequestTimeout
+	if requestTimeout != "" {
+		d, err := time.ParseDuration(requestTimeout)
+		if err != nil || d <= 0 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("request_timeout"),
+				"Invalid CloudRift Request Timeout",
+				"request_timeout must be a positive Go duration string (e.g. \"30s\", \"1m\"), got: "+requestTimeout,
+			)
+			return
+		}
+		timeout = d
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	client, err := cloudriftapi.NewCustom(baseURL, token, protoVersion, teamID, cloudriftapi.WithRetryableHttpClient(4))
+	// retries kept low: each attempt now has a generous timeout, so 3 attempts
+	// max is a bounded worst case rather than many short hangs.
+	client, err := cloudriftapi.NewCustom(baseURL, token, protoVersion, teamID,
+		cloudriftapi.WithRetryableHttpClient(2),
+		cloudriftapi.WithTimeout(timeout),
+	)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to create CloudRift API Client",
