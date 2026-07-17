@@ -59,5 +59,6 @@ also set `team_id` or `CLOUDRIFT_TEAM_ID`.
 
 - `base_url` (String) Base URL for the CloudRift platform API. If not specified the provider has a built in default Base URL that will be used.May also be provided via CLOUDRIFT_BASE_URL environment variable.
 - `proto_version` (String) Protocol Version to be used for the CloudRift platform API.If not specified the provider has a built in default version that will be used. May also be provided via CLOUDRIFT_PROTO_VERSION environment variable.
+- `request_timeout` (String) Per-request HTTP timeout as a Go duration string (e.g. `30s`, `1m`). Raise it if the CloudRift API is slow to respond on large teams. Defaults to 30s. May also be provided via CLOUDRIFT_REQUEST_TIMEOUT environment variable.
 - `team_id` (String) Team ID for team-scoped operations (instance provisioning). May also be provided via CLOUDRIFT_TEAM_ID environment variable.
 - `token` (String, Sensitive) Token for CloudRift platform API. May also be provided via CLOUDRIFT_TOKEN environment variable.
