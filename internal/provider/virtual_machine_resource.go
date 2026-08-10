@@ -603,9 +603,18 @@ func populateModelFromInstanceResponse(m *virtualMachineModel, data *cloudriftap
 			VmID: types.Int64Value(int64(vm.Vmid)),
 			Name: types.StringValue(vm.Name),
 		}
+		// Username lives in whichever login-info variant the server returns:
+		// UsernameAndPassword, Username (SSH-key only), or HiddenPassword
+		// (with_credentials not requested, since API v061). The union has no
+		// discriminator, so As*() never errors on a mismatched variant, it just
+		// yields empty fields; pick whichever one actually carries a username.
 		if login := vm.LoginInfo; login != nil {
-			if login, err := login.AsInstanceLoginInfo0(); err == nil {
-				model.Username = types.StringValue(login.UsernameAndPassword.Username)
+			if v, err := login.AsInstanceLoginInfo0(); err == nil && v.UsernameAndPassword.Username != "" {
+				model.Username = types.StringValue(v.UsernameAndPassword.Username)
+			} else if v, err := login.AsInstanceLoginInfo1(); err == nil && v.Username.Username != "" {
+				model.Username = types.StringValue(v.Username.Username)
+			} else if v, err := login.AsInstanceLoginInfo2(); err == nil && v.HiddenPassword.Username != "" {
+				model.Username = types.StringValue(v.HiddenPassword.Username)
 			}
 		}
 

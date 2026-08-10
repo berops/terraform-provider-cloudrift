@@ -614,3 +614,88 @@ func Test_PopulateModelFromInstanceResponse_NullableFields(t *testing.T) {
 		})
 	}
 }
+
+// Test_PopulateModelFromInstanceResponse_LoginInfoVariants guards username
+// extraction across all three InstanceLoginInfo variants. Since API v061,
+// /instances/list defaults with_credentials=false and returns the
+// HiddenPassword variant, which the provider must still read the username from.
+func Test_PopulateModelFromInstanceResponse_LoginInfoVariants(t *testing.T) {
+	t.Parallel()
+
+	usernameAndPassword := func() *cloudriftapi.InstanceLoginInfo {
+		var li cloudriftapi.InstanceLoginInfo
+		var v cloudriftapi.InstanceLoginInfo0
+		v.UsernameAndPassword.Username = "up-user"
+		v.UsernameAndPassword.Password = "secret"
+		if err := li.FromInstanceLoginInfo0(v); err != nil {
+			t.Fatal(err)
+		}
+		return &li
+	}
+	usernameOnly := func() *cloudriftapi.InstanceLoginInfo {
+		var li cloudriftapi.InstanceLoginInfo
+		var v cloudriftapi.InstanceLoginInfo1
+		v.Username.Username = "ssh-user"
+		if err := li.FromInstanceLoginInfo1(v); err != nil {
+			t.Fatal(err)
+		}
+		return &li
+	}
+	hiddenPassword := func() *cloudriftapi.InstanceLoginInfo {
+		var li cloudriftapi.InstanceLoginInfo
+		var v cloudriftapi.InstanceLoginInfo2
+		v.HiddenPassword.Username = "hidden-user"
+		if err := li.FromInstanceLoginInfo2(v); err != nil {
+			t.Fatal(err)
+		}
+		return &li
+	}
+
+	tests := []struct {
+		name      string
+		loginInfo *cloudriftapi.InstanceLoginInfo
+		want      string
+	}{
+		{"UsernameAndPassword", usernameAndPassword(), "up-user"},
+		{"Username (SSH-key only)", usernameOnly(), "ssh-user"},
+		{"HiddenPassword (v061 default)", hiddenPassword(), "hidden-user"},
+		{"nil login_info", nil, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			data := &cloudriftapi.InstanceAndUsageInfo{
+				VirtualMachines: []cloudriftapi.InstanceVirtualMachineInfo{
+					{Vmid: 1, Name: "vm-1", LoginInfo: tt.loginInfo},
+				},
+			}
+
+			var m virtualMachineModel
+			diags := populateModelFromInstanceResponse(&m, data)
+			for _, d := range diags {
+				if d.Severity() == diag.SeverityError {
+					t.Fatalf("unexpected error diagnostic: %s — %s", d.Summary(), d.Detail())
+				}
+			}
+
+			elems := m.VirtualMachines.Elements()
+			if len(elems) != 1 {
+				t.Fatalf("VirtualMachines: got %d elements, want 1", len(elems))
+			}
+			obj, ok := elems[0].(types.Object)
+			if !ok {
+				t.Fatalf("VirtualMachines[0]: got %T, want types.Object", elems[0])
+			}
+			username := obj.Attributes()["username"]
+			want := types.StringNull()
+			if tt.want != "" {
+				want = types.StringValue(tt.want)
+			}
+			if !username.Equal(want) {
+				t.Errorf("username: got %v, want %v", username, want)
+			}
+		})
+	}
+}
