@@ -208,3 +208,61 @@ func TestAcc_VirtualMachineResource(t *testing.T) {
 		},
 	})
 }
+
+// pinnedUbuntuCloudImageURL is a dated (non-"current") Ubuntu 24.04 cloud
+// image build, used instead of the "recipe" catalog to test the image_url
+// attribute end-to-end against the real API.
+const pinnedUbuntuCloudImageURL = "https://cloud-images.ubuntu.com/releases/noble/release-20260801/ubuntu-24.04-server-cloudimg-amd64.img"
+
+func TestAcc_VirtualMachineResource_ImageUrl(t *testing.T) {
+	testAccPreCheck(t)
+
+	if os.Getenv("CLOUDRIFT_TEAM_ID") == "" {
+		t.Skip("CLOUDRIFT_TEAM_ID must be set for VM tests")
+	}
+
+	sshPublicKey := os.Getenv("CLOUDRIFT_TEST_SSH_PUBLIC_KEY")
+	if sshPublicKey == "" {
+		t.Skip("CLOUDRIFT_TEST_SSH_PUBLIC_KEY must be set")
+	}
+
+	instance := findCheapestAvailableInstance(t)
+
+	keyName := fmt.Sprintf("ci-test-vm-image-url-%d", time.Now().UnixNano())
+
+	vmName := fmt.Sprintf("provider-test-image-url-master-%d", time.Now().UnixNano())
+	if pr := os.Getenv("PR_NUMBER"); pr != "" {
+		vmName = fmt.Sprintf("provider-test-image-url-pr-%s-%d", pr, time.Now().UnixNano())
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					provider "cloudrift" {}
+
+					resource "cloudrift_ssh_key" "test" {
+						name       = %q
+						public_key = %q
+					}
+
+					resource "cloudrift_virtual_machine" "test" {
+						name          = %q
+						image_url     = %q
+						datacenter    = %q
+						instance_type = %q
+						ssh_key_id    = cloudrift_ssh_key.test.id
+					}
+				`, keyName, sshPublicKey, vmName, pinnedUbuntuCloudImageURL, instance.datacenter, instance.variantName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("cloudrift_virtual_machine.test", "name", vmName),
+					resource.TestCheckResourceAttr("cloudrift_virtual_machine.test", "image_url", pinnedUbuntuCloudImageURL),
+					resource.TestCheckResourceAttrSet("cloudrift_virtual_machine.test", "id"),
+					resource.TestCheckResourceAttrSet("cloudrift_virtual_machine.test", "public_ip"),
+					resource.TestCheckResourceAttr("cloudrift_virtual_machine.test", "status", "Active"),
+				),
+			},
+		},
+	})
+}

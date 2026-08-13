@@ -32,9 +32,10 @@ const (
 )
 
 var (
-	_ resource.Resource                = &virtualMachineResource{}
-	_ resource.ResourceWithConfigure   = &virtualMachineResource{}
-	_ resource.ResourceWithImportState = &virtualMachineResource{}
+	_ resource.Resource                   = &virtualMachineResource{}
+	_ resource.ResourceWithConfigure      = &virtualMachineResource{}
+	_ resource.ResourceWithImportState    = &virtualMachineResource{}
+	_ resource.ResourceWithValidateConfig = &virtualMachineResource{}
 )
 
 type virtualMachineMetadataModel struct {
@@ -68,6 +69,7 @@ type virtualMachineModel struct {
 	Name       types.String                 `tfsdk:"name"`
 	Metadata   *virtualMachineMetadataModel `tfsdk:"metadata"`
 	Recipe     types.String                 `tfsdk:"recipe"`
+	ImageUrl   types.String                 `tfsdk:"image_url"`
 	Datacenter types.String                 `tfsdk:"datacenter"`
 	SSHKeyID   types.String                 `tfsdk:"ssh_key_id"`
 }
@@ -101,6 +103,29 @@ func (r *virtualMachineResource) Configure(_ context.Context, req resource.Confi
 	}
 
 	r.client = client
+}
+
+func (r *virtualMachineResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var config virtualMachineModel
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// An unknown value (e.g. referencing another resource's computed output)
+	// counts as set: it isn't known yet, but it isn't absent either. Only a
+	// null or empty-string value counts as unset, matching what the client
+	// treats as "no image specified".
+	recipeSet := config.Recipe.IsUnknown() || config.Recipe.ValueString() != ""
+	imageURLSet := config.ImageUrl.IsUnknown() || config.ImageUrl.ValueString() != ""
+
+	if recipeSet == imageURLSet {
+		resp.Diagnostics.AddError(
+			"Invalid Virtual Machine Configuration",
+			"Exactly one of \"recipe\" or \"image_url\" must be set.",
+		)
+	}
 }
 
 func (r *virtualMachineResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -212,8 +237,15 @@ func (r *virtualMachineResource) Schema(_ context.Context, req resource.SchemaRe
 				},
 			},
 			"recipe": schema.StringAttribute{
-				MarkdownDescription: "The Base Image used for the Virtual Machine",
-				Required:            true,
+				MarkdownDescription: "The Base Image used for the Virtual Machine. Exactly one of `recipe` or `image_url` must be set.",
+				Optional:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"image_url": schema.StringAttribute{
+				MarkdownDescription: "Direct URL of a custom VM image to use, as an alternative to `recipe`. Exactly one of `recipe` or `image_url` must be set.",
+				Optional:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -276,6 +308,7 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 
 	ids, err := r.client.RentPublicInstanceVM(
 		plan.Recipe.ValueString(),
+		plan.ImageUrl.ValueString(),
 		plan.Datacenter.ValueString(),
 		plan.InstanceType.ValueString(),
 		startupCommands,
@@ -603,9 +636,18 @@ func populateModelFromInstanceResponse(m *virtualMachineModel, data *cloudriftap
 			VmID: types.Int64Value(int64(vm.Vmid)),
 			Name: types.StringValue(vm.Name),
 		}
+		// Username lives in whichever login-info variant the server returns:
+		// UsernameAndPassword, Username (SSH-key only), or HiddenPassword
+		// (with_credentials not requested, since API v061). The union has no
+		// discriminator, so As*() never errors on a mismatched variant, it just
+		// yields empty fields; pick whichever one actually carries a username.
 		if login := vm.LoginInfo; login != nil {
-			if login, err := login.AsInstanceLoginInfo0(); err == nil {
-				model.Username = types.StringValue(login.UsernameAndPassword.Username)
+			if v, err := login.AsInstanceLoginInfo0(); err == nil && v.UsernameAndPassword.Username != "" {
+				model.Username = types.StringValue(v.UsernameAndPassword.Username)
+			} else if v, err := login.AsInstanceLoginInfo1(); err == nil && v.Username.Username != "" {
+				model.Username = types.StringValue(v.Username.Username)
+			} else if v, err := login.AsInstanceLoginInfo2(); err == nil && v.HiddenPassword.Username != "" {
+				model.Username = types.StringValue(v.HiddenPassword.Username)
 			}
 		}
 

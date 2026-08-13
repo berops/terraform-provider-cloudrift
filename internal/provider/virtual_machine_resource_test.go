@@ -66,6 +66,105 @@ func Test_VirtualMachineResource_TeamId(t *testing.T) {
 	})
 }
 
+// Test_VirtualMachineResource_ImageUrl verifies that setting image_url instead
+// of recipe sends the custom image URL straight through to the rent request,
+// bypassing the recipe lookup (whose default test image_url is "test").
+func Test_VirtualMachineResource_ImageUrl(t *testing.T) {
+	t.Parallel()
+
+	keyName := "anotheruser-key"
+	publicKey := "ssh-rsa AAAA anotheruser"
+	customImageURL := "https://example.com/custom.img"
+	var capturedImageURL string
+
+	server := newVMTestServer(keyName, publicKey, func(req *http.Request) {
+		body, _ := io.ReadAll(req.Body)
+		var parsed struct {
+			Data struct {
+				Config struct {
+					VirtualMachine struct {
+						ImageUrl string `json:"image_url"`
+					} `json:"VirtualMachine"`
+				} `json:"config"`
+			} `json:"data"`
+		}
+		_ = json.Unmarshal(body, &parsed)
+		capturedImageURL = parsed.Data.Config.VirtualMachine.ImageUrl
+	})
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
+					resource "cloudrift_ssh_key" "primary" {
+					  name       = "%s"
+					  public_key = "%s"
+					}
+
+					resource "cloudrift_virtual_machine" "machine0" {
+					  image_url     = "%s"
+					  datacenter    = "us-east-nc-nr-1"
+					  instance_type = "rtx49-10c-kn.1"
+					  ssh_key_id    = cloudrift_ssh_key.primary.id
+					}
+				`, keyName, publicKey, customImageURL),
+				Check: resource.TestCheckFunc(func(s *terraform.State) error {
+					if capturedImageURL != customImageURL {
+						return fmt.Errorf("expected image_url %q in rent request, got %q", customImageURL, capturedImageURL)
+					}
+					return nil
+				}),
+			},
+		},
+	})
+}
+
+// Test_VirtualMachineResource_RecipeAndImageUrl_MutuallyExclusive verifies that
+// setting both or neither of recipe/image_url is rejected at plan time.
+func Test_VirtualMachineResource_RecipeAndImageUrl_MutuallyExclusive(t *testing.T) {
+	t.Parallel()
+
+	keyName := "anotheruser-key"
+	publicKey := "ssh-rsa AAAA anotheruser"
+	server := newVMTestServer(keyName, publicKey, nil)
+
+	testCases := []struct {
+		name  string
+		extra string
+	}{
+		{name: "both set", extra: `recipe = "ubuntu"` + "\n" + `image_url = "https://example.com/custom.img"`},
+		{name: "neither set", extra: ""},
+		{name: "both empty string", extra: `recipe = ""` + "\n" + `image_url = ""`},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
+							resource "cloudrift_ssh_key" "primary" {
+							  name       = "%s"
+							  public_key = "%s"
+							}
+
+							resource "cloudrift_virtual_machine" "machine0" {
+							  %s
+							  datacenter    = "us-east-nc-nr-1"
+							  instance_type = "rtx49-10c-kn.1"
+							  ssh_key_id    = cloudrift_ssh_key.primary.id
+							}
+						`, keyName, publicKey, tc.extra),
+						ExpectError: regexp.MustCompile(`(?i)exactly one of`),
+					},
+				},
+			})
+		})
+	}
+}
+
 // A freshly rented VM can be missing from the first poll (eventual consistency)
 // or briefly Inactive. Create must keep polling through that not-found rather
 // than hard-failing on it.
@@ -610,6 +709,91 @@ func Test_PopulateModelFromInstanceResponse_NullableFields(t *testing.T) {
 			}
 			if !m.ProviderName.Equal(tt.wantProviderName) {
 				t.Errorf("ProviderName: got %v, want %v", m.ProviderName, tt.wantProviderName)
+			}
+		})
+	}
+}
+
+// Test_PopulateModelFromInstanceResponse_LoginInfoVariants guards username
+// extraction across all three InstanceLoginInfo variants. Since API v061,
+// /instances/list defaults with_credentials=false and returns the
+// HiddenPassword variant, which the provider must still read the username from.
+func Test_PopulateModelFromInstanceResponse_LoginInfoVariants(t *testing.T) {
+	t.Parallel()
+
+	usernameAndPassword := func() *cloudriftapi.InstanceLoginInfo {
+		var li cloudriftapi.InstanceLoginInfo
+		var v cloudriftapi.InstanceLoginInfo0
+		v.UsernameAndPassword.Username = "up-user"
+		v.UsernameAndPassword.Password = "secret"
+		if err := li.FromInstanceLoginInfo0(v); err != nil {
+			t.Fatal(err)
+		}
+		return &li
+	}
+	usernameOnly := func() *cloudriftapi.InstanceLoginInfo {
+		var li cloudriftapi.InstanceLoginInfo
+		var v cloudriftapi.InstanceLoginInfo1
+		v.Username.Username = "ssh-user"
+		if err := li.FromInstanceLoginInfo1(v); err != nil {
+			t.Fatal(err)
+		}
+		return &li
+	}
+	hiddenPassword := func() *cloudriftapi.InstanceLoginInfo {
+		var li cloudriftapi.InstanceLoginInfo
+		var v cloudriftapi.InstanceLoginInfo2
+		v.HiddenPassword.Username = "hidden-user"
+		if err := li.FromInstanceLoginInfo2(v); err != nil {
+			t.Fatal(err)
+		}
+		return &li
+	}
+
+	tests := []struct {
+		name      string
+		loginInfo *cloudriftapi.InstanceLoginInfo
+		want      string
+	}{
+		{"UsernameAndPassword", usernameAndPassword(), "up-user"},
+		{"Username (SSH-key only)", usernameOnly(), "ssh-user"},
+		{"HiddenPassword (v061 default)", hiddenPassword(), "hidden-user"},
+		{"nil login_info", nil, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			data := &cloudriftapi.InstanceAndUsageInfo{
+				VirtualMachines: []cloudriftapi.InstanceVirtualMachineInfo{
+					{Vmid: 1, Name: "vm-1", LoginInfo: tt.loginInfo},
+				},
+			}
+
+			var m virtualMachineModel
+			diags := populateModelFromInstanceResponse(&m, data)
+			for _, d := range diags {
+				if d.Severity() == diag.SeverityError {
+					t.Fatalf("unexpected error diagnostic: %s — %s", d.Summary(), d.Detail())
+				}
+			}
+
+			elems := m.VirtualMachines.Elements()
+			if len(elems) != 1 {
+				t.Fatalf("VirtualMachines: got %d elements, want 1", len(elems))
+			}
+			obj, ok := elems[0].(types.Object)
+			if !ok {
+				t.Fatalf("VirtualMachines[0]: got %T, want types.Object", elems[0])
+			}
+			username := obj.Attributes()["username"]
+			want := types.StringNull()
+			if tt.want != "" {
+				want = types.StringValue(tt.want)
+			}
+			if !username.Equal(want) {
+				t.Errorf("username: got %v, want %v", username, want)
 			}
 		})
 	}

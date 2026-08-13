@@ -99,15 +99,12 @@ func NewCustom(endpoint, token, protoVersion, teamID string, opts ...HttpClientO
 		c.HostURL += "/"
 	}
 
-	// Default to a dated protocol version rather than ~upcoming so the
-	// provider does not silently shift when the server cuts a new contract.
-	// 2026-03-10 was the first dated version to accept ByStatus+scope; we
-	// pick the most recent one that is currently equivalent to ~upcoming.
-	// The team-scoped listing path (listInstancesByTeam) overrides this
-	// per-call with Proto20250610 because that older contract is the only
-	// one that populates host_address for team instances.
+	// Default to ~upcoming. As of API v061 every dated version is rejected
+	// by /instances/list ("unsupported version"); ~upcoming is the only one
+	// the server accepts. Pin to a dated version again once one supports the
+	// ByStatus+scope selector and the connection-info mask.
 	if protoVersion == "" {
-		c.ProtoVersion = Proto20260510
+		c.ProtoVersion = ProtoUpcoming
 	}
 
 	if err := c.Auth(); err != nil {
@@ -350,9 +347,9 @@ func (c *HttpClient) TerminateInstance(id string) error {
 	return err
 }
 
-func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands, name string, pubKeys []string) (*RentInstanceResponseProto, error) {
-	if recipe == "" {
-		return nil, errors.New("no image specified")
+func (c *HttpClient) RentPublicInstanceVM(recipe, imageURL, datacenter, instance, commands, name string, pubKeys []string) (*RentInstanceResponseProto, error) {
+	if (recipe == "") == (imageURL == "") {
+		return nil, errors.New("exactly one of recipe or image_url must be specified")
 	}
 	if len(pubKeys) == 0 || slices.Contains(pubKeys, "") {
 		return nil, errors.New("no ssh key specified")
@@ -375,10 +372,17 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands
 		commands = strings.TrimSpace(commands)
 	}
 
-	recipe = strings.ToLower(recipe)
-	details, err := c.findVMRecipe(recipe)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find the requested recipe %s: %w", recipe, err)
+	var vmConfig InstanceConfiguration1
+	if recipe != "" {
+		recipe = strings.ToLower(recipe)
+		details, err := c.findVMRecipe(recipe)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find the requested recipe %s: %w", recipe, err)
+		}
+		vmConfig.VirtualMachine.CloudinitUrl = &details.VirtualMachine.CloudinitUrl
+		vmConfig.VirtualMachine.ImageUrl = details.VirtualMachine.ImageUrl
+	} else {
+		vmConfig.VirtualMachine.ImageUrl = imageURL
 	}
 
 	var keySelector InstanceSshKeySelector
@@ -386,9 +390,6 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands
 		return nil, err
 	}
 
-	var vmConfig InstanceConfiguration1
-	vmConfig.VirtualMachine.CloudinitUrl = &details.VirtualMachine.CloudinitUrl
-	vmConfig.VirtualMachine.ImageUrl = details.VirtualMachine.ImageUrl
 	vmConfig.VirtualMachine.CloudinitCommands = &commands
 	vmConfig.VirtualMachine.SshKey = &keySelector
 
@@ -459,9 +460,19 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands
 }
 
 func (c *HttpClient) listInstances(selector InstancesSelector) (*ListInstancesResponseProto, error) {
+	// Since API v061, host_address/internal_host_address are gated behind the
+	// with_connection_info mask; without it they come back null and the Create
+	// provisioning poll (which waits for host_address) never completes. We do
+	// not request with_credentials: the provider stores no password, and asking
+	// for it without ViewInstanceCredentials is a 403.
+	withConnectionInfo := true
 	body, err := marshalVersionedRequest(c.ProtoVersion, struct {
-		Selector InstancesSelector `json:"selector"`
-	}{Selector: selector})
+		Selector InstancesSelector  `json:"selector"`
+		Mask     *InstanceInfoFlags `json:"mask,omitempty"`
+	}{
+		Selector: selector,
+		Mask:     &InstanceInfoFlags{WithConnectionInfo: &withConnectionInfo},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -493,29 +504,6 @@ func (c *HttpClient) doListInstances(body io.Reader) (*ListInstancesResponseProt
 }
 
 func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
-	if c.TeamID != "" {
-		// Team-scoped listing must go through the legacy ByTeamId selector
-		// on ProtoVersion 2025-06-10. The newer ~upcoming + ByStatus+scope
-		// form is accepted by the server but returns host_address=null,
-		// which breaks the provisioning poll. See listInstancesByTeam.
-		// ByTeamId has no server-side status filter, so apply the same
-		// Active/Initializing/Deactivating allowlist client-side to keep
-		// ListInstances() semantics consistent across account types.
-		resp, err := c.listInstancesByTeam()
-		if err != nil {
-			return nil, err
-		}
-		resp.Data.Instances = slices.DeleteFunc(resp.Data.Instances, func(i InstanceAndUsageInfo) bool {
-			switch i.Status {
-			case InstanceStatusActive, InstanceStatusInitializing, InstanceStatusDeactivating:
-				return false
-			default:
-				return true
-			}
-		})
-		return resp, nil
-	}
-	var selector InstancesSelector
 	statuses := StatusSelector{
 		Statuses: []InstanceStatus{
 			InstanceStatusActive,
@@ -523,6 +511,16 @@ func (c *HttpClient) ListInstances() (*ListInstancesResponseProto, error) {
 			InstanceStatusDeactivating,
 		},
 	}
+	// Team accounts see their instances only when the listing is scoped to the
+	// team; a default (personal) scope hides them. Personal accounts omit scope.
+	if c.TeamID != "" {
+		var scope SelectorScope
+		if err := scope.FromSelectorScope1(SelectorScope1{Teams: []string{c.TeamID}}); err != nil {
+			return nil, err
+		}
+		statuses.Scope = &scope
+	}
+	var selector InstancesSelector
 	if err := selector.FromInstancesSelector1(InstancesSelector1{ByStatus: statuses}); err != nil {
 		return nil, err
 	}
@@ -569,37 +567,15 @@ func (c *HttpClient) GetInstance(id string) (*InstanceAndUsageInfo, error) {
 }
 
 // listInstancesForGet returns the instance list GetInstance should filter
-// over. Team instances are not visible via ById, so team accounts list by
-// team via the dated ByTeamId path (see listInstancesByTeam). Personal
-// accounts use the typed ById selector on the configured ProtoVersion.
+// over. Since API v061, ById resolves instances for both personal and team
+// accounts (with host_address populated via the connection-info mask set in
+// listInstances), so no team-specific selector is needed.
 func (c *HttpClient) listInstancesForGet(id string) (*ListInstancesResponseProto, error) {
-	if c.TeamID != "" {
-		return c.listInstancesByTeam()
-	}
 	var selector InstancesSelector
 	if err := selector.FromInstancesSelector0(InstancesSelector0{ById: []string{id}}); err != nil {
 		return nil, err
 	}
 	return c.listInstances(selector)
-}
-
-// listInstancesByTeam queries /instances/list with the legacy ByTeamId
-// selector pinned to ProtoVersion 2025-06-10. The newer ~upcoming +
-// ByStatus+scope path returns host_address=null for team instances even
-// after Active+Ready, which breaks the Create provisioning poll. ByTeamId
-// is not part of the InstancesSelector union on ~upcoming, so the body is
-// hand-crafted; the response shape is a superset of ListInstancesResponseProto
-// so the generated parser handles it.
-func (c *HttpClient) listInstancesByTeam() (*ListInstancesResponseProto, error) {
-	body, err := marshalVersionedRequest(Proto20250610, map[string]any{
-		"selector": map[string]any{
-			"ByTeamId": map[string]any{"id": c.TeamID},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	return c.doListInstances(body)
 }
 
 // marshalVersionedRequest serializes a request body with "version" before "data".

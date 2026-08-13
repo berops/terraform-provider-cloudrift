@@ -1804,6 +1804,14 @@
         ],
         "type": "object"
       },
+      "BaseImageCaching": {
+        "description": "How the host manages this VM's base image.",
+        "enum": [
+          "Shared",
+          "Ephemeral"
+        ],
+        "type": "string"
+      },
       "Bucket": {
         "properties": {
           "bucket_id": {
@@ -3299,6 +3307,126 @@
             },
             "required": [
               "payment_intent_id"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "CreateQuotaRequest": {
+        "properties": {
+          "name": {
+            "description": "Operator label, e.g. \"KMG-serv4-2026\"",
+            "type": "string"
+          },
+          "node_id": {
+            "type": "string"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/QuotaRecipient"
+          },
+          "resources": {
+            "$ref": "#/components/schemas/QuotaResources"
+          },
+          "valid_from": {
+            "description": "Defaults to now.",
+            "nullable": true,
+            "type": "string"
+          },
+          "valid_till": {
+            "description": "`None` = no expiry.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "recipient",
+          "name",
+          "resources"
+        ],
+        "type": "object"
+      },
+      "CreateQuotaRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "name": {
+                "description": "Operator label, e.g. \"KMG-serv4-2026\"",
+                "type": "string"
+              },
+              "node_id": {
+                "type": "string"
+              },
+              "recipient": {
+                "$ref": "#/components/schemas/QuotaRecipient"
+              },
+              "resources": {
+                "$ref": "#/components/schemas/QuotaResources"
+              },
+              "valid_from": {
+                "description": "Defaults to now.",
+                "nullable": true,
+                "type": "string"
+              },
+              "valid_till": {
+                "description": "`None` = no expiry.",
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": [
+              "node_id",
+              "recipient",
+              "name",
+              "resources"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "CreateQuotaResponse": {
+        "properties": {
+          "quota": {
+            "$ref": "#/components/schemas/Quota",
+            "description": "The created quota, fully populated — saves the operator UI a\nfollow-up list call."
+          }
+        },
+        "required": [
+          "quota"
+        ],
+        "type": "object"
+      },
+      "CreateQuotaResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "quota": {
+                "$ref": "#/components/schemas/Quota",
+                "description": "The created quota, fully populated — saves the operator UI a\nfollow-up list call."
+              }
+            },
+            "required": [
+              "quota"
             ],
             "type": "object"
           },
@@ -6024,6 +6152,28 @@
         ],
         "type": "object"
       },
+      "EvictedImage": {
+        "description": "A base image the node evicted (or skipped downloading) during `SyncImages`,\nreported back to the server for observability.",
+        "properties": {
+          "file_name": {
+            "type": "string"
+          },
+          "freed_bytes": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/ImageEvictionReason"
+          }
+        },
+        "required": [
+          "file_name",
+          "reason",
+          "freed_bytes"
+        ],
+        "type": "object"
+      },
       "ExecDesc": {
         "properties": {
           "attach_stderr": {
@@ -7442,8 +7592,16 @@
         ],
         "type": "object"
       },
+      "ImageEvictionReason": {
+        "description": "Why a cached base image was evicted from the node's content-addressed store.",
+        "enum": [
+          "Dangling",
+          "SpaceLru"
+        ],
+        "type": "string"
+      },
       "InstanceAndUsageInfo": {
-        "description": "Same shape as `v045::InstanceAndUsageInfo` but with `status: v059::InstanceStatus`\n(so `Failed` is a valid value) and an extra `failure` field that's populated when\nthe rental ended up in `Failed`.",
+        "description": "Same shape as `v059::InstanceAndUsageInfo` but with `virtual_machines` /\n`bare_metal` carrying `v061::InstanceLoginInfo`.",
         "properties": {
           "bare_metal": {
             "$ref": "#/components/schemas/InstanceBareMetalInfo",
@@ -7622,6 +7780,7 @@
         "type": "object"
       },
       "InstanceBareMetalInfo": {
+        "description": "Same shape as `v045::InstanceBareMetalInfo` but carrying\n`v061::InstanceLoginInfo`.",
         "properties": {
           "login_info": {
             "$ref": "#/components/schemas/InstanceLoginInfo",
@@ -7846,10 +8005,14 @@
         "type": "object"
       },
       "InstanceInfoFlags": {
-        "description": "Controls which optional data fields the server fetches for each instance.\nAll fields default to `false` — set a flag to `true` to include that data.",
+        "description": "Same as `v058::InstanceInfoFlags` plus [`Self::with_credentials`].",
         "properties": {
           "with_connection_info": {
-            "description": "Include connection fields: host_address, internal_host_address, instructions, reservation_data, volume_mounts.",
+            "description": "Include connection fields: host_address, internal_host_address, reservation_data, volume_mounts.",
+            "type": "boolean"
+          },
+          "with_credentials": {
+            "description": "Include instance credentials: the login password and the rendered\nconnection instructions that embed it. Requires the\n`ViewInstanceCredentials` permission — asking for it without that\npermission is a `403`, not a silently redacted response.\n\nAlso requires `with_connection_info` for the instructions, which are\npart of the connection payload.",
             "type": "boolean"
           },
           "with_hardware_info": {
@@ -7864,6 +8027,7 @@
         "type": "object"
       },
       "InstanceLoginInfo": {
+        "description": "Same as `v045::InstanceLoginInfo` plus [`Self::HiddenPassword`].",
         "oneOf": [
           {
             "properties": {
@@ -7889,8 +8053,10 @@
             "type": "object"
           },
           {
+            "description": "The instance has no password (SSH-key auth only).",
             "properties": {
               "Username": {
+                "description": "The instance has no password (SSH-key auth only).",
                 "properties": {
                   "username": {
                     "type": "string"
@@ -7904,6 +8070,27 @@
             },
             "required": [
               "Username"
+            ],
+            "type": "object"
+          },
+          {
+            "description": "The caller lacks `ViewInstanceCredentials`, so the password was never\nfetched. Distinct from [`Self::Username`] so clients can render\n\"withheld\" rather than \"none\".",
+            "properties": {
+              "HiddenPassword": {
+                "description": "The caller lacks `ViewInstanceCredentials`, so the password was never\nfetched. Distinct from [`Self::Username`] so clients can render\n\"withheld\" rather than \"none\".",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "HiddenPassword"
             ],
             "type": "object"
           }
@@ -8960,6 +9147,7 @@
         ]
       },
       "InstanceVirtualMachineInfo": {
+        "description": "Same shape as `v045::InstanceVirtualMachineInfo` but carrying\n`v061::InstanceLoginInfo`.",
         "properties": {
           "login_info": {
             "$ref": "#/components/schemas/InstanceLoginInfo",
@@ -9867,6 +10055,7 @@
         "type": "object"
       },
       "ListInstancesRequest": {
+        "description": "Same as `v058::ListInstancesRequest` but carrying `v061::InstanceInfoFlags`.",
         "properties": {
           "mask": {
             "$ref": "#/components/schemas/InstanceInfoFlags",
@@ -9885,6 +10074,7 @@
       "ListInstancesRequestProto": {
         "properties": {
           "data": {
+            "description": "Same as `v058::ListInstancesRequest` but carrying `v061::InstanceInfoFlags`.",
             "properties": {
               "mask": {
                 "$ref": "#/components/schemas/InstanceInfoFlags",
@@ -10186,6 +10376,78 @@
         ],
         "type": "object"
       },
+      "ListQuotasRequest": {
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/QuotaSelector"
+          }
+        },
+        "type": "object"
+      },
+      "ListQuotasRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "selector": {
+                "$ref": "#/components/schemas/QuotaSelector"
+              }
+            },
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "ListQuotasResponse": {
+        "properties": {
+          "quotas": {
+            "items": {
+              "$ref": "#/components/schemas/Quota"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "quotas"
+        ],
+        "type": "object"
+      },
+      "ListQuotasResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "quotas": {
+                "items": {
+                  "$ref": "#/components/schemas/Quota"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "quotas"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
       "ListRecipesResponse": {
         "properties": {
           "groups": {
@@ -10345,6 +10607,82 @@
             },
             "required": [
               "reservations"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "ListSavedEnvironmentsRequest": {
+        "properties": {
+          "team_id": {
+            "description": "Scope the listing to a team the caller belongs to; omit for the\ncaller's own environments.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ListSavedEnvironmentsRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "team_id": {
+                "description": "Scope the listing to a team the caller belongs to; omit for the\ncaller's own environments.",
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "ListSavedEnvironmentsResponse": {
+        "properties": {
+          "saved_environments": {
+            "items": {
+              "$ref": "#/components/schemas/SavedEnvironment"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "saved_environments"
+        ],
+        "type": "object"
+      },
+      "ListSavedEnvironmentsResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "saved_environments": {
+                "items": {
+                  "$ref": "#/components/schemas/SavedEnvironment"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "saved_environments"
             ],
             "type": "object"
           },
@@ -12228,6 +12566,30 @@
         ],
         "type": "object"
       },
+      "NodeMemory": {
+        "description": "Explicit memory assignment for one host NUMA node in a manual NUMA\nconfiguration. Only needed for a deliberately non-proportional split.",
+        "properties": {
+          "memory_kb": {
+            "description": "Memory assigned to the guest cell on this host node, in KiB",
+            "example": "16777216",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "node_id": {
+            "description": "Host NUMA node id",
+            "example": "0",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "node_id",
+          "memory_kb"
+        ],
+        "type": "object"
+      },
       "NodeMetrics": {
         "description": "Hardware metrics for a single node",
         "properties": {
@@ -12417,10 +12779,10 @@
             "type": "object"
           },
           {
-            "description": "Rent a custom off-catalog configuration on a specific node. Gated by\nthe `allow_custom_instances` flag; available to any user when enabled.",
+            "description": "Rent a custom off-catalog configuration on a specific node. Requires\n`allow_custom_instances` enabled and operator role (admin or the\nnode's provider); a quota holder may use it on their own allocated node.",
             "properties": {
               "ByNodeWithResources": {
-                "description": "Rent a custom off-catalog configuration on a specific node. Gated by\nthe `allow_custom_instances` flag; available to any user when enabled.",
+                "description": "Rent a custom off-catalog configuration on a specific node. Requires\n`allow_custom_instances` enabled and operator role (admin or the\nnode's provider); a quota holder may use it on their own allocated node.",
                 "properties": {
                   "node_id": {
                     "description": "Node ID to rent on",
@@ -13615,6 +13977,33 @@
         ],
         "type": "object"
       },
+      "Principal": {
+        "description": "Resolved holder of an allocation.",
+        "oneOf": [
+          {
+            "properties": {
+              "User": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "User"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "Team": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "Team"
+            ],
+            "type": "object"
+          }
+        ]
+      },
       "ProfilePointData": {
         "properties": {
           "count": {
@@ -13970,6 +14359,13 @@
             "minimum": 0,
             "type": "integer"
           },
+          "allocations": {
+            "description": "Active resource quotas (allocations) carved out of this node — the\noperator view. Customers read their own via `/quotas/list`. Lets the\noperator node page render the capacity strip + table from one call.",
+            "items": {
+              "$ref": "#/components/schemas/Quota"
+            },
+            "type": "array"
+          },
           "client_version": {
             "nullable": true,
             "type": "string"
@@ -14105,6 +14501,13 @@
             "description": "Bitmask of GPUs hosting MIG instances",
             "example": "0",
             "type": "string"
+          },
+          "rentable_gpus": {
+            "description": "Free GPUs that are also healthy — excludes PCI-invalid and disabled\nGPUs. Rentable capacity; `gpus_available` is the raw free count.",
+            "example": "8",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
           }
         },
         "required": [
@@ -14234,6 +14637,211 @@
           "protocol"
         ],
         "type": "object"
+      },
+      "Quota": {
+        "description": "Operator-assigned dedicated capacity on a single node. Customer-facing\nname: \"Allocation\".",
+        "properties": {
+          "account_id": {
+            "type": "string"
+          },
+          "active": {
+            "description": "`false` after revoke; the row is kept for audit.",
+            "type": "boolean"
+          },
+          "billing_exempt": {
+            "type": "boolean"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/QuotaResources"
+          },
+          "consumed": {
+            "$ref": "#/components/schemas/QuotaResources",
+            "description": "Live consumption: summed requested shapes of the holder's\nresource-holding executors on the node. Server-computed so the\nwizard ceiling and the admission check share one source of truth."
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "created_by": {
+            "description": "Operator (admin or node-owning provider) who assigned the quota.",
+            "type": "string"
+          },
+          "created_by_email": {
+            "type": "string"
+          },
+          "holder_name": {
+            "description": "Recipient display name (team name, or the user's email).",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "description": "Operator label, e.g. \"KMG-serv4-2026\"",
+            "type": "string"
+          },
+          "node_cpu_brand": {
+            "nullable": true,
+            "type": "string"
+          },
+          "node_gpu_brand": {
+            "nullable": true,
+            "type": "string"
+          },
+          "node_gpu_vram": {
+            "format": "int64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "node_hostname": {
+            "description": "Node identity for display — the rental flow must show the renter\nwhich node the allocation pins to.",
+            "nullable": true,
+            "type": "string"
+          },
+          "node_id": {
+            "type": "string"
+          },
+          "node_instance_type": {
+            "description": "Node hardware summary, so the rental wizard renders the hardware\nwith no `nodes/list` (operator-only) and no client-side join:\ncatalog instance-type name, GPU brand (e.g. \"H200\"), VRAM per GPU\n(bytes), and CPU brand. `None` fields for off-catalog / GPU-less nodes.",
+            "nullable": true,
+            "type": "string"
+          },
+          "node_ip_address": {
+            "nullable": true,
+            "type": "string"
+          },
+          "principal": {
+            "$ref": "#/components/schemas/Principal"
+          },
+          "valid_from": {
+            "type": "string"
+          },
+          "valid_till": {
+            "description": "`None` = no expiry. Expiry stops new admissions only; running VMs\ncontinue.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "account_id",
+          "principal",
+          "holder_name",
+          "node_id",
+          "budget",
+          "consumed",
+          "valid_from",
+          "active",
+          "billing_exempt",
+          "created_at",
+          "created_by",
+          "created_by_email"
+        ],
+        "type": "object"
+      },
+      "QuotaRecipient": {
+        "description": "Allocation recipient supplied on create.",
+        "oneOf": [
+          {
+            "properties": {
+              "User": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "User"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "Team": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "Team"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "TeamName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "TeamName"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "QuotaResources": {
+        "description": "One resource shape. Used for a quota's budget, its live consumption,\nand the create request. `cpu_count` is guest vCPUs, `gpu_count` whole\nGPUs, `dram`/`disk` bytes — same conventions as `ResourceSpec`.",
+        "properties": {
+          "cpu_count": {
+            "example": "96",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "disk": {
+            "example": "10995116277760",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "dram": {
+            "example": "1099511627776",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "gpu_count": {
+            "example": "8",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "gpu_count",
+          "cpu_count",
+          "dram",
+          "disk"
+        ],
+        "type": "object"
+      },
+      "QuotaSelector": {
+        "description": "Customer/member-facing selector. The operator's per-node allocation\nview lives on `/nodes/list` (`ProviderNodeInfo.allocations`), not here.",
+        "oneOf": [
+          {
+            "description": "Everything visible to the caller: own quotas for customers, all\nquotas for admins.",
+            "enum": [
+              "All"
+            ],
+            "example": "All",
+            "type": "string"
+          },
+          {
+            "description": "Quotas held by a team (members and admins only).",
+            "example": {
+              "ByTeamId": "f7b1d7c4-4b3b-4b3b-8b3b-4b3b4b3b4b3b"
+            },
+            "properties": {
+              "ByTeamId": {
+                "description": "Quotas held by a team (members and admins only).",
+                "type": "string"
+              }
+            },
+            "required": [
+              "ByTeamId"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "Recipe": {
         "properties": {
@@ -14923,10 +15531,19 @@
             "nullable": true,
             "type": "string"
           },
+          "require_quota_coverage": {
+            "description": "Fail-closed assertion: this rental must be covered by an active\nresource quota on the node, otherwise it is rejected instead of\nbilled. Never grants coverage — coverage is always derived\nserver-side from (account, node).",
+            "type": "boolean"
+          },
           "reservation": {
             "$ref": "#/components/schemas/ReservationParameters",
             "description": "Reservation request parameters for instance usage",
             "nullable": true
+          },
+          "reuse_environment_id": {
+            "description": "Reuse a saved environment's disk instead of installing a fresh OS. The\nreferenced environment (see `instances/saved-environments/list`) pins\nthe rental to its node and instance type. `None` for a fresh rental.",
+            "nullable": true,
+            "type": "string"
           },
           "selector": {
             "$ref": "#/components/schemas/NodeSelector",
@@ -14984,10 +15601,19 @@
                 "nullable": true,
                 "type": "string"
               },
+              "require_quota_coverage": {
+                "description": "Fail-closed assertion: this rental must be covered by an active\nresource quota on the node, otherwise it is rejected instead of\nbilled. Never grants coverage — coverage is always derived\nserver-side from (account, node).",
+                "type": "boolean"
+              },
               "reservation": {
                 "$ref": "#/components/schemas/ReservationParameters",
                 "description": "Reservation request parameters for instance usage",
                 "nullable": true
+              },
+              "reuse_environment_id": {
+                "description": "Reuse a saved environment's disk instead of installing a fresh OS. The\nreferenced environment (see `instances/saved-environments/list`) pins\nthe rental to its node and instance type. `None` for a fresh rental.",
+                "nullable": true,
+                "type": "string"
               },
               "selector": {
                 "$ref": "#/components/schemas/NodeSelector",
@@ -15094,6 +15720,66 @@
         ],
         "type": "object"
       },
+      "RequestedNumaConfig": {
+        "description": "Admin-only manual NUMA CPU pinning for a custom (off-catalog) rental.\nThe admin pins the host CPUs; the server completes the rest of the\nlayout (cell grouping, memory split, emulator core, GPU-to-cell\nmapping), validates it against the host hardware, and uses it instead\nof automatic NUMA derivation.",
+        "properties": {
+          "cpu_ids": {
+            "description": "Host CPU ids to expose as guest vCPUs. The server groups them into\nguest cells by each CPU's host NUMA node (one cell per host node,\ncells ordered by node_id ascending).",
+            "example": [
+              0,
+              1,
+              2,
+              3,
+              48,
+              49,
+              50,
+              51
+            ],
+            "items": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "emulator_cpu_ids": {
+            "description": "Optional. Host CPU ids for the QEMU emulator thread. Omit to let\nthe server pick it the same way the automatic path does: a carved\noverhead core when the VM needs more than one physical core,\notherwise the emulator overlaps the vCPUs (no extra core).",
+            "items": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "gpu_indices": {
+            "description": "Optional. Host GPU hardware indices to pass through. Omit to let\nthe server auto-select free GPUs (NUMA-ranked). When supplied, must\nlist exactly `gpu` indices; the server passes through these GPUs and\nstill derives the GPU-to-cell mapping from each GPU's real NUMA\naffinity.",
+            "example": [
+              2,
+              3
+            ],
+            "items": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "memory_kb_per_node": {
+            "description": "Optional. Explicit per-host-node memory for a deliberately\nnon-proportional split. Omit for a vCPU-weighted, hugepage-aware\nsplit of `dram`. Keys must be exactly the host nodes that have\nvCPUs, and the values must sum to `dram`.",
+            "items": {
+              "$ref": "#/components/schemas/NodeMemory"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "required": [
+          "cpu_ids"
+        ],
+        "type": "object"
+      },
       "Reservation": {
         "properties": {
           "billing_exempt": {
@@ -15117,6 +15803,10 @@
             "$ref": "#/components/schemas/InstanceVariant",
             "description": "Present for catalog reservations; `None` for custom (off-catalog) ones.",
             "nullable": true
+          },
+          "node_id": {
+            "description": "The node a custom reservation is pinned to, so a redeploy targets the\nsame paid-for hardware. `None` for catalog reservations.",
+            "type": "string"
           },
           "resources": {
             "$ref": "#/components/schemas/ReservationResources",
@@ -15392,6 +16082,11 @@
             "minimum": 0,
             "type": "integer"
           },
+          "manual_numa_config": {
+            "$ref": "#/components/schemas/RequestedNumaConfig",
+            "description": "Admin-only: manual NUMA CPU pinning. The server completes and\nvalidates the layout, then uses it instead of automatic derivation.",
+            "nullable": true
+          },
           "vcpu": {
             "example": "16",
             "format": "int32",
@@ -15579,6 +16274,153 @@
         "required": [
           "version",
           "data"
+        ],
+        "type": "object"
+      },
+      "ReuseDisk": {
+        "description": "Boot from a disk preserved by a terminated VM instead of creating a fresh\noverlay. The overlay is a local file on one node, so the server must pin the\nrental to that node.",
+        "properties": {
+          "source_vm_name": {
+            "description": "`dom_id` of the terminated VM; the host locates the overlay by this name.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_vm_name"
+        ],
+        "type": "object"
+      },
+      "RevokeQuotaRequest": {
+        "properties": {
+          "quota_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "quota_id"
+        ],
+        "type": "object"
+      },
+      "RevokeQuotaRequestProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "quota_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "quota_id"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "RevokeQuotaResponse": {
+        "properties": {
+          "quota_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "quota_id"
+        ],
+        "type": "object"
+      },
+      "RevokeQuotaResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "quota_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "quota_id"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "SavedEnvironment": {
+        "description": "A VM disk left on a node by a terminated rental that the renter can\nre-attach to a new VM instead of installing a fresh OS.\n\nTemporary, not a durable backup: the provider erases the disk once the\nnode's `erase_grace_period` elapses (`expires_at`). The disk is a local\noverlay on `node_id`, so a rental reusing it must be pinned to that node\nand instance type (see `reuse_environment_id` on the rent request).",
+        "properties": {
+          "disk_size_bytes": {
+            "description": "Virtual size of the preserved disk in bytes.",
+            "example": "107374182400",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "expires_at": {
+            "description": "When the provider erases this disk; a rent referencing it afterwards\nfalls back to a fresh OS.",
+            "type": "string"
+          },
+          "id": {
+            "description": "Pass as `reuse_environment_id` on a rent request to boot from this disk.",
+            "type": "string"
+          },
+          "instance_type_name": {
+            "description": "Catalog instance type the environment is bound to. `None` for off-catalog\nnodes or when the node's type can't be resolved.",
+            "nullable": true,
+            "type": "string"
+          },
+          "last_used_at": {
+            "description": "When the original instance was terminated.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the original instance.",
+            "example": "bright-falcon",
+            "type": "string"
+          },
+          "node_hostname": {
+            "description": "`None` if the node never reported one.",
+            "nullable": true,
+            "type": "string"
+          },
+          "node_id": {
+            "description": "Node the disk lives on; reuse must be pinned here.",
+            "type": "string"
+          },
+          "original_variant_name": {
+            "description": "Variant the environment was originally rented at, e.g. \"h100-80gb-1x\".\n`None` once that variant is removed from the catalog.",
+            "nullable": true,
+            "type": "string"
+          },
+          "os_label": {
+            "description": "OS label for display, e.g. \"Ubuntu 24.04 Server\".",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "node_id",
+          "os_label",
+          "disk_size_bytes",
+          "last_used_at",
+          "expires_at"
         ],
         "type": "object"
       },
@@ -16945,6 +17787,28 @@
           }
         ]
       },
+      "SyncImageSpec": {
+        "description": "Per-image instruction for `SyncImages`. The server is authoritative about\nwhich images must stay (`required`, in use by a running VM on this node)\nversus which images may stay (catalog images, kept LRU as disk allows).",
+        "properties": {
+          "last_used_at": {
+            "description": "Last-usage timestamp (most recent VM that used it) or image creation\ndate, used for LRU ordering of optional images. `None` sorts as oldest.",
+            "nullable": true,
+            "type": "string"
+          },
+          "required": {
+            "description": "In use by a VM running on this node — must never be evicted.",
+            "type": "boolean"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "required"
+        ],
+        "type": "object"
+      },
       "SystemCommand": {
         "description": "Command to execute on the node",
         "oneOf": [
@@ -18150,6 +19014,7 @@
         "type": "object"
       },
       "TerminateInstancesRequest": {
+        "description": "Unchanged from `v055::TerminateInstancesRequest`. Re-declared for the\nsame reason as [`ListInstancesRequest`] — the terminate response echoes\nback each instance in full, so it carries login info too.",
         "properties": {
           "selector": {
             "$ref": "#/components/schemas/InstancesSelector",
@@ -18164,6 +19029,7 @@
       "TerminateInstancesRequestProto": {
         "properties": {
           "data": {
+            "description": "Unchanged from `v055::TerminateInstancesRequest`. Re-declared for the\nsame reason as [`ListInstancesRequest`] — the terminate response echoes\nback each instance in full, so it carries login info too.",
             "properties": {
               "selector": {
                 "$ref": "#/components/schemas/InstancesSelector",
@@ -19348,6 +20214,112 @@
         ],
         "type": "object"
       },
+      "UpdateQuotaRequest": {
+        "description": "Edit a quota's mutable fields. `node` and recipient are immutable —\nreassigning either means revoking and creating a new allocation. Sends\nthe full mutable set (form-replace semantics).",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "quota_id": {
+            "type": "string"
+          },
+          "resources": {
+            "$ref": "#/components/schemas/QuotaResources"
+          },
+          "valid_from": {
+            "type": "string"
+          },
+          "valid_till": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "quota_id",
+          "name",
+          "valid_from",
+          "resources"
+        ],
+        "type": "object"
+      },
+      "UpdateQuotaRequestProto": {
+        "properties": {
+          "data": {
+            "description": "Edit a quota's mutable fields. `node` and recipient are immutable —\nreassigning either means revoking and creating a new allocation. Sends\nthe full mutable set (form-replace semantics).",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "quota_id": {
+                "type": "string"
+              },
+              "resources": {
+                "$ref": "#/components/schemas/QuotaResources"
+              },
+              "valid_from": {
+                "type": "string"
+              },
+              "valid_till": {
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": [
+              "quota_id",
+              "name",
+              "valid_from",
+              "resources"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
+      "UpdateQuotaResponse": {
+        "properties": {
+          "quota": {
+            "$ref": "#/components/schemas/Quota"
+          }
+        },
+        "required": [
+          "quota"
+        ],
+        "type": "object"
+      },
+      "UpdateQuotaResponseProto": {
+        "properties": {
+          "data": {
+            "properties": {
+              "quota": {
+                "$ref": "#/components/schemas/Quota"
+              }
+            },
+            "required": [
+              "quota"
+            ],
+            "type": "object"
+          },
+          "version": {
+            "default": "~upcoming",
+            "description": "The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "data"
+        ],
+        "type": "object"
+      },
       "UpdateReservationRequest": {
         "properties": {
           "executor_id": {
@@ -20434,7 +21406,10 @@
           {
             "properties": {
               "images": {
-                "type": "string"
+                "items": {
+                  "$ref": "#/components/schemas/SyncImageSpec"
+                },
+                "type": "array"
               },
               "type": {
                 "enum": [
@@ -20650,6 +21625,12 @@
           },
           {
             "properties": {
+              "evicted": {
+                "items": {
+                  "$ref": "#/components/schemas/EvictedImage"
+                },
+                "type": "array"
+              },
               "existing_images": {
                 "items": {
                   "type": "string"
@@ -20873,6 +21854,12 @@
               },
               {
                 "properties": {
+                  "evicted": {
+                    "items": {
+                      "$ref": "#/components/schemas/EvictedImage"
+                    },
+                    "type": "array"
+                  },
                   "existing_images": {
                     "items": {
                       "type": "string"
@@ -21109,7 +22096,10 @@
               {
                 "properties": {
                   "images": {
-                    "type": "string"
+                    "items": {
+                      "$ref": "#/components/schemas/SyncImageSpec"
+                    },
+                    "type": "array"
                   },
                   "type": {
                     "enum": [
@@ -21270,6 +22260,10 @@
             "nullable": true,
             "type": "string"
           },
+          "base_image_caching": {
+            "$ref": "#/components/schemas/BaseImageCaching",
+            "description": "How the host manages this VM's base image. The server sets `Shared`\nwhen the requested `image_url` is one of its catalog/recipe images\n(trusted, stable, shared across VMs) and `Ephemeral` for any other,\narbitrary user-supplied image. When `Ephemeral` the host downloads\nthe image into the VM's own per-VM directory so it is removed on VM\ntermination, never entering the shared cache. The agent has no\ncatalog knowledge and just honors this value.\n\n`#[serde(default)]` falls back to the enum default `Shared`, so any\nunflagged/older payload preserves the historical shared-cache\nbehavior; the server sets `Ephemeral` explicitly for non-catalog\nimages."
+          },
           "cloudinit_config": {
             "description": "cloudinit config as string",
             "items": {
@@ -21290,6 +22284,11 @@
           "name": {
             "description": "VM name",
             "type": "string"
+          },
+          "reuse_disk": {
+            "$ref": "#/components/schemas/ReuseDisk",
+            "description": "When set, boot from a preserved disk instead of creating a fresh overlay\nfrom `disk_image_url`. `#[serde(default)]` keeps older desktops working.",
+            "nullable": true
           },
           "volumes": {
             "description": "Ceph RBD volumes to attach to this VM (optional)",
@@ -21317,6 +22316,10 @@
                 "nullable": true,
                 "type": "string"
               },
+              "base_image_caching": {
+                "$ref": "#/components/schemas/BaseImageCaching",
+                "description": "How the host manages this VM's base image. The server sets `Shared`\nwhen the requested `image_url` is one of its catalog/recipe images\n(trusted, stable, shared across VMs) and `Ephemeral` for any other,\narbitrary user-supplied image. When `Ephemeral` the host downloads\nthe image into the VM's own per-VM directory so it is removed on VM\ntermination, never entering the shared cache. The agent has no\ncatalog knowledge and just honors this value.\n\n`#[serde(default)]` falls back to the enum default `Shared`, so any\nunflagged/older payload preserves the historical shared-cache\nbehavior; the server sets `Ephemeral` explicitly for non-catalog\nimages."
+              },
               "cloudinit_config": {
                 "description": "cloudinit config as string",
                 "items": {
@@ -21337,6 +22340,11 @@
               "name": {
                 "description": "VM name",
                 "type": "string"
+              },
+              "reuse_disk": {
+                "$ref": "#/components/schemas/ReuseDisk",
+                "description": "When set, boot from a preserved disk instead of creating a fresh overlay\nfrom `disk_image_url`. `#[serde(default)]` keeps older desktops working.",
+                "nullable": true
               },
               "volumes": {
                 "description": "Ceph RBD volumes to attach to this VM (optional)",
@@ -22027,7 +23035,7 @@
       "name": ""
     },
     "title": "rift-server",
-    "version": "0.59.2"
+    "version": "0.61.0"
   },
   "openapi": "3.0.4",
   "paths": {
@@ -23255,6 +24263,51 @@
           },
           "403": {
             "description": "Forbidden - not authorized to resume this instance"
+          }
+        },
+        "security": [
+          {
+            "token": []
+          },
+          {
+            "api-key": []
+          }
+        ],
+        "tags": [
+          "instances"
+        ]
+      }
+    },
+    "/api/v1/instances/saved-environments/list": {
+      "post": {
+        "description": "List the caller's saved environments — disks from terminated VM rentals still within their node's erase grace window, which can be re-attached to a new rental via `reuse_environment_id`. Pass `team_id` to list a team's environments.",
+        "operationId": "list_saved_environments",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListSavedEnvironmentsRequestProto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSavedEnvironmentsResponseProto"
+                }
+              }
+            },
+            "description": "Saved environments listed"
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "403": {
+            "description": "Caller is not a member of the requested team"
           }
         },
         "security": [

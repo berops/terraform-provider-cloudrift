@@ -1182,10 +1182,11 @@ type GpuMetrics struct {
 	TensorActivity *float64 `json:"tensor_activity"`
 }
 
-// InstanceAndUsageInfo Same shape as `v045::InstanceAndUsageInfo` but with `status: v059::InstanceStatus`
-// (so `Failed` is a valid value) and an extra `failure` field that's populated when
-// the rental ended up in `Failed`.
+// InstanceAndUsageInfo Same shape as `v059::InstanceAndUsageInfo` but with `virtual_machines` /
+// `bare_metal` carrying `v061::InstanceLoginInfo`.
 type InstanceAndUsageInfo struct {
+	// BareMetal Same shape as `v045::InstanceBareMetalInfo` but carrying
+	// `v061::InstanceLoginInfo`.
 	BareMetal     *InstanceBareMetalInfo  `json:"bare_metal,omitempty"`
 	BillingExempt *bool                   `json:"billing_exempt,omitempty"`
 	Containers    []InstanceContainerInfo `json:"containers"`
@@ -1224,8 +1225,10 @@ type InstanceAndUsageInfo struct {
 	VolumeMounts    *[]VolumeInfo                `json:"volume_mounts"`
 }
 
-// InstanceBareMetalInfo defines model for InstanceBareMetalInfo.
+// InstanceBareMetalInfo Same shape as `v045::InstanceBareMetalInfo` but carrying
+// `v061::InstanceLoginInfo`.
 type InstanceBareMetalInfo struct {
+	// LoginInfo Same as `v045::InstanceLoginInfo` plus [`Self::HiddenPassword`].
 	LoginInfo *InstanceLoginInfo `json:"login_info,omitempty"`
 	Name      string             `json:"name"`
 	Ready     bool               `json:"ready"`
@@ -1305,11 +1308,19 @@ type InstanceInfo struct {
 	Name string `json:"name"`
 }
 
-// InstanceInfoFlags Controls which optional data fields the server fetches for each instance.
-// All fields default to `false` — set a flag to `true` to include that data.
+// InstanceInfoFlags Same as `v058::InstanceInfoFlags` plus [`Self::with_credentials`].
 type InstanceInfoFlags struct {
-	// WithConnectionInfo Include connection fields: host_address, internal_host_address, instructions, reservation_data, volume_mounts.
+	// WithConnectionInfo Include connection fields: host_address, internal_host_address, reservation_data, volume_mounts.
 	WithConnectionInfo *bool `json:"with_connection_info,omitempty"`
+
+	// WithCredentials Include instance credentials: the login password and the rendered
+	// connection instructions that embed it. Requires the
+	// `ViewInstanceCredentials` permission — asking for it without that
+	// permission is a `403`, not a silently redacted response.
+	//
+	// Also requires `with_connection_info` for the instructions, which are
+	// part of the connection payload.
+	WithCredentials *bool `json:"with_credentials,omitempty"`
 
 	// WithHardwareInfo Include detailed hardware fields: cpu, cpu_mask, dram, disk_limit, gpu_mask, mig_profile.
 	WithHardwareInfo *bool `json:"with_hardware_info,omitempty"`
@@ -1318,7 +1329,7 @@ type InstanceInfoFlags struct {
 	WithUsageInfo *bool `json:"with_usage_info,omitempty"`
 }
 
-// InstanceLoginInfo defines model for InstanceLoginInfo.
+// InstanceLoginInfo Same as `v045::InstanceLoginInfo` plus [`Self::HiddenPassword`].
 type InstanceLoginInfo struct {
 	union json.RawMessage
 }
@@ -1331,11 +1342,24 @@ type InstanceLoginInfo0 struct {
 	} `json:"UsernameAndPassword"`
 }
 
-// InstanceLoginInfo1 defines model for .
+// InstanceLoginInfo1 The instance has no password (SSH-key auth only).
 type InstanceLoginInfo1 struct {
+	// Username The instance has no password (SSH-key auth only).
 	Username struct {
 		Username string `json:"username"`
 	} `json:"Username"`
+}
+
+// InstanceLoginInfo2 The caller lacks `ViewInstanceCredentials`, so the password was never
+// fetched. Distinct from [`Self::Username`] so clients can render
+// "withheld" rather than "none".
+type InstanceLoginInfo2 struct {
+	// HiddenPassword The caller lacks `ViewInstanceCredentials`, so the password was never
+	// fetched. Distinct from [`Self::Username`] so clients can render
+	// "withheld" rather than "none".
+	HiddenPassword struct {
+		Username string `json:"username"`
+	} `json:"HiddenPassword"`
 }
 
 // InstanceMetrics Hardware metrics for a single instance, filtered to GPUs allocated via gpu_mask
@@ -1709,8 +1733,10 @@ type InstanceVariantSelector0 struct {
 	} `json:"ByInstanceTypeAndName"`
 }
 
-// InstanceVirtualMachineInfo defines model for InstanceVirtualMachineInfo.
+// InstanceVirtualMachineInfo Same shape as `v045::InstanceVirtualMachineInfo` but carrying
+// `v061::InstanceLoginInfo`.
 type InstanceVirtualMachineInfo struct {
+	// LoginInfo Same as `v045::InstanceLoginInfo` plus [`Self::HiddenPassword`].
 	LoginInfo     *InstanceLoginInfo `json:"login_info,omitempty"`
 	MemoryUsageKb *int32             `json:"memory_usage_kb"`
 	Name          string             `json:"name"`
@@ -1839,9 +1865,9 @@ type ListInstanceTypesResponseProto struct {
 
 // ListInstancesRequestProto defines model for ListInstancesRequestProto.
 type ListInstancesRequestProto struct {
+	// Data Same as `v058::ListInstancesRequest` but carrying `v061::InstanceInfoFlags`.
 	Data struct {
-		// Mask Controls which optional data fields the server fetches for each instance.
-		// All fields default to `false` — set a flag to `true` to include that data.
+		// Mask Same as `v058::InstanceInfoFlags` plus [`Self::with_credentials`].
 		Mask     *InstanceInfoFlags `json:"mask,omitempty"`
 		Selector InstancesSelector  `json:"selector"`
 	} `json:"data"`
@@ -1961,6 +1987,28 @@ type ListReservationsRequestProto struct {
 type ListReservationsResponseProto struct {
 	Data struct {
 		Reservations []Reservation `json:"reservations"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// ListSavedEnvironmentsRequestProto defines model for ListSavedEnvironmentsRequestProto.
+type ListSavedEnvironmentsRequestProto struct {
+	Data struct {
+		// TeamId Scope the listing to a team the caller belongs to; omit for the
+		// caller's own environments.
+		TeamId *string `json:"team_id"`
+	} `json:"data"`
+
+	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
+	Version string `json:"version"`
+}
+
+// ListSavedEnvironmentsResponseProto defines model for ListSavedEnvironmentsResponseProto.
+type ListSavedEnvironmentsResponseProto struct {
+	Data struct {
+		SavedEnvironments []SavedEnvironment `json:"saved_environments"`
 	} `json:"data"`
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
@@ -2241,6 +2289,16 @@ type NodeHealthStatus1 struct {
 	} `json:"Unhealthy"`
 }
 
+// NodeMemory Explicit memory assignment for one host NUMA node in a manual NUMA
+// configuration. Only needed for a deliberately non-proportional split.
+type NodeMemory struct {
+	// MemoryKb Memory assigned to the guest cell on this host node, in KiB
+	MemoryKb int64 `json:"memory_kb"`
+
+	// NodeId Host NUMA node id
+	NodeId int32 `json:"node_id"`
+}
+
 // NodeMetrics Hardware metrics for a single node
 type NodeMetrics struct {
 	Gpus   []GpuMetrics `json:"gpus"`
@@ -2308,11 +2366,13 @@ type NodeSelector1 struct {
 	} `json:"ByNodeId"`
 }
 
-// NodeSelector2 Rent a custom off-catalog configuration on a specific node. Gated by
-// the `allow_custom_instances` flag; available to any user when enabled.
+// NodeSelector2 Rent a custom off-catalog configuration on a specific node. Requires
+// `allow_custom_instances` enabled and operator role (admin or the
+// node's provider); a quota holder may use it on their own allocated node.
 type NodeSelector2 struct {
-	// ByNodeWithResources Rent a custom off-catalog configuration on a specific node. Gated by
-	// the `allow_custom_instances` flag; available to any user when enabled.
+	// ByNodeWithResources Rent a custom off-catalog configuration on a specific node. Requires
+	// `allow_custom_instances` enabled and operator role (admin or the
+	// node's provider); a quota holder may use it on their own allocated node.
 	ByNodeWithResources struct {
 		// NodeId Node ID to rent on
 		NodeId string `json:"node_id"`
@@ -2361,6 +2421,21 @@ type PauseInstancesRequestProto struct {
 	Version string `json:"version"`
 }
 
+// Principal Resolved holder of an allocation.
+type Principal struct {
+	union json.RawMessage
+}
+
+// Principal0 defines model for .
+type Principal0 struct {
+	User string `json:"User"`
+}
+
+// Principal1 defines model for .
+type Principal1 struct {
+	Team string `json:"Team"`
+}
+
 // PromoCodeRequestProto defines model for PromoCodeRequestProto.
 type PromoCodeRequestProto struct {
 	Data struct {
@@ -2389,8 +2464,13 @@ type ProviderNodeHardwareInfo struct {
 // ProviderNodeInfo Updated ProviderNodeInfo with drain information
 type ProviderNodeInfo struct {
 	// ActiveInstanceCount Number of active (non-root) instances on this node
-	ActiveInstanceCount int32   `json:"active_instance_count"`
-	ClientVersion       *string `json:"client_version"`
+	ActiveInstanceCount int32 `json:"active_instance_count"`
+
+	// Allocations Active resource quotas (allocations) carved out of this node — the
+	// operator view. Customers read their own via `/quotas/list`. Lets the
+	// operator node page render the capacity strip + table from one call.
+	Allocations   *[]Quota `json:"allocations,omitempty"`
+	ClientVersion *string  `json:"client_version"`
 
 	// CountryCode Country code of the node location
 	CountryCode *string `json:"country_code"`
@@ -2443,6 +2523,10 @@ type ProviderNodeUtilizationInfo struct {
 
 	// MigGpuMask Bitmask of GPUs hosting MIG instances
 	MigGpuMask *string `json:"mig_gpu_mask,omitempty"`
+
+	// RentableGpus Free GPUs that are also healthy — excludes PCI-invalid and disabled
+	// GPUs. Rentable capacity; `gpus_available` is the raw free count.
+	RentableGpus *int32 `json:"rentable_gpus,omitempty"`
 }
 
 // ProviderSelector defines model for ProviderSelector.
@@ -2457,6 +2541,71 @@ type ProviderSelector0 string
 type ProviderSelector1 struct {
 	// ByName Select providers by name
 	ByName []string `json:"ByName"`
+}
+
+// Quota Operator-assigned dedicated capacity on a single node. Customer-facing
+// name: "Allocation".
+type Quota struct {
+	AccountId string `json:"account_id"`
+
+	// Active `false` after revoke; the row is kept for audit.
+	Active        bool `json:"active"`
+	BillingExempt bool `json:"billing_exempt"`
+
+	// Budget One resource shape. Used for a quota's budget, its live consumption,
+	// and the create request. `cpu_count` is guest vCPUs, `gpu_count` whole
+	// GPUs, `dram`/`disk` bytes — same conventions as `ResourceSpec`.
+	Budget QuotaResources `json:"budget"`
+
+	// Consumed One resource shape. Used for a quota's budget, its live consumption,
+	// and the create request. `cpu_count` is guest vCPUs, `gpu_count` whole
+	// GPUs, `dram`/`disk` bytes — same conventions as `ResourceSpec`.
+	Consumed  QuotaResources `json:"consumed"`
+	CreatedAt string         `json:"created_at"`
+
+	// CreatedBy Operator (admin or node-owning provider) who assigned the quota.
+	CreatedBy      string `json:"created_by"`
+	CreatedByEmail string `json:"created_by_email"`
+
+	// HolderName Recipient display name (team name, or the user's email).
+	HolderName string `json:"holder_name"`
+	Id         string `json:"id"`
+
+	// Name Operator label, e.g. "KMG-serv4-2026"
+	Name         string  `json:"name"`
+	NodeCpuBrand *string `json:"node_cpu_brand"`
+	NodeGpuBrand *string `json:"node_gpu_brand"`
+	NodeGpuVram  *int64  `json:"node_gpu_vram"`
+
+	// NodeHostname Node identity for display — the rental flow must show the renter
+	// which node the allocation pins to.
+	NodeHostname *string `json:"node_hostname"`
+	NodeId       string  `json:"node_id"`
+
+	// NodeInstanceType Node hardware summary, so the rental wizard renders the hardware
+	// with no `nodes/list` (operator-only) and no client-side join:
+	// catalog instance-type name, GPU brand (e.g. "H200"), VRAM per GPU
+	// (bytes), and CPU brand. `None` fields for off-catalog / GPU-less nodes.
+	NodeInstanceType *string `json:"node_instance_type"`
+	NodeIpAddress    *string `json:"node_ip_address"`
+
+	// Principal Resolved holder of an allocation.
+	Principal Principal `json:"principal"`
+	ValidFrom string    `json:"valid_from"`
+
+	// ValidTill `None` = no expiry. Expiry stops new admissions only; running VMs
+	// continue.
+	ValidTill *string `json:"valid_till"`
+}
+
+// QuotaResources One resource shape. Used for a quota's budget, its live consumption,
+// and the create request. `cpu_count` is guest vCPUs, `gpu_count` whole
+// GPUs, `dram`/`disk` bytes — same conventions as `ResourceSpec`.
+type QuotaResources struct {
+	CpuCount int32 `json:"cpu_count"`
+	Disk     int64 `json:"disk"`
+	Dram     int64 `json:"dram"`
+	GpuCount int32 `json:"gpu_count"`
 }
 
 // Recipe defines model for Recipe.
@@ -2633,11 +2782,22 @@ type RentInstanceRequestProto struct {
 		// Recipe Recipe name to use for the instance
 		Recipe *string `json:"recipe"`
 
+		// RequireQuotaCoverage Fail-closed assertion: this rental must be covered by an active
+		// resource quota on the node, otherwise it is rejected instead of
+		// billed. Never grants coverage — coverage is always derived
+		// server-side from (account, node).
+		RequireQuotaCoverage *bool `json:"require_quota_coverage,omitempty"`
+
 		// Reservation Parameters for using reservations with instances.
 		// `billing_exempt` on `New` skips the prepayment debit on the new
 		// reservation; independent of the rental's billing_exempt flag.
 		Reservation *ReservationParameters `json:"reservation,omitempty"`
-		Selector    NodeSelector           `json:"selector"`
+
+		// ReuseEnvironmentId Reuse a saved environment's disk instead of installing a fresh OS. The
+		// referenced environment (see `instances/saved-environments/list`) pins
+		// the rental to its node and instance type. `None` for a fresh rental.
+		ReuseEnvironmentId *string      `json:"reuse_environment_id"`
+		Selector           NodeSelector `json:"selector"`
 
 		// TeamId Optional team ID
 		TeamId *string `json:"team_id"`
@@ -2678,17 +2838,52 @@ type RentalFailureInfo struct {
 	UserMessage string `json:"user_message"`
 }
 
+// RequestedNumaConfig Admin-only manual NUMA CPU pinning for a custom (off-catalog) rental.
+// The admin pins the host CPUs; the server completes the rest of the
+// layout (cell grouping, memory split, emulator core, GPU-to-cell
+// mapping), validates it against the host hardware, and uses it instead
+// of automatic NUMA derivation.
+type RequestedNumaConfig struct {
+	// CpuIds Host CPU ids to expose as guest vCPUs. The server groups them into
+	// guest cells by each CPU's host NUMA node (one cell per host node,
+	// cells ordered by node_id ascending).
+	CpuIds []int32 `json:"cpu_ids"`
+
+	// EmulatorCpuIds Optional. Host CPU ids for the QEMU emulator thread. Omit to let
+	// the server pick it the same way the automatic path does: a carved
+	// overhead core when the VM needs more than one physical core,
+	// otherwise the emulator overlaps the vCPUs (no extra core).
+	EmulatorCpuIds *[]int32 `json:"emulator_cpu_ids"`
+
+	// GpuIndices Optional. Host GPU hardware indices to pass through. Omit to let
+	// the server auto-select free GPUs (NUMA-ranked). When supplied, must
+	// list exactly `gpu` indices; the server passes through these GPUs and
+	// still derives the GPU-to-cell mapping from each GPU's real NUMA
+	// affinity.
+	GpuIndices *[]int32 `json:"gpu_indices"`
+
+	// MemoryKbPerNode Optional. Explicit per-host-node memory for a deliberately
+	// non-proportional split. Omit for a vCPU-weighted, hugepage-aware
+	// split of `dram`. Keys must be exactly the host nodes that have
+	// vCPUs, and the values must sum to `dram`.
+	MemoryKbPerNode *[]NodeMemory `json:"memory_kb_per_node"`
+}
+
 // Reservation defines model for Reservation.
 type Reservation struct {
 	// BillingExempt Whether prepayment / extension debits are skipped for this reservation
-	BillingExempt   *bool                 `json:"billing_exempt,omitempty"`
-	BoundResource   string                `json:"bound_resource"`
-	CreatedAt       string                `json:"created_at"`
-	Id              string                `json:"id"`
-	InstanceType    *InstanceType         `json:"instance_type,omitempty"`
-	InstanceVariant *InstanceVariant      `json:"instance_variant,omitempty"`
-	Resources       *ReservationResources `json:"resources,omitempty"`
-	ValidTill       string                `json:"valid_till"`
+	BillingExempt   *bool            `json:"billing_exempt,omitempty"`
+	BoundResource   string           `json:"bound_resource"`
+	CreatedAt       string           `json:"created_at"`
+	Id              string           `json:"id"`
+	InstanceType    *InstanceType    `json:"instance_type,omitempty"`
+	InstanceVariant *InstanceVariant `json:"instance_variant,omitempty"`
+
+	// NodeId The node a custom reservation is pinned to, so a redeploy targets the
+	// same paid-for hardware. `None` for catalog reservations.
+	NodeId    *string               `json:"node_id,omitempty"`
+	Resources *ReservationResources `json:"resources,omitempty"`
+	ValidTill string                `json:"valid_till"`
 }
 
 // ReservationDates defines model for ReservationDates.
@@ -2766,7 +2961,14 @@ type ResourceSpec struct {
 	Disk int64 `json:"disk"`
 	Dram int64 `json:"dram"`
 	Gpu  int32 `json:"gpu"`
-	Vcpu int32 `json:"vcpu"`
+
+	// ManualNumaConfig Admin-only manual NUMA CPU pinning for a custom (off-catalog) rental.
+	// The admin pins the host CPUs; the server completes the rest of the
+	// layout (cell grouping, memory split, emulator core, GPU-to-cell
+	// mapping), validates it against the host hardware, and uses it instead
+	// of automatic NUMA derivation.
+	ManualNumaConfig *RequestedNumaConfig `json:"manual_numa_config,omitempty"`
+	Vcpu             int32                `json:"vcpu"`
 }
 
 // ResourceType defines model for ResourceType.
@@ -2805,6 +3007,48 @@ type ResumeNodeResponseProto struct {
 
 	// Version The version of the protocol like 2024-09-22, etc. Specify '~upcoming' to indicate future (unreleased) version or always use latest relesed version.
 	Version string `json:"version"`
+}
+
+// SavedEnvironment A VM disk left on a node by a terminated rental that the renter can
+// re-attach to a new VM instead of installing a fresh OS.
+//
+// Temporary, not a durable backup: the provider erases the disk once the
+// node's `erase_grace_period` elapses (`expires_at`). The disk is a local
+// overlay on `node_id`, so a rental reusing it must be pinned to that node
+// and instance type (see `reuse_environment_id` on the rent request).
+type SavedEnvironment struct {
+	// DiskSizeBytes Virtual size of the preserved disk in bytes.
+	DiskSizeBytes int64 `json:"disk_size_bytes"`
+
+	// ExpiresAt When the provider erases this disk; a rent referencing it afterwards
+	// falls back to a fresh OS.
+	ExpiresAt string `json:"expires_at"`
+
+	// Id Pass as `reuse_environment_id` on a rent request to boot from this disk.
+	Id string `json:"id"`
+
+	// InstanceTypeName Catalog instance type the environment is bound to. `None` for off-catalog
+	// nodes or when the node's type can't be resolved.
+	InstanceTypeName *string `json:"instance_type_name"`
+
+	// LastUsedAt When the original instance was terminated.
+	LastUsedAt string `json:"last_used_at"`
+
+	// Name Name of the original instance.
+	Name string `json:"name"`
+
+	// NodeHostname `None` if the node never reported one.
+	NodeHostname *string `json:"node_hostname"`
+
+	// NodeId Node the disk lives on; reuse must be pinned here.
+	NodeId string `json:"node_id"`
+
+	// OriginalVariantName Variant the environment was originally rented at, e.g. "h100-80gb-1x".
+	// `None` once that variant is removed from the catalog.
+	OriginalVariantName *string `json:"original_variant_name"`
+
+	// OsLabel OS label for display, e.g. "Ubuntu 24.04 Server".
+	OsLabel string `json:"os_label"`
 }
 
 // SearchResultEntry A single search result entry.
@@ -3287,6 +3531,9 @@ type TeamSearchResultEntry struct {
 
 // TerminateInstancesRequestProto defines model for TerminateInstancesRequestProto.
 type TerminateInstancesRequestProto struct {
+	// Data Unchanged from `v055::TerminateInstancesRequest`. Re-declared for the
+	// same reason as [`ListInstancesRequest`] — the terminate response echoes
+	// back each instance in full, so it carries login info too.
 	Data struct {
 		Selector InstancesSelector `json:"selector"`
 	} `json:"data"`
@@ -3896,6 +4143,9 @@ type ResetVmJSONRequestBody = ResetInstancesRequestProto
 
 // ResumeVmJSONRequestBody defines body for ResumeVm for application/json ContentType.
 type ResumeVmJSONRequestBody = ResumeInstancesRequestProto
+
+// ListSavedEnvironmentsJSONRequestBody defines body for ListSavedEnvironments for application/json ContentType.
+type ListSavedEnvironmentsJSONRequestBody = ListSavedEnvironmentsRequestProto
 
 // StartVmJSONRequestBody defines body for StartVm for application/json ContentType.
 type StartVmJSONRequestBody = StartInstancesRequestProto
@@ -4705,6 +4955,32 @@ func (t *InstanceLoginInfo) FromInstanceLoginInfo1(v InstanceLoginInfo1) error {
 
 // MergeInstanceLoginInfo1 performs a merge with any union data inside the InstanceLoginInfo, using the provided InstanceLoginInfo1
 func (t *InstanceLoginInfo) MergeInstanceLoginInfo1(v InstanceLoginInfo1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsInstanceLoginInfo2 returns the union data inside the InstanceLoginInfo as a InstanceLoginInfo2
+func (t InstanceLoginInfo) AsInstanceLoginInfo2() (InstanceLoginInfo2, error) {
+	var body InstanceLoginInfo2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromInstanceLoginInfo2 overwrites any union data inside the InstanceLoginInfo as the provided InstanceLoginInfo2
+func (t *InstanceLoginInfo) FromInstanceLoginInfo2(v InstanceLoginInfo2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeInstanceLoginInfo2 performs a merge with any union data inside the InstanceLoginInfo, using the provided InstanceLoginInfo2
+func (t *InstanceLoginInfo) MergeInstanceLoginInfo2(v InstanceLoginInfo2) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -5533,6 +5809,68 @@ func (t NodeSelector) MarshalJSON() ([]byte, error) {
 }
 
 func (t *NodeSelector) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsPrincipal0 returns the union data inside the Principal as a Principal0
+func (t Principal) AsPrincipal0() (Principal0, error) {
+	var body Principal0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPrincipal0 overwrites any union data inside the Principal as the provided Principal0
+func (t *Principal) FromPrincipal0(v Principal0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePrincipal0 performs a merge with any union data inside the Principal, using the provided Principal0
+func (t *Principal) MergePrincipal0(v Principal0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPrincipal1 returns the union data inside the Principal as a Principal1
+func (t Principal) AsPrincipal1() (Principal1, error) {
+	var body Principal1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPrincipal1 overwrites any union data inside the Principal as the provided Principal1
+func (t *Principal) FromPrincipal1(v Principal1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePrincipal1 performs a merge with any union data inside the Principal, using the provided Principal1
+func (t *Principal) MergePrincipal1(v Principal1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Principal) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Principal) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -7145,6 +7483,11 @@ type ClientInterface interface {
 
 	ResumeVm(ctx context.Context, body ResumeVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListSavedEnvironmentsWithBody request with any body
+	ListSavedEnvironmentsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ListSavedEnvironments(ctx context.Context, body ListSavedEnvironmentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// StartVmWithBody request with any body
 	StartVmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -8074,6 +8417,30 @@ func (c *Client) ResumeVmWithBody(ctx context.Context, contentType string, body 
 
 func (c *Client) ResumeVm(ctx context.Context, body ResumeVmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewResumeVmRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListSavedEnvironmentsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListSavedEnvironmentsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListSavedEnvironments(ctx context.Context, body ListSavedEnvironmentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListSavedEnvironmentsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10376,6 +10743,46 @@ func NewResumeVmRequestWithBody(server string, contentType string, body io.Reade
 	return req, nil
 }
 
+// NewListSavedEnvironmentsRequest calls the generic ListSavedEnvironments builder with application/json body
+func NewListSavedEnvironmentsRequest(server string, body ListSavedEnvironmentsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewListSavedEnvironmentsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewListSavedEnvironmentsRequestWithBody generates requests for ListSavedEnvironments with any type of body
+func NewListSavedEnvironmentsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/instances/saved-environments/list")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewStartVmRequest calls the generic StartVm builder with application/json body
 func NewStartVmRequest(server string, body StartVmJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -12376,6 +12783,11 @@ type ClientWithResponsesInterface interface {
 
 	ResumeVmWithResponse(ctx context.Context, body ResumeVmJSONRequestBody, reqEditors ...RequestEditorFn) (*ResumeVmResponse, error)
 
+	// ListSavedEnvironmentsWithBodyWithResponse request with any body
+	ListSavedEnvironmentsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListSavedEnvironmentsResponse, error)
+
+	ListSavedEnvironmentsWithResponse(ctx context.Context, body ListSavedEnvironmentsJSONRequestBody, reqEditors ...RequestEditorFn) (*ListSavedEnvironmentsResponse, error)
+
 	// StartVmWithBodyWithResponse request with any body
 	StartVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*StartVmResponse, error)
 
@@ -13305,6 +13717,28 @@ func (r ResumeVmResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ResumeVmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListSavedEnvironmentsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListSavedEnvironmentsResponseProto
+}
+
+// Status returns HTTPResponse.Status
+func (r ListSavedEnvironmentsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListSavedEnvironmentsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -14825,6 +15259,23 @@ func (c *ClientWithResponses) ResumeVmWithResponse(ctx context.Context, body Res
 	return ParseResumeVmResponse(rsp)
 }
 
+// ListSavedEnvironmentsWithBodyWithResponse request with arbitrary body returning *ListSavedEnvironmentsResponse
+func (c *ClientWithResponses) ListSavedEnvironmentsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ListSavedEnvironmentsResponse, error) {
+	rsp, err := c.ListSavedEnvironmentsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListSavedEnvironmentsResponse(rsp)
+}
+
+func (c *ClientWithResponses) ListSavedEnvironmentsWithResponse(ctx context.Context, body ListSavedEnvironmentsJSONRequestBody, reqEditors ...RequestEditorFn) (*ListSavedEnvironmentsResponse, error) {
+	rsp, err := c.ListSavedEnvironments(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListSavedEnvironmentsResponse(rsp)
+}
+
 // StartVmWithBodyWithResponse request with arbitrary body returning *StartVmResponse
 func (c *ClientWithResponses) StartVmWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*StartVmResponse, error) {
 	rsp, err := c.StartVmWithBody(ctx, contentType, body, reqEditors...)
@@ -16312,6 +16763,32 @@ func ParseResumeVmResponse(rsp *http.Response) (*ResumeVmResponse, error) {
 	response := &ResumeVmResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseListSavedEnvironmentsResponse parses an HTTP response from a ListSavedEnvironmentsWithResponse call
+func ParseListSavedEnvironmentsResponse(rsp *http.Response) (*ListSavedEnvironmentsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListSavedEnvironmentsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListSavedEnvironmentsResponseProto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	}
 
 	return response, nil
