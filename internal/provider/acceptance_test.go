@@ -210,11 +210,11 @@ func TestAcc_VirtualMachineResource(t *testing.T) {
 }
 
 // pinnedUbuntuCloudImageURL is a dated (non-"current") Ubuntu 24.04 cloud
-// image build, used instead of the "recipe" catalog to test the image_url
-// attribute end-to-end against the real API.
+// image build, passed as a recipe URL instead of a catalog name to test custom
+// images end-to-end against the real API.
 const pinnedUbuntuCloudImageURL = "https://cloud-images.ubuntu.com/releases/noble/release-20260801/ubuntu-24.04-server-cloudimg-amd64.img"
 
-func TestAcc_VirtualMachineResource_ImageUrl(t *testing.T) {
+func TestAcc_VirtualMachineResource_RecipeUrl(t *testing.T) {
 	testAccPreCheck(t)
 
 	if os.Getenv("CLOUDRIFT_TEAM_ID") == "" {
@@ -249,7 +249,7 @@ func TestAcc_VirtualMachineResource_ImageUrl(t *testing.T) {
 
 					resource "cloudrift_virtual_machine" "test" {
 						name          = %q
-						image_url     = %q
+						recipe        = %q
 						datacenter    = %q
 						instance_type = %q
 						ssh_key_id    = cloudrift_ssh_key.test.id
@@ -257,7 +257,7 @@ func TestAcc_VirtualMachineResource_ImageUrl(t *testing.T) {
 				`, keyName, sshPublicKey, vmName, pinnedUbuntuCloudImageURL, instance.datacenter, instance.variantName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("cloudrift_virtual_machine.test", "name", vmName),
-					resource.TestCheckResourceAttr("cloudrift_virtual_machine.test", "image_url", pinnedUbuntuCloudImageURL),
+					resource.TestCheckResourceAttr("cloudrift_virtual_machine.test", "recipe", pinnedUbuntuCloudImageURL),
 					resource.TestCheckResourceAttrSet("cloudrift_virtual_machine.test", "id"),
 					resource.TestCheckResourceAttrSet("cloudrift_virtual_machine.test", "public_ip"),
 					resource.TestCheckResourceAttr("cloudrift_virtual_machine.test", "status", "Active"),
