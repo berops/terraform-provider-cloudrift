@@ -69,7 +69,6 @@ type virtualMachineModel struct {
 	Name       types.String                 `tfsdk:"name"`
 	Metadata   *virtualMachineMetadataModel `tfsdk:"metadata"`
 	Recipe     types.String                 `tfsdk:"recipe"`
-	ImageUrl   types.String                 `tfsdk:"image_url"`
 	Datacenter types.String                 `tfsdk:"datacenter"`
 	SSHKeyID   types.String                 `tfsdk:"ssh_key_id"`
 }
@@ -113,17 +112,13 @@ func (r *virtualMachineResource) ValidateConfig(ctx context.Context, req resourc
 		return
 	}
 
-	// An unknown value (e.g. referencing another resource's computed output)
-	// counts as set: it isn't known yet, but it isn't absent either. Only a
-	// null or empty-string value counts as unset, matching what the client
-	// treats as "no image specified".
-	recipeSet := config.Recipe.IsUnknown() || config.Recipe.ValueString() != ""
-	imageURLSet := config.ImageUrl.IsUnknown() || config.ImageUrl.ValueString() != ""
-
-	if recipeSet == imageURLSet {
+	// Required already rejects a missing attribute, but not an explicit empty
+	// string. An unknown value (e.g. another resource's computed output) is not
+	// yet knowable, so it passes.
+	if !config.Recipe.IsUnknown() && !config.Recipe.IsNull() && config.Recipe.ValueString() == "" {
 		resp.Diagnostics.AddError(
 			"Invalid Virtual Machine Configuration",
-			"Exactly one of \"recipe\" or \"image_url\" must be set.",
+			"Attribute \"recipe\" must not be empty.",
 		)
 	}
 }
@@ -237,15 +232,8 @@ func (r *virtualMachineResource) Schema(_ context.Context, req resource.SchemaRe
 				},
 			},
 			"recipe": schema.StringAttribute{
-				MarkdownDescription: "The Base Image used for the Virtual Machine. Exactly one of `recipe` or `image_url` must be set.",
-				Optional:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"image_url": schema.StringAttribute{
-				MarkdownDescription: "Direct URL of a custom VM image to use, as an alternative to `recipe`. Exactly one of `recipe` or `image_url` must be set.",
-				Optional:            true,
+				MarkdownDescription: "The Base Image used for the Virtual Machine. Either a name from the CloudRift recipe catalog (e.g. `ubuntu`), or a direct `http://` / `https://` URL of a custom VM image.",
+				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -308,7 +296,6 @@ func (r *virtualMachineResource) Create(ctx context.Context, req resource.Create
 
 	ids, err := r.client.RentPublicInstanceVM(
 		plan.Recipe.ValueString(),
-		plan.ImageUrl.ValueString(),
 		plan.Datacenter.ValueString(),
 		plan.InstanceType.ValueString(),
 		startupCommands,

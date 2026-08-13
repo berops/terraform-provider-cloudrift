@@ -66,15 +66,16 @@ func Test_VirtualMachineResource_TeamId(t *testing.T) {
 	})
 }
 
-// Test_VirtualMachineResource_ImageUrl verifies that setting image_url instead
-// of recipe sends the custom image URL straight through to the rent request,
-// bypassing the recipe lookup (whose default test image_url is "test").
+// Test_VirtualMachineResource_ImageUrl verifies that a recipe holding a URL
+// sends that URL straight through to the rent request, bypassing the recipe
+// catalog lookup (whose default test image_url is "test").
 func Test_VirtualMachineResource_ImageUrl(t *testing.T) {
 	t.Parallel()
 
 	keyName := "anotheruser-key"
 	publicKey := "ssh-rsa AAAA anotheruser"
-	customImageURL := "https://example.com/custom.img"
+	// Mixed case on purpose: URL paths are case-sensitive, unlike recipe names.
+	customImageURL := "https://example.com/Custom-Image.IMG"
 	var capturedImageURL string
 
 	server := newVMTestServer(keyName, publicKey, func(req *http.Request) {
@@ -103,7 +104,7 @@ func Test_VirtualMachineResource_ImageUrl(t *testing.T) {
 					}
 
 					resource "cloudrift_virtual_machine" "machine0" {
-					  image_url     = "%s"
+					  recipe        = "%s"
 					  datacenter    = "us-east-nc-nr-1"
 					  instance_type = "rtx49-10c-kn.1"
 					  ssh_key_id    = cloudrift_ssh_key.primary.id
@@ -120,9 +121,9 @@ func Test_VirtualMachineResource_ImageUrl(t *testing.T) {
 	})
 }
 
-// Test_VirtualMachineResource_RecipeAndImageUrl_MutuallyExclusive verifies that
-// setting both or neither of recipe/image_url is rejected at plan time.
-func Test_VirtualMachineResource_RecipeAndImageUrl_MutuallyExclusive(t *testing.T) {
+// Test_VirtualMachineResource_RecipeRequired verifies that a missing or empty
+// recipe is rejected at plan time.
+func Test_VirtualMachineResource_RecipeRequired(t *testing.T) {
 	t.Parallel()
 
 	keyName := "anotheruser-key"
@@ -130,12 +131,12 @@ func Test_VirtualMachineResource_RecipeAndImageUrl_MutuallyExclusive(t *testing.
 	server := newVMTestServer(keyName, publicKey, nil)
 
 	testCases := []struct {
-		name  string
-		extra string
+		name    string
+		extra   string
+		errorRe string
 	}{
-		{name: "both set", extra: `recipe = "ubuntu"` + "\n" + `image_url = "https://example.com/custom.img"`},
-		{name: "neither set", extra: ""},
-		{name: "both empty string", extra: `recipe = ""` + "\n" + `image_url = ""`},
+		{name: "not set", extra: "", errorRe: `(?i)"recipe" is required`},
+		{name: "empty string", extra: `recipe = ""`, errorRe: `(?i)"recipe" must not be empty`},
 	}
 
 	for _, tc := range testCases {
@@ -157,7 +158,7 @@ func Test_VirtualMachineResource_RecipeAndImageUrl_MutuallyExclusive(t *testing.
 							  ssh_key_id    = cloudrift_ssh_key.primary.id
 							}
 						`, keyName, publicKey, tc.extra),
-						ExpectError: regexp.MustCompile(`(?i)exactly one of`),
+						ExpectError: regexp.MustCompile(tc.errorRe),
 					},
 				},
 			})

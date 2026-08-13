@@ -19,14 +19,13 @@ Manage virtualMachines
 
 - `datacenter` (String) The datacenter identifier
 - `instance_type` (String) The instance type identifier
+- `recipe` (String) The Base Image used for the Virtual Machine. Either a name from the CloudRift recipe catalog (e.g. `ubuntu`), or a direct `http://` / `https://` URL of a custom VM image.
 - `ssh_key_id` (String) The SSH Key ID to be able to connect to the Virtual Machine.
 
 ### Optional
 
-- `image_url` (String) Direct URL of a custom VM image to use, as an alternative to `recipe`. Exactly one of `recipe` or `image_url` must be set.
 - `metadata` (Attributes) Option to provide metadata. Currently supported is `startup_commands`. (see [below for nested schema](#nestedatt--metadata))
 - `name` (String) Optional name for the Virtual Machine, shown in the CloudRift dashboard. Changing it forces replacement.
-- `recipe` (String) The Base Image used for the Virtual Machine. Exactly one of `recipe` or `image_url` must be set.
 
 ### Read-Only
 

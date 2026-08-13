@@ -347,9 +347,15 @@ func (c *HttpClient) TerminateInstance(id string) error {
 	return err
 }
 
-func (c *HttpClient) RentPublicInstanceVM(recipe, imageURL, datacenter, instance, commands, name string, pubKeys []string) (*RentInstanceResponseProto, error) {
-	if (recipe == "") == (imageURL == "") {
-		return nil, errors.New("exactly one of recipe or image_url must be specified")
+// isImageURL reports whether a recipe value is a direct image URL rather than
+// a name from the recipe catalog.
+func isImageURL(recipe string) bool {
+	return strings.HasPrefix(recipe, "http://") || strings.HasPrefix(recipe, "https://")
+}
+
+func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands, name string, pubKeys []string) (*RentInstanceResponseProto, error) {
+	if recipe == "" {
+		return nil, errors.New("empty recipe")
 	}
 	if len(pubKeys) == 0 || slices.Contains(pubKeys, "") {
 		return nil, errors.New("no ssh key specified")
@@ -373,7 +379,12 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, imageURL, datacenter, instance
 	}
 
 	var vmConfig InstanceConfiguration1
-	if recipe != "" {
+	// A recipe is either a catalog name ("ubuntu") or a direct image URL. URLs
+	// go straight through without a catalog lookup, and are not lowercased
+	// since URL paths are case-sensitive.
+	if isImageURL(recipe) {
+		vmConfig.VirtualMachine.ImageUrl = recipe
+	} else {
 		recipe = strings.ToLower(recipe)
 		details, err := c.findVMRecipe(recipe)
 		if err != nil {
@@ -381,8 +392,6 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, imageURL, datacenter, instance
 		}
 		vmConfig.VirtualMachine.CloudinitUrl = &details.VirtualMachine.CloudinitUrl
 		vmConfig.VirtualMachine.ImageUrl = details.VirtualMachine.ImageUrl
-	} else {
-		vmConfig.VirtualMachine.ImageUrl = imageURL
 	}
 
 	var keySelector InstanceSshKeySelector
