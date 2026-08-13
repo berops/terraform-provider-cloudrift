@@ -348,12 +348,15 @@ func (c *HttpClient) TerminateInstance(id string) error {
 }
 
 // isImageURL reports whether a recipe value is a direct image URL rather than
-// a name from the recipe catalog.
+// a name from the recipe catalog. URI schemes are case-insensitive, so the
+// scheme is matched that way while the rest of the URL is left untouched.
 func isImageURL(recipe string) bool {
-	return strings.HasPrefix(recipe, "http://") || strings.HasPrefix(recipe, "https://")
+	lower := strings.ToLower(recipe)
+	return strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://")
 }
 
 func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands, name string, pubKeys []string) (*RentInstanceResponseProto, error) {
+	recipe = strings.TrimSpace(recipe)
 	if recipe == "" {
 		return nil, errors.New("empty recipe")
 	}

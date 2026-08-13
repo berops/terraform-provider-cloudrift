@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/berops/terraform-provider-cloudrift/pkg/cloudriftapi"
@@ -112,10 +113,10 @@ func (r *virtualMachineResource) ValidateConfig(ctx context.Context, req resourc
 		return
 	}
 
-	// Required already rejects a missing attribute, but not an explicit empty
-	// string. An unknown value (e.g. another resource's computed output) is not
-	// yet knowable, so it passes.
-	if !config.Recipe.IsUnknown() && !config.Recipe.IsNull() && config.Recipe.ValueString() == "" {
+	// Required already rejects a missing attribute, but not an explicit empty or
+	// whitespace-only string. An unknown value (e.g. another resource's computed
+	// output) is not yet knowable, so it passes.
+	if !config.Recipe.IsUnknown() && !config.Recipe.IsNull() && strings.TrimSpace(config.Recipe.ValueString()) == "" {
 		resp.Diagnostics.AddError(
 			"Invalid Virtual Machine Configuration",
 			"Attribute \"recipe\" must not be empty.",

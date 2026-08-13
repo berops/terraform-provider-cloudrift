@@ -214,7 +214,7 @@ func TestAcc_VirtualMachineResource(t *testing.T) {
 // images end-to-end against the real API.
 const pinnedUbuntuCloudImageURL = "https://cloud-images.ubuntu.com/releases/noble/release-20260801/ubuntu-24.04-server-cloudimg-amd64.img"
 
-func TestAcc_VirtualMachineResource_ImageUrl(t *testing.T) {
+func TestAcc_VirtualMachineResource_RecipeUrl(t *testing.T) {
 	testAccPreCheck(t)
 
 	if os.Getenv("CLOUDRIFT_TEAM_ID") == "" {

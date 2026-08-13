@@ -66,10 +66,10 @@ func Test_VirtualMachineResource_TeamId(t *testing.T) {
 	})
 }
 
-// Test_VirtualMachineResource_ImageUrl verifies that a recipe holding a URL
+// Test_VirtualMachineResource_RecipeUrl verifies that a recipe holding a URL
 // sends that URL straight through to the rent request, bypassing the recipe
 // catalog lookup (whose default test image_url is "test").
-func Test_VirtualMachineResource_ImageUrl(t *testing.T) {
+func Test_VirtualMachineResource_RecipeUrl(t *testing.T) {
 	t.Parallel()
 
 	keyName := "anotheruser-key"
@@ -121,8 +121,8 @@ func Test_VirtualMachineResource_ImageUrl(t *testing.T) {
 	})
 }
 
-// Test_VirtualMachineResource_RecipeRequired verifies that a missing or empty
-// recipe is rejected at plan time.
+// Test_VirtualMachineResource_RecipeRequired verifies that a missing, empty or
+// whitespace-only recipe is rejected at plan time.
 func Test_VirtualMachineResource_RecipeRequired(t *testing.T) {
 	t.Parallel()
 
@@ -137,6 +137,7 @@ func Test_VirtualMachineResource_RecipeRequired(t *testing.T) {
 	}{
 		{name: "not set", extra: "", errorRe: `(?i)"recipe" is required`},
 		{name: "empty string", extra: `recipe = ""`, errorRe: `(?i)"recipe" must not be empty`},
+		{name: "whitespace only", extra: `recipe = "   "`, errorRe: `(?i)"recipe" must not be empty`},
 	}
 
 	for _, tc := range testCases {
