@@ -347,9 +347,9 @@ func (c *HttpClient) TerminateInstance(id string) error {
 	return err
 }
 
-func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands, name string, pubKeys []string) (*RentInstanceResponseProto, error) {
-	if recipe == "" {
-		return nil, errors.New("no image specified")
+func (c *HttpClient) RentPublicInstanceVM(recipe, imageURL, datacenter, instance, commands, name string, pubKeys []string) (*RentInstanceResponseProto, error) {
+	if (recipe == "") == (imageURL == "") {
+		return nil, errors.New("exactly one of recipe or image_url must be specified")
 	}
 	if len(pubKeys) == 0 || slices.Contains(pubKeys, "") {
 		return nil, errors.New("no ssh key specified")
@@ -372,10 +372,17 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands
 		commands = strings.TrimSpace(commands)
 	}
 
-	recipe = strings.ToLower(recipe)
-	details, err := c.findVMRecipe(recipe)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find the requested recipe %s: %w", recipe, err)
+	var vmConfig InstanceConfiguration1
+	if recipe != "" {
+		recipe = strings.ToLower(recipe)
+		details, err := c.findVMRecipe(recipe)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find the requested recipe %s: %w", recipe, err)
+		}
+		vmConfig.VirtualMachine.CloudinitUrl = &details.VirtualMachine.CloudinitUrl
+		vmConfig.VirtualMachine.ImageUrl = details.VirtualMachine.ImageUrl
+	} else {
+		vmConfig.VirtualMachine.ImageUrl = imageURL
 	}
 
 	var keySelector InstanceSshKeySelector
@@ -383,9 +390,6 @@ func (c *HttpClient) RentPublicInstanceVM(recipe, datacenter, instance, commands
 		return nil, err
 	}
 
-	var vmConfig InstanceConfiguration1
-	vmConfig.VirtualMachine.CloudinitUrl = &details.VirtualMachine.CloudinitUrl
-	vmConfig.VirtualMachine.ImageUrl = details.VirtualMachine.ImageUrl
 	vmConfig.VirtualMachine.CloudinitCommands = &commands
 	vmConfig.VirtualMachine.SshKey = &keySelector
 
