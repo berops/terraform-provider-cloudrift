@@ -135,6 +135,7 @@ func Test_VirtualMachineResource_RecipeAndImageUrl_MutuallyExclusive(t *testing.
 	}{
 		{name: "both set", extra: `recipe = "ubuntu"` + "\n" + `image_url = "https://example.com/custom.img"`},
 		{name: "neither set", extra: ""},
+		{name: "both empty string", extra: `recipe = ""` + "\n" + `image_url = ""`},
 	}
 
 	for _, tc := range testCases {

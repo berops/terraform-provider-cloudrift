@@ -113,8 +113,12 @@ func (r *virtualMachineResource) ValidateConfig(ctx context.Context, req resourc
 		return
 	}
 
-	recipeSet := !config.Recipe.IsNull()
-	imageURLSet := !config.ImageUrl.IsNull()
+	// An unknown value (e.g. referencing another resource's computed output)
+	// counts as set: it isn't known yet, but it isn't absent either. Only a
+	// null or empty-string value counts as unset, matching what the client
+	// treats as "no image specified".
+	recipeSet := config.Recipe.IsUnknown() || config.Recipe.ValueString() != ""
+	imageURLSet := config.ImageUrl.IsUnknown() || config.ImageUrl.ValueString() != ""
 
 	if recipeSet == imageURLSet {
 		resp.Diagnostics.AddError(
