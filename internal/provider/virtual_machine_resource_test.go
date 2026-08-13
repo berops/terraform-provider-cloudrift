@@ -66,6 +66,104 @@ func Test_VirtualMachineResource_TeamId(t *testing.T) {
 	})
 }
 
+// Test_VirtualMachineResource_ImageUrl verifies that setting image_url instead
+// of recipe sends the custom image URL straight through to the rent request,
+// bypassing the recipe lookup (whose default test image_url is "test").
+func Test_VirtualMachineResource_ImageUrl(t *testing.T) {
+	t.Parallel()
+
+	keyName := "anotheruser-key"
+	publicKey := "ssh-rsa AAAA anotheruser"
+	customImageURL := "https://example.com/custom.img"
+	var capturedImageURL string
+
+	server := newVMTestServer(keyName, publicKey, func(req *http.Request) {
+		body, _ := io.ReadAll(req.Body)
+		var parsed struct {
+			Data struct {
+				Config struct {
+					VirtualMachine struct {
+						ImageUrl string `json:"image_url"`
+					} `json:"VirtualMachine"`
+				} `json:"config"`
+			} `json:"data"`
+		}
+		_ = json.Unmarshal(body, &parsed)
+		capturedImageURL = parsed.Data.Config.VirtualMachine.ImageUrl
+	})
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
+					resource "cloudrift_ssh_key" "primary" {
+					  name       = "%s"
+					  public_key = "%s"
+					}
+
+					resource "cloudrift_virtual_machine" "machine0" {
+					  image_url     = "%s"
+					  datacenter    = "us-east-nc-nr-1"
+					  instance_type = "rtx49-10c-kn.1"
+					  ssh_key_id    = cloudrift_ssh_key.primary.id
+					}
+				`, keyName, publicKey, customImageURL),
+				Check: resource.TestCheckFunc(func(s *terraform.State) error {
+					if capturedImageURL != customImageURL {
+						return fmt.Errorf("expected image_url %q in rent request, got %q", customImageURL, capturedImageURL)
+					}
+					return nil
+				}),
+			},
+		},
+	})
+}
+
+// Test_VirtualMachineResource_RecipeAndImageUrl_MutuallyExclusive verifies that
+// setting both or neither of recipe/image_url is rejected at plan time.
+func Test_VirtualMachineResource_RecipeAndImageUrl_MutuallyExclusive(t *testing.T) {
+	t.Parallel()
+
+	keyName := "anotheruser-key"
+	publicKey := "ssh-rsa AAAA anotheruser"
+	server := newVMTestServer(keyName, publicKey, nil)
+
+	testCases := []struct {
+		name  string
+		extra string
+	}{
+		{name: "both set", extra: `recipe = "ubuntu"` + "\n" + `image_url = "https://example.com/custom.img"`},
+		{name: "neither set", extra: ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: providerConfig(server.URL, "1.0") + fmt.Sprintf(`
+							resource "cloudrift_ssh_key" "primary" {
+							  name       = "%s"
+							  public_key = "%s"
+							}
+
+							resource "cloudrift_virtual_machine" "machine0" {
+							  %s
+							  datacenter    = "us-east-nc-nr-1"
+							  instance_type = "rtx49-10c-kn.1"
+							  ssh_key_id    = cloudrift_ssh_key.primary.id
+							}
+						`, keyName, publicKey, tc.extra),
+						ExpectError: regexp.MustCompile(`(?i)exactly one of`),
+					},
+				},
+			})
+		})
+	}
+}
+
 // A freshly rented VM can be missing from the first poll (eventual consistency)
 // or briefly Inactive. Create must keep polling through that not-found rather
 // than hard-failing on it.
